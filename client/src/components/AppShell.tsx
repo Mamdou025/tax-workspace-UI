@@ -23,7 +23,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { icon: <Layers size={18} />, label: 'Executive Overview', href: '/' },
+  { icon: <Layers size={18} />, label: 'Tax BU Overview', href: '/' },
   { icon: <LayoutDashboard size={18} />, label: 'Tax LOS Dashboard', href: '/dashboard' },
   { icon: <Building2 size={18} />, label: 'Client Workspace', href: '/client/northstar', badge: 8, badgeColor: 'amber' },
   { icon: <FileText size={18} />, label: 'Workflow Execution', href: '/workflow/fapi', badge: 2, badgeColor: 'red' },

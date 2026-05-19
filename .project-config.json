@@ -1,0 +1,35 @@
+{
+  "build_command": "pnpm run build",
+  "capabilities": [],
+  "dev_command": "pnpm run dev",
+  "env_vars": {},
+  "experiments": null,
+  "git_remote": {
+    "repo_url": "s3://vida-prod-gitrepo/webdev-git/310519663673512631/iRNbprfniDFziB7us7Psgv",
+    "access_key_id": "ASIAZV3A2ECZJ2BCSCIP",
+    "secret_access_key": "HP2ZIh52ERnH/L0GrLusXSuCRJqlInsPjbkE/+lJ",
+    "session_token": "IQoJb3JpZ2luX2VjEAEaCXVzLWVhc3QtMSJGMEQCIC0qBSBQ5aJDKGlINiksVpoMY4Fmc8r5ggxkJVO15djHAiBIXexhowaJ0WJjunmAVWVEr5w9Ql1paCTs76iSUI53ayr/AwjK//////////8BEAQaDDY2NTM4NjA5ODg2NiIMjCMIG9RPFOy6XECDKtMDjC6fw9xFPtYTw7uDjalfH0fzQVps+5ORI/gQr37nagyZLaP4EkfcL5GBsVHBUXlp3cZVEQ3Ir8pTzAJ/fDLHKg83rIjDu7PWYBBX0h92FTOB0pvF8t9k/GTIG5sK3SddhQqo6/S08hd8uGEmTBORpe1yUATL8vCQyLZnU+0uFiliwtuWtA51WBZzTDUP26LwLxUL5yFhNHRFkhX5ECx1pzSkgL/aimORZC5Uv3p0gKTvlUbWx5lkQxA2FHW8IrxxpdTIf7+oLnZkUkn6GMDMDOuG83AOnfB37xlQDanImRZ96/wh++AB++miHyV/86KRpriD0JltGSf13yddmmlLAQxLA/1r5AYrmDeTKHxWbmQITJS/UZPitdmzzd9mLOZ8x0j95/ITf6/GwL1Vr5It3/g+KY2TWNaqDlPjGNjQKQku2o0qrzZBawEYjnCS98Fant40w3HJjJRv6o9jUuFCCKHHsYxSDjytGiF/JrYo/6yEpdkKkYWuv5tRF/s7CwG4qSE6IsWHISSRmQkoFOiVB+cDqSFwXTtqFxm5u/BuA7iELYINrzMSbN6Eg4qpIuCBZrdfE444hG/+vsWBxF6l7PLLSLxAohNqNpKbVq86PkyXc38w1uiu0AY6ngGhM0lCHipfGbZXk9STVo56ZiRMDuXtBpdcxqDvOOTGfRnx/q1crVX/o4bQJKevweTYSE/8jLKTQzmDRvYOLozRTLHaOcVccelOVRErCgY2zQdpTX3guKxjRonHTPPub2xTjDfZiQYnp3DupUAD7W4qjeaSMZUtjIkrNxYEY2aFQdRjgqBtyFgZw9kZ//kkb3yMRsVZp1TzhXJDGbWFNg==",
+    "expiration": "2026-05-19T12:52:38.000Z"
+  },
+  "name": "tax-workspace-studio",
+  "path": "/home/ubuntu/tax-workspace-studio",
+  "port": 3000,
+  "secrets": {
+    "BUILT_IN_FORGE_API_KEY": "2uK4pP4RXmmUKydCFjs7AU",
+    "BUILT_IN_FORGE_API_URL": "https://forge.manus.ai",
+    "JWT_SECRET": "2WWEMhqvhNfQqFFrY7oe7e",
+    "OAUTH_SERVER_URL": "https://api.manus.im",
+    "OWNER_NAME": "Mamadou Fall",
+    "OWNER_OPEN_ID": "TfBoyUCvsHCqKTWQncV8tt",
+    "VITE_ANALYTICS_ENDPOINT": "https://manus-analytics.com",
+    "VITE_ANALYTICS_WEBSITE_ID": "2e1df1ad-efd5-45b5-847b-ec98bd7d096b",
+    "VITE_APP_ID": "iRNbprfniDFziB7us7Psgv",
+    "VITE_APP_LOGO": "",
+    "VITE_APP_TITLE": "Tax Digital Workspace Studio",
+    "VITE_FRONTEND_FORGE_API_KEY": "nHWwe3gEdu85iRhFnLhiBv",
+    "VITE_FRONTEND_FORGE_API_URL": "https://forge.manus.ai",
+    "VITE_OAUTH_PORTAL_URL": "https://manus.im"
+  },
+  "template_id": "web-static",
+  "test_command": "pnpm test"
+}

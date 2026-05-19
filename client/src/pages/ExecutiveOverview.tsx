@@ -16,6 +16,7 @@ import {
   LINES_OF_SERVICE, CROSS_LOS_CLIENTS, EXECUTIVE_STATS,
   type LineOfService, type CrossLOSClientRow
 } from '@/lib/data';
+import ClientIntelligenceMap from '@/components/ClientIntelligenceMap';
 import { toast } from 'sonner';
 
 // ─── Palette — strictly grayscale + deep blue ─────────────────────────────────
@@ -542,37 +543,8 @@ export default function ExecutiveOverview() {
           </div>
         </div>
 
-        {/* ── Cross-LOS Client Intelligence ────────────────────────────────── */}
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h2 className="text-sm font-700 text-[#0F2044]">Client Portfolio — Cross-LOS View</h2>
-          </div>
-          <p className="text-[11px] text-slate-400 mb-3">
-            Shared data sets (entity lists, financial statements, org charts) are available to all LOS teams serving the same client.
-          </p>
-
-          <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-100">
-                    <th className="text-left py-2.5 px-4 text-[10px] font-600 text-slate-400 uppercase tracking-wider">Client</th>
-                    <th className="text-left py-2.5 px-4 text-[10px] font-600 text-slate-400 uppercase tracking-wider">Tier</th>
-                    <th className="text-left py-2.5 px-4 text-[10px] font-600 text-slate-400 uppercase tracking-wider">Active LOS</th>
-                    <th className="text-left py-2.5 px-4 text-[10px] font-600 text-slate-400 uppercase tracking-wider">Shared Data</th>
-                    <th className="text-right py-2.5 px-4 text-[10px] font-600 text-slate-400 uppercase tracking-wider">Revenue YTD</th>
-                    <th className="py-2.5 px-4 w-8"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {CROSS_LOS_CLIENTS.map((row, i) => (
-                    <CrossLOSRow key={row.clientId} row={row} index={i} />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        {/* ── 360 Client Intelligence MAP ──────────────────────────────────── */}
+        <ClientIntelligenceMap />
 
       </div>
     </AppShell>

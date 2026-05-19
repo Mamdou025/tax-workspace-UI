@@ -474,3 +474,322 @@ export const RECENT_ACTIVITY = [
   { id: 'a5', type: 'exception', text: 'Pillar 2 GloBE Assessment flagged 4 exceptions — immediate attention required', time: '8 hours ago', icon: 'alert' },
   { id: 'a6', type: 'complete', text: 'T2 Corporate Return 2024 — Cascade Technologies delivered to client', time: '1 week ago', icon: 'complete' },
 ];
+
+// ─── Executive Overview — Lines of Service ────────────────────────────────────
+export interface LineOfService {
+  id: string;
+  name: string;
+  abbreviation: string;
+  color: string;           // hex accent color
+  bgClass: string;         // tailwind bg utility for card header
+  leadPartner: string;
+  leadPartnerInitials: string;
+  activeClients: number;
+  activeWorkflows: number;
+  pendingReviews: number;
+  atRisk: number;
+  upcomingDeadlines: number;
+  completedMTD: number;
+  revenueYTD: string;      // formatted string
+  trend: 'up' | 'down' | 'flat';
+  trendPct: string;
+  description: string;
+  sharedDataClients: string[];   // clients whose data is shared across LOS
+  keyDeliverables: string[];
+}
+
+export const LINES_OF_SERVICE: LineOfService[] = [
+  {
+    id: 'compliance',
+    name: 'Tax Compliance',
+    abbreviation: 'TC',
+    color: '#1B5FD4',
+    bgClass: 'bg-blue-600',
+    leadPartner: 'David Okafor',
+    leadPartnerInitials: 'DO',
+    activeClients: 5,
+    activeWorkflows: 5,
+    pendingReviews: 3,
+    atRisk: 0,
+    upcomingDeadlines: 4,
+    completedMTD: 2,
+    revenueYTD: '$1.2M',
+    trend: 'up',
+    trendPct: '+8%',
+    description: 'Corporate T2 returns, provincial filings, and annual compliance obligations for all client entities.',
+    sharedDataClients: ['northstar', 'meridian', 'atlas', 'cascade'],
+    keyDeliverables: ['T2 Corporate Returns', 'Provincial Filings', 'Instalment Schedules'],
+  },
+  {
+    id: 'intl',
+    name: 'International Corporate Tax',
+    abbreviation: 'ICT',
+    color: '#7C3AED',
+    bgClass: 'bg-violet-600',
+    leadPartner: 'Margaret Chen',
+    leadPartnerInitials: 'MC',
+    activeClients: 3,
+    activeWorkflows: 4,
+    pendingReviews: 4,
+    atRisk: 2,
+    upcomingDeadlines: 3,
+    completedMTD: 0,
+    revenueYTD: '$2.1M',
+    trend: 'up',
+    trendPct: '+14%',
+    description: 'FAPI, T1134 foreign affiliate reporting, surplus calculations, Pillar 2 GloBE assessments, and cross-border structuring.',
+    sharedDataClients: ['northstar', 'atlas'],
+    keyDeliverables: ['FAPI Workpapers', 'T1134 Schedules', 'Surplus Calculations', 'Pillar 2 Reports'],
+  },
+  {
+    id: 'ma',
+    name: 'M&A Tax',
+    abbreviation: 'M&A',
+    color: '#D97706',
+    bgClass: 'bg-amber-600',
+    leadPartner: 'Sarah Lindqvist',
+    leadPartnerInitials: 'SL',
+    activeClients: 2,
+    activeWorkflows: 2,
+    pendingReviews: 2,
+    atRisk: 1,
+    upcomingDeadlines: 2,
+    completedMTD: 0,
+    revenueYTD: '$3.4M',
+    trend: 'up',
+    trendPct: '+22%',
+    description: 'Transaction structuring, due diligence, tax opinions, and post-acquisition integration for M&A mandates.',
+    sharedDataClients: ['northstar', 'vantage'],
+    keyDeliverables: ['Transaction Memos', 'Due Diligence Reports', 'Tax Opinions'],
+  },
+  {
+    id: 'indirect',
+    name: 'Indirect Tax',
+    abbreviation: 'IND',
+    color: '#0891B2',
+    bgClass: 'bg-cyan-600',
+    leadPartner: 'David Okafor',
+    leadPartnerInitials: 'DO',
+    activeClients: 2,
+    activeWorkflows: 2,
+    pendingReviews: 1,
+    atRisk: 0,
+    upcomingDeadlines: 1,
+    completedMTD: 1,
+    revenueYTD: '$0.6M',
+    trend: 'flat',
+    trendPct: '0%',
+    description: 'GST/HST, PST, customs duties, and indirect tax compliance and advisory for domestic and cross-border transactions.',
+    sharedDataClients: ['atlas', 'cascade'],
+    keyDeliverables: ['GST/HST Returns', 'Indirect Tax Reviews', 'Customs Opinions'],
+  },
+  {
+    id: 'rd',
+    name: 'R&D / Tax Incentives',
+    abbreviation: 'R&D',
+    color: '#16A34A',
+    bgClass: 'bg-green-600',
+    leadPartner: 'David Okafor',
+    leadPartnerInitials: 'DO',
+    activeClients: 2,
+    activeWorkflows: 2,
+    pendingReviews: 1,
+    atRisk: 0,
+    upcomingDeadlines: 2,
+    completedMTD: 1,
+    revenueYTD: '$0.8M',
+    trend: 'up',
+    trendPct: '+5%',
+    description: 'SR&ED claims, investment tax credits, government incentive programs, and innovation-related tax planning.',
+    sharedDataClients: ['cascade'],
+    keyDeliverables: ['SR&ED Claims', 'ITC Calculations', 'CRA Audit Support'],
+  },
+  {
+    id: 'us',
+    name: 'US Tax',
+    abbreviation: 'US',
+    color: '#2563EB',
+    bgClass: 'bg-blue-700',
+    leadPartner: 'Margaret Chen',
+    leadPartnerInitials: 'MC',
+    activeClients: 2,
+    activeWorkflows: 2,
+    pendingReviews: 1,
+    atRisk: 0,
+    upcomingDeadlines: 1,
+    completedMTD: 0,
+    revenueYTD: '$1.1M',
+    trend: 'up',
+    trendPct: '+11%',
+    description: 'US federal and state tax compliance, cross-border US/Canada planning, GILTI, BEAT, and treaty analysis.',
+    sharedDataClients: ['northstar'],
+    keyDeliverables: ['US Federal Returns', 'State Filings', 'GILTI/BEAT Analysis'],
+  },
+  {
+    id: 'tp',
+    name: 'Transfer Pricing',
+    abbreviation: 'TP',
+    color: '#059669',
+    bgClass: 'bg-emerald-600',
+    leadPartner: 'Sarah Lindqvist',
+    leadPartnerInitials: 'SL',
+    activeClients: 2,
+    activeWorkflows: 2,
+    pendingReviews: 1,
+    atRisk: 0,
+    upcomingDeadlines: 2,
+    completedMTD: 0,
+    revenueYTD: '$0.9M',
+    trend: 'flat',
+    trendPct: '+2%',
+    description: 'Intercompany pricing policies, contemporaneous documentation, benchmarking studies, and APA applications.',
+    sharedDataClients: ['meridian', 'vantage'],
+    keyDeliverables: ['TP Documentation', 'Benchmarking Studies', 'APA Applications'],
+  },
+  {
+    id: 'pe',
+    name: 'Private Enterprise',
+    abbreviation: 'PE',
+    color: '#9333EA',
+    bgClass: 'bg-purple-600',
+    leadPartner: 'David Okafor',
+    leadPartnerInitials: 'DO',
+    activeClients: 1,
+    activeWorkflows: 1,
+    pendingReviews: 0,
+    atRisk: 0,
+    upcomingDeadlines: 1,
+    completedMTD: 1,
+    revenueYTD: '$0.4M',
+    trend: 'down',
+    trendPct: '-3%',
+    description: 'Owner-managed business planning, estate and succession planning, family trust structures, and CCPC optimization.',
+    sharedDataClients: [],
+    keyDeliverables: ['Owner-Manager Plans', 'Estate Plans', 'Trust Structures'],
+  },
+  {
+    id: 'litigation',
+    name: 'Tax Litigation',
+    abbreviation: 'LIT',
+    color: '#DC2626',
+    bgClass: 'bg-red-600',
+    leadPartner: 'Margaret Chen',
+    leadPartnerInitials: 'MC',
+    activeClients: 1,
+    activeWorkflows: 1,
+    pendingReviews: 1,
+    atRisk: 1,
+    upcomingDeadlines: 1,
+    completedMTD: 0,
+    revenueYTD: '$0.7M',
+    trend: 'up',
+    trendPct: '+18%',
+    description: 'CRA audit defence, objections, Tax Court proceedings, and voluntary disclosures.',
+    sharedDataClients: ['northstar'],
+    keyDeliverables: ['CRA Objections', 'Tax Court Filings', 'Voluntary Disclosures'],
+  },
+];
+
+// ─── Cross-LOS Client Intelligence ────────────────────────────────────────────
+export interface CrossLOSClientRow {
+  clientId: string;
+  clientName: string;
+  tier: ClientTier;
+  activeLOS: string[];       // LOS abbreviations active for this client
+  sharedDataSets: string[];  // e.g. "Entity List", "Financial Statements"
+  totalWorkflows: number;
+  atRisk: number;
+  openReviews: number;
+  nearestDeadline: string;
+  leadPartner: string;
+  leadPartnerInitials: string;
+  totalRevenueYTD: string;
+}
+
+export const CROSS_LOS_CLIENTS: CrossLOSClientRow[] = [
+  {
+    clientId: 'northstar',
+    clientName: 'Northstar Holdings Inc.',
+    tier: 'Platinum',
+    activeLOS: ['TC', 'ICT', 'M&A', 'US', 'LIT'],
+    sharedDataSets: ['Entity List', 'Financial Statements', 'Org Chart', 'FX Rates'],
+    totalWorkflows: 6,
+    atRisk: 2,
+    openReviews: 8,
+    nearestDeadline: 'May 28',
+    leadPartner: 'Margaret Chen',
+    leadPartnerInitials: 'MC',
+    totalRevenueYTD: '$4.2M',
+  },
+  {
+    clientId: 'meridian',
+    clientName: 'Meridian Energy Corp.',
+    tier: 'Strategic',
+    activeLOS: ['TC', 'TP'],
+    sharedDataSets: ['Entity List', 'Financial Statements'],
+    totalWorkflows: 2,
+    atRisk: 0,
+    openReviews: 1,
+    nearestDeadline: 'Jun 15',
+    leadPartner: 'David Okafor',
+    leadPartnerInitials: 'DO',
+    totalRevenueYTD: '$1.1M',
+  },
+  {
+    clientId: 'atlas',
+    clientName: 'Atlas Financial Group',
+    tier: 'Platinum',
+    activeLOS: ['TC', 'ICT', 'IND'],
+    sharedDataSets: ['Entity List', 'Financial Statements', 'Org Chart'],
+    totalWorkflows: 3,
+    atRisk: 1,
+    openReviews: 3,
+    nearestDeadline: 'Jun 15',
+    leadPartner: 'Sarah Lindqvist',
+    leadPartnerInitials: 'SL',
+    totalRevenueYTD: '$2.3M',
+  },
+  {
+    clientId: 'cascade',
+    clientName: 'Cascade Technologies Ltd.',
+    tier: 'Standard',
+    activeLOS: ['TC', 'R&D', 'IND'],
+    sharedDataSets: ['Financial Statements', 'R&D Project List'],
+    totalWorkflows: 2,
+    atRisk: 0,
+    openReviews: 1,
+    nearestDeadline: 'Jul 15',
+    leadPartner: 'David Okafor',
+    leadPartnerInitials: 'DO',
+    totalRevenueYTD: '$0.8M',
+  },
+  {
+    clientId: 'vantage',
+    clientName: 'Vantage Capital Partners',
+    tier: 'Strategic',
+    activeLOS: ['M&A', 'TP'],
+    sharedDataSets: ['Entity List', 'Transaction Documents'],
+    totalWorkflows: 1,
+    atRisk: 1,
+    openReviews: 5,
+    nearestDeadline: 'May 25',
+    leadPartner: 'Sarah Lindqvist',
+    leadPartnerInitials: 'SL',
+    totalRevenueYTD: '$1.8M',
+  },
+];
+
+// ─── Executive Summary Stats ───────────────────────────────────────────────────
+export const EXECUTIVE_STATS = {
+  totalClients: 5,
+  totalLOS: 9,
+  activeLOSEngagements: 9,
+  totalActiveWorkflows: 21,
+  atRiskDeliverables: 4,
+  pendingReviews: 14,
+  upcomingDeadlines: 17,
+  totalRevenueYTD: '$10.2M',
+  revenueTarget: '$14.0M',
+  revenueAttainment: 73,
+  crossLOSClients: 4,   // clients active in 2+ LOS
+};

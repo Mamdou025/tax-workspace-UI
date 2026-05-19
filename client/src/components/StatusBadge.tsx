@@ -11,27 +11,27 @@ interface StatusBadgeProps {
 
 const STATUS_CONFIG: Record<string, { dot: string; className: string }> = {
   // Workflow statuses
-  'In Progress': { dot: 'bg-blue-400', className: 'status-info' },
-  'Under Review': { dot: 'bg-amber-400', className: 'status-warning' },
-  'Approved': { dot: 'bg-green-400', className: 'status-approved' },
-  'Pending': { dot: 'bg-gray-400', className: 'status-pending' },
-  'At Risk': { dot: 'bg-red-400 animate-pulse-dot', className: 'status-error' },
-  'Complete': { dot: 'bg-green-400', className: 'status-approved' },
-  'Not Started': { dot: 'bg-gray-500', className: 'status-pending' },
+  'In Progress': { dot: 'bg-blue-500', className: 'status-info' },
+  'Under Review': { dot: 'bg-amber-500', className: 'status-warning' },
+  'Approved': { dot: 'bg-emerald-500', className: 'status-approved' },
+  'Pending': { dot: 'bg-slate-400', className: 'status-pending' },
+  'At Risk': { dot: 'bg-red-500 animate-pulse-dot', className: 'status-error' },
+  'Complete': { dot: 'bg-emerald-500', className: 'status-approved' },
+  'Not Started': { dot: 'bg-slate-500', className: 'status-pending' },
   // Review stages
-  'Consultant': { dot: 'bg-blue-400', className: 'status-info' },
-  'Manager': { dot: 'bg-amber-400', className: 'status-warning' },
+  'Consultant': { dot: 'bg-blue-500', className: 'status-info' },
+  'Manager': { dot: 'bg-amber-500', className: 'status-warning' },
   'Senior Manager': { dot: 'bg-orange-400', className: 'status-warning' },
-  'Partner': { dot: 'bg-purple-400', className: 'status-platinum' },
-  'Delivered': { dot: 'bg-green-400', className: 'status-approved' },
+  'Partner': { dot: 'bg-violet-500', className: 'status-platinum' },
+  'Delivered': { dot: 'bg-emerald-500', className: 'status-approved' },
   // Client tiers
-  'Platinum': { dot: 'bg-purple-400', className: 'status-platinum' },
-  'Strategic': { dot: 'bg-blue-400', className: 'status-info' },
-  'Standard': { dot: 'bg-gray-400', className: 'status-pending' },
+  'Platinum': { dot: 'bg-violet-500', className: 'status-platinum' },
+  'Strategic': { dot: 'bg-blue-500', className: 'status-info' },
+  'Standard': { dot: 'bg-slate-400', className: 'status-pending' },
 };
 
 export default function StatusBadge({ status, size = 'sm', showDot = true, className }: StatusBadgeProps) {
-  const config = STATUS_CONFIG[status] || { dot: 'bg-gray-400', className: 'status-pending' };
+  const config = STATUS_CONFIG[status] || { dot: 'bg-slate-400', className: 'status-pending' };
 
   return (
     <span

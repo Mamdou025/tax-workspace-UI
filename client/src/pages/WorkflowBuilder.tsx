@@ -99,11 +99,11 @@ function CanvasBlock({
 }) {
   const config = BLOCK_CONFIG[block.type];
   const statusIcon = block.status === 'complete' ? (
-    <CheckCircle2 size={10} className="text-green-400" />
+    <CheckCircle2 size={10} className="text-emerald-600" />
   ) : block.status === 'active' ? (
     <div className="w-2 h-2 rounded-full bg-primary animate-pulse-dot" />
   ) : block.status === 'error' ? (
-    <AlertTriangle size={10} className="text-red-400" />
+    <AlertTriangle size={10} className="text-red-500" />
   ) : (
     <div className="w-2 h-2 rounded-full bg-border" />
   );
@@ -261,8 +261,8 @@ function BlockInspector({ block, onClose }: { block: WorkflowBlock | null; onClo
             <div className="text-[10px] font-600 text-muted-foreground uppercase tracking-wider">Protected Config</div>
             <div className="bg-green-500/8 border border-green-500/20 rounded p-2.5 text-[10px]">
               <div className="flex items-center gap-1.5 mb-1">
-                <Shield size={9} className="text-green-400" />
-                <span className="font-600 text-green-400">Governed Value</span>
+                <Shield size={9} className="text-emerald-600" />
+                <span className="font-600 text-emerald-600">Governed Value</span>
               </div>
               <span className="text-muted-foreground">This value is locked in runtime. Editable only in builder draft mode.</span>
             </div>
@@ -303,8 +303,8 @@ function BlockInspector({ block, onClose }: { block: WorkflowBlock | null; onClo
             <div className="text-[10px] font-600 text-muted-foreground uppercase tracking-wider">AI Config</div>
             <div className="bg-purple-500/8 border border-purple-500/20 rounded p-2.5 text-[10px]">
               <div className="flex items-center gap-1.5 mb-1">
-                <Sparkles size={9} className="text-purple-400" />
-                <span className="font-600 text-purple-400">AI Proposal Rule</span>
+                <Sparkles size={9} className="text-violet-600" />
+                <span className="font-600 text-violet-600">AI Proposal Rule</span>
               </div>
               <span className="text-muted-foreground">AI proposes changes. All proposals require explicit human approval before being applied.</span>
             </div>
@@ -354,7 +354,7 @@ function BlockInspector({ block, onClose }: { block: WorkflowBlock | null; onClo
           </button>
           <button
             onClick={() => toast.info('Block deleted')}
-            className="p-1.5 rounded border border-red-500/20 text-red-400 hover:bg-red-500/10 transition-colors"
+            className="p-1.5 rounded border border-red-500/20 text-red-500 hover:bg-red-500/10 transition-colors"
           >
             <Trash2 size={11} />
           </button>
@@ -619,7 +619,7 @@ export default function WorkflowBuilder() {
                 <div className="text-[11px] text-muted-foreground">
                   {blocks.filter(b => b.type === 'source').map(b => (
                     <span key={b.id} className="inline-flex items-center gap-1 mr-3">
-                      <Database size={9} className="text-blue-400" /> {b.label}
+                      <Database size={9} className="text-blue-600" /> {b.label}
                     </span>
                   ))}
                 </div>
@@ -628,17 +628,17 @@ export default function WorkflowBuilder() {
                 <div className="text-[11px] text-muted-foreground">
                   {blocks.filter(b => b.type === 'output').map(b => (
                     <span key={b.id} className="inline-flex items-center gap-1 mr-3">
-                      <Package size={9} className="text-green-400" /> {b.label}
+                      <Package size={9} className="text-emerald-600" /> {b.label}
                     </span>
                   ))}
                 </div>
               )}
               {activeBottomTab === 'logs' && (
                 <div className="font-mono text-[10px] text-muted-foreground space-y-0.5">
-                  <div><span className="text-green-400">[OK]</span> Source blocks loaded — 3 sources</div>
-                  <div><span className="text-green-400">[OK]</span> Keyword Mapper executed — 8 rows classified</div>
+                  <div><span className="text-emerald-600">[OK]</span> Source blocks loaded — 3 sources</div>
+                  <div><span className="text-emerald-600">[OK]</span> Keyword Mapper executed — 8 rows classified</div>
                   <div><span className="text-primary">[RUN]</span> Calculation Engine running — FAPI / FAT / Net</div>
-                  <div><span className="text-amber-400">[WARN]</span> Exception Check: 2 exceptions flagged</div>
+                  <div><span className="text-amber-600">[WARN]</span> Exception Check: 2 exceptions flagged</div>
                   <div><span className="text-muted-foreground">[WAIT]</span> Approval Gate: awaiting manager sign-off</div>
                 </div>
               )}

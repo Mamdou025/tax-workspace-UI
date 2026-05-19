@@ -41,7 +41,7 @@ function WorkflowCardItem({ wf, index }: { wf: WorkflowCard; index: number }) {
           <div className="flex items-center gap-2 mb-1">
             <span className="text-sm font-600 text-foreground truncate">{wf.name}</span>
             {wf.status === 'At Risk' && (
-              <AlertTriangle size={12} className="text-red-400 shrink-0" />
+              <AlertTriangle size={12} className="text-red-500 shrink-0" />
             )}
           </div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -90,17 +90,17 @@ function WorkflowCardItem({ wf, index }: { wf: WorkflowCard; index: number }) {
                 <div className="flex flex-col items-center">
                   <div className={cn(
                     'w-2 h-2 rounded-full',
-                    isDone ? 'bg-green-400' : isCurrent ? 'bg-primary animate-pulse-dot' : 'bg-border'
+                    isDone ? 'bg-emerald-500' : isCurrent ? 'bg-primary animate-pulse-dot' : 'bg-border'
                   )} />
                   <span className={cn(
                     'text-[9px] mt-0.5 whitespace-nowrap',
-                    isCurrent ? 'text-primary font-600' : isDone ? 'text-green-400' : 'text-muted-foreground'
+                    isCurrent ? 'text-primary font-600' : isDone ? 'text-emerald-600' : 'text-muted-foreground'
                   )}>
                     {stage === 'Senior Manager' ? 'Sr. Mgr' : stage}
                   </span>
                 </div>
                 {!isLast && (
-                  <div className={cn('flex-1 h-px mx-1', isDone ? 'bg-green-400/40' : 'bg-border')} />
+                  <div className={cn('flex-1 h-px mx-1', isDone ? 'bg-emerald-500/40' : 'bg-border')} />
                 )}
               </div>
             );
@@ -225,7 +225,7 @@ export default function ClientWorkspace() {
   return (
     <AppShell
       breadcrumbs={[
-        { label: 'Tax LOS Dashboard', href: '/' },
+        { label: 'Tax LOS Dashboard', href: '/dashboard' },
         { label: client.name },
       ]}
       actions={
@@ -254,7 +254,7 @@ export default function ClientWorkspace() {
                 <h1 className="text-lg font-700 text-foreground">{client.name}</h1>
                 <StatusBadge status={client.tier} size="md" />
                 <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                  <Star size={10} className="text-amber-400" />
+                  <Star size={10} className="text-amber-600" />
                   <span>Platinum Client</span>
                 </div>
               </div>
@@ -286,9 +286,9 @@ export default function ClientWorkspace() {
             <div className="hidden lg:flex items-center gap-4 shrink-0">
               {[
                 { label: 'Workflows', value: client.workflows.length, color: 'text-foreground' },
-                { label: 'Open Reviews', value: client.openReviewItems, color: 'text-amber-400' },
-                { label: 'At Risk', value: client.atRiskDeliverables, color: 'text-red-400' },
-                { label: 'Deadlines', value: client.upcomingDeadlines, color: 'text-amber-400' },
+                { label: 'Open Reviews', value: client.openReviewItems, color: 'text-amber-600' },
+                { label: 'At Risk', value: client.atRiskDeliverables, color: 'text-red-500' },
+                { label: 'Deadlines', value: client.upcomingDeadlines, color: 'text-amber-600' },
               ].map(s => (
                 <div key={s.label} className="text-center">
                   <div className={cn('tabular-nums text-xl font-700', s.color)}>{s.value}</div>
@@ -397,7 +397,7 @@ export default function ClientWorkspace() {
                           <div className="flex flex-col items-center w-full">
                             <div className={cn(
                               'w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-600',
-                              s.done ? 'bg-green-400/20 text-green-400 border border-green-400/40' :
+                              s.done ? 'bg-emerald-500/20 text-emerald-600 border border-green-400/40' :
                               s.current ? 'bg-primary/20 text-primary border border-primary/40' :
                               'bg-secondary text-muted-foreground border border-border'
                             )}>
@@ -405,12 +405,12 @@ export default function ClientWorkspace() {
                             </div>
                             <span className={cn(
                               'text-[9px] mt-1 text-center',
-                              s.current ? 'text-primary font-600' : s.done ? 'text-green-400' : 'text-muted-foreground'
+                              s.current ? 'text-primary font-600' : s.done ? 'text-emerald-600' : 'text-muted-foreground'
                             )}>
                               {s.label}
                             </span>
                           </div>
-                          {i < 4 && <div className={cn('h-px flex-1 mx-1 -mt-4', s.done ? 'bg-green-400/40' : 'bg-border')} />}
+                          {i < 4 && <div className={cn('h-px flex-1 mx-1 -mt-4', s.done ? 'bg-emerald-500/40' : 'bg-border')} />}
                         </div>
                       ))}
                     </div>
@@ -550,7 +550,7 @@ export default function ClientWorkspace() {
                             <td><StatusBadge status={d.status as any} size="sm" /></td>
                             <td>
                               <div className="flex items-center gap-1">
-                                <div className={cn('w-2 h-2 rounded-full', d.signoff ? 'bg-green-400' : 'bg-border')} />
+                                <div className={cn('w-2 h-2 rounded-full', d.signoff ? 'bg-emerald-500' : 'bg-border')} />
                                 <span className="text-[10px] text-muted-foreground">{d.signoff ? 'Signed' : 'Pending'}</span>
                               </div>
                             </td>

@@ -6,7 +6,7 @@ import { Link, useLocation } from 'wouter';
 import {
   LayoutDashboard, Users, FileText, Settings, ChevronRight,
   Workflow, Bell, Search, HelpCircle, LogOut, ChevronLeft,
-  Building2, Wrench, Sparkles, BarChart3
+  Building2, Wrench, Sparkles, BarChart3, Layers
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -23,7 +23,8 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { icon: <LayoutDashboard size={18} />, label: 'Tax LOS Dashboard', href: '/' },
+  { icon: <Layers size={18} />, label: 'Executive Overview', href: '/' },
+  { icon: <LayoutDashboard size={18} />, label: 'Tax LOS Dashboard', href: '/dashboard' },
   { icon: <Building2 size={18} />, label: 'Client Workspace', href: '/client/northstar', badge: 8, badgeColor: 'amber' },
   { icon: <FileText size={18} />, label: 'Workflow Execution', href: '/workflow/fapi', badge: 2, badgeColor: 'red' },
   { icon: <Wrench size={18} />, label: 'Workflow Builder', href: '/builder' },
@@ -86,6 +87,8 @@ export default function AppShell({ children, breadcrumbs, actions, title }: AppS
           {NAV_ITEMS.map((item) => {
             const isActive = item.href === '/'
               ? location === '/'
+              : item.href === '/dashboard'
+              ? location === '/dashboard'
               : location.startsWith(item.href);
             return (
               <Tooltip key={item.href} delayDuration={collapsed ? 100 : 9999}>

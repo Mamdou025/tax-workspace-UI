@@ -107,7 +107,7 @@ function WorkpaperNav({ activeSection, onSelect }: {
           <div key={s.label} className="flex items-center gap-2">
             <div className={cn(
               'w-1.5 h-1.5 rounded-full',
-              s.status === 'complete' ? 'bg-green-400' :
+              s.status === 'complete' ? 'bg-emerald-500' :
               s.status === 'active' ? 'bg-primary animate-pulse-dot' : 'bg-border'
             )} />
             <span className="text-[10px] text-muted-foreground">{s.label}</span>
@@ -189,7 +189,7 @@ function SourcesSection() {
                   <div className="flex items-center gap-1">
                     <div className={cn(
                       'h-1.5 rounded-full',
-                      row.confidence >= 95 ? 'bg-green-400' : row.confidence >= 90 ? 'bg-amber-400' : 'bg-red-400'
+                      row.confidence >= 95 ? 'bg-emerald-500' : row.confidence >= 90 ? 'bg-amber-500' : 'bg-red-500'
                     )} style={{ width: `${row.confidence * 0.4}px` }} />
                     <span className="tabular-nums text-[10px] text-muted-foreground">{row.confidence}%</span>
                   </div>
@@ -197,8 +197,8 @@ function SourcesSection() {
                 <td>
                   {row.flag && (
                     <div className="flex items-center gap-1">
-                      <AlertTriangle size={10} className="text-amber-400 shrink-0" />
-                      <span className="text-[10px] text-amber-400 truncate max-w-32">{row.flag}</span>
+                      <AlertTriangle size={10} className="text-amber-600 shrink-0" />
+                      <span className="text-[10px] text-amber-600 truncate max-w-32">{row.flag}</span>
                     </div>
                   )}
                 </td>
@@ -271,7 +271,7 @@ function CalculationsSection() {
                 <tr key={row.id}>
                   <td className="font-500 text-[11px]">{row.category}</td>
                   <td className="num">{fmtCAD(row.grossIncome)}</td>
-                  <td className="num text-amber-400">({fmtCAD(row.fatDeduction)})</td>
+                  <td className="num text-amber-600">({fmtCAD(row.fatDeduction)})</td>
                   <td className="num font-600 text-foreground">{fmtCAD(row.netFAPI)}</td>
                   <td className="num text-muted-foreground">{(row.taxRate * 100).toFixed(1)}%</td>
                   <td className="num font-600 text-foreground">{fmtCAD(row.grossUpTax)}</td>
@@ -290,7 +290,7 @@ function CalculationsSection() {
               <tr className="bg-secondary/30">
                 <td className="text-[11px] font-600 text-muted-foreground px-3 py-2">Total</td>
                 <td className="num font-700">{fmtCAD(FAPI_CALCULATIONS.reduce((s, r) => s + r.grossIncome, 0))}</td>
-                <td className="num font-700 text-amber-400">({fmtCAD(FAPI_CALCULATIONS.reduce((s, r) => s + r.fatDeduction, 0))})</td>
+                <td className="num font-700 text-amber-600">({fmtCAD(FAPI_CALCULATIONS.reduce((s, r) => s + r.fatDeduction, 0))})</td>
                 <td className="num font-700 text-foreground">{fmtCAD(totalNet)}</td>
                 <td />
                 <td className="num font-700 text-foreground">{fmtCAD(totalGrossUp)}</td>
@@ -308,8 +308,8 @@ function CalculationsSection() {
           </div>
           <div className="space-y-1.5 font-mono text-[11px]">
             <div className="text-muted-foreground">{`// FAPI Calculation — ITA s.95(1)`}</div>
-            <div className="text-foreground">Gross FAPI Income = <span className="text-green-400">13,079,930</span> CAD</div>
-            <div className="text-foreground">FAT Deduction (15%) = <span className="text-amber-400">(1,962,000)</span> CAD</div>
+            <div className="text-foreground">Gross FAPI Income = <span className="text-emerald-600">13,079,930</span> CAD</div>
+            <div className="text-foreground">FAT Deduction (15%) = <span className="text-amber-600">(1,962,000)</span> CAD</div>
             <div className="text-foreground font-600">Net FAPI = <span className="text-primary">11,117,930</span> CAD</div>
             <div className="text-foreground">Gross-Up Tax (26.5%) = <span className="text-primary">2,946,251</span> CAD</div>
             <div className="text-muted-foreground text-[10px] mt-2">Source: Northstar_FAPI_FinancialStatements_2024.xlsx · FX: BoC Dec 31, 2024</div>
@@ -319,7 +319,7 @@ function CalculationsSection() {
         {/* Exceptions */}
         <div className="bg-card border border-red-500/20 rounded p-4">
           <div className="flex items-center gap-2 mb-3">
-            <AlertTriangle size={13} className="text-red-400" />
+            <AlertTriangle size={13} className="text-red-500" />
             <span className="text-xs font-600 text-foreground">Exceptions (2)</span>
           </div>
           <div className="space-y-2">
@@ -331,7 +331,7 @@ function CalculationsSection() {
                 'flex items-start gap-2 p-2.5 rounded',
                 e.severity === 'error' ? 'bg-red-500/10 border border-red-500/20' : 'bg-amber-500/10 border border-amber-500/20'
               )}>
-                <AlertTriangle size={11} className={e.severity === 'error' ? 'text-red-400 mt-0.5 shrink-0' : 'text-amber-400 mt-0.5 shrink-0'} />
+                <AlertTriangle size={11} className={e.severity === 'error' ? 'text-red-500 mt-0.5 shrink-0' : 'text-amber-600 mt-0.5 shrink-0'} />
                 <div className="flex-1">
                   <p className="text-[11px] text-foreground">{e.msg}</p>
                 </div>
@@ -366,7 +366,7 @@ function ProtectedSection() {
           className={cn(
             'flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border transition-colors',
             unlocked
-              ? 'border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20'
+              ? 'border-amber-500/40 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20'
               : 'border-border text-muted-foreground hover:text-foreground'
           )}
         >
@@ -400,7 +400,7 @@ function ProtectedSection() {
                   {item.locked && !unlocked ? (
                     <Lock size={10} className="text-primary" />
                   ) : (
-                    <Unlock size={10} className="text-amber-400" />
+                    <Unlock size={10} className="text-amber-600" />
                   )}
                 </div>
               </div>
@@ -446,9 +446,9 @@ function ReviewSection() {
               <div key={i} className="flex items-center gap-2.5">
                 <div className={cn(
                   'w-4 h-4 rounded flex items-center justify-center shrink-0',
-                  item.done ? 'bg-green-400/20 border border-green-400/40' : 'bg-secondary border border-border'
+                  item.done ? 'bg-emerald-500/20 border border-green-400/40' : 'bg-secondary border border-border'
                 )}>
-                  {item.done && <CheckCircle2 size={10} className="text-green-400" />}
+                  {item.done && <CheckCircle2 size={10} className="text-emerald-600" />}
                 </div>
                 <span className={cn('text-[11px]', item.done ? 'text-muted-foreground line-through' : 'text-foreground')}>
                   {item.label}
@@ -507,13 +507,13 @@ function ReviewSection() {
               </button>
               <button
                 onClick={() => toast.info('Change request submitted')}
-                className="text-xs px-2.5 py-1 rounded border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 transition-colors"
+                className="text-xs px-2.5 py-1 rounded border border-amber-500/30 text-amber-600 hover:bg-amber-500/10 transition-colors"
               >
                 Request Change
               </button>
               <button
                 onClick={() => toast.success('Approved and forwarded to Senior Manager')}
-                className="text-xs px-2.5 py-1 rounded border border-green-500/30 text-green-400 hover:bg-green-500/10 transition-colors"
+                className="text-xs px-2.5 py-1 rounded border border-green-500/30 text-emerald-600 hover:bg-green-500/10 transition-colors"
               >
                 Approve
               </button>
@@ -538,11 +538,11 @@ function OutputSection() {
 
       <div className="flex-1 overflow-auto p-4 space-y-3">
         {[
-          { name: 'Excel Workpaper', desc: 'Full FAPI workpaper with all calculations and source trace', format: 'XLSX', ready: false, icon: <FileText size={16} className="text-green-400" /> },
-          { name: 'PDF Report', desc: 'Formatted FAPI summary report for client delivery', format: 'PDF', ready: false, icon: <FileText size={16} className="text-red-400" /> },
-          { name: 'Evidence Pack', desc: 'All source documents, FX references, and calculation trace', format: 'ZIP', ready: false, icon: <Package size={16} className="text-blue-400" /> },
-          { name: 'Canonical JSON', desc: 'Structured output for downstream systems and ONESOURCE', format: 'JSON', ready: false, icon: <Database size={16} className="text-purple-400" /> },
-          { name: 'Taxprep Handoff', desc: 'Pre-populated Taxprep data file for T2 integration', format: 'XML', ready: false, icon: <FileText size={16} className="text-amber-400" /> },
+          { name: 'Excel Workpaper', desc: 'Full FAPI workpaper with all calculations and source trace', format: 'XLSX', ready: false, icon: <FileText size={16} className="text-emerald-600" /> },
+          { name: 'PDF Report', desc: 'Formatted FAPI summary report for client delivery', format: 'PDF', ready: false, icon: <FileText size={16} className="text-red-500" /> },
+          { name: 'Evidence Pack', desc: 'All source documents, FX references, and calculation trace', format: 'ZIP', ready: false, icon: <Package size={16} className="text-blue-600" /> },
+          { name: 'Canonical JSON', desc: 'Structured output for downstream systems and ONESOURCE', format: 'JSON', ready: false, icon: <Database size={16} className="text-violet-600" /> },
+          { name: 'Taxprep Handoff', desc: 'Pre-populated Taxprep data file for T2 integration', format: 'XML', ready: false, icon: <FileText size={16} className="text-amber-600" /> },
         ].map((output, i) => (
           <div
             key={i}
@@ -566,7 +566,7 @@ function OutputSection() {
               className={cn(
                 'text-xs px-3 py-1.5 rounded border transition-colors shrink-0 flex items-center gap-1.5',
                 output.ready
-                  ? 'border-green-500/30 text-green-400 hover:bg-green-500/10'
+                  ? 'border-green-500/30 text-emerald-600 hover:bg-green-500/10'
                   : 'border-border text-muted-foreground cursor-not-allowed'
               )}
             >
@@ -579,13 +579,13 @@ function OutputSection() {
         {/* Blocking items */}
         <div className="bg-amber-500/8 border border-amber-500/20 rounded p-3">
           <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle size={12} className="text-amber-400" />
-            <span className="text-xs font-600 text-amber-400">Output Blocked — 5 items pending</span>
+            <AlertTriangle size={12} className="text-amber-600" />
+            <span className="text-xs font-600 text-amber-600">Output Blocked — 5 items pending</span>
           </div>
           <div className="space-y-1">
             {['HK FX rate exception', 'JP treaty memo', 'Manager sign-off', 'Senior Manager review', 'Partner sign-off'].map((item, i) => (
               <div key={i} className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                <div className="w-1 h-1 rounded-full bg-amber-400" />
+                <div className="w-1 h-1 rounded-full bg-amber-500" />
                 {item}
               </div>
             ))}
@@ -739,7 +739,7 @@ export default function WorkflowExecution() {
   return (
     <AppShell
       breadcrumbs={[
-        { label: 'Tax LOS Dashboard', href: '/' },
+        { label: 'Tax LOS Dashboard', href: '/dashboard' },
         { label: 'Northstar Holdings Inc.', href: '/client/northstar' },
         { label: 'FAPI Workpaper 2025' },
       ]}
@@ -780,7 +780,7 @@ export default function WorkflowExecution() {
           <span>Preparer: <span className="text-foreground">Ryan Tran</span></span>
           <span>Manager: <span className="text-foreground">Alex Bouchard</span></span>
           <span>Partner: <span className="text-foreground">Margaret Chen</span></span>
-          <span className="text-amber-400">Due: Jun 30, 2025</span>
+          <span className="text-amber-600">Due: Jun 30, 2025</span>
         </div>
       </div>
 

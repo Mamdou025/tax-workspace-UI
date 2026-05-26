@@ -8,7 +8,7 @@ import { Link, useLocation } from 'wouter';
 import {
   Layers, LayoutDashboard, Building2, FileText,
   Wrench, BarChart3, Settings, HelpCircle, ChevronRight, ChevronLeft,
-  LogOut, Workflow, Bell
+  LogOut, Workflow, Bell, Home
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -79,8 +79,38 @@ export default function AppShell({ children, breadcrumbs, actions, hideTopBar }:
           )}
         </div>
 
+        {/* Home button — always navigates back to Workbench */}
+        <div className="px-1.5 pt-2 pb-1">
+          <Tooltip delayDuration={expanded ? 9999 : 80}>
+            <TooltipTrigger asChild>
+              <Link href="/">
+                <div className={cn(
+                  'relative flex items-center rounded-lg transition-all duration-150 cursor-pointer',
+                  'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                  expanded ? 'gap-2.5 px-2.5 py-2' : 'justify-center w-9 h-9 mx-auto',
+                  location === '/'
+                    ? 'bg-[#0F2044]/10 text-[#0F2044]'
+                    : 'text-slate-500'
+                )}>
+                  {location === '/' && (
+                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r bg-[#0F2044]" />
+                  )}
+                  <Home size={18} className={location === '/' ? 'text-[#0F2044]' : 'text-slate-400'} />
+                  {expanded && <span className="flex-1 truncate text-[12px] font-500">Workbench</span>}
+                </div>
+              </Link>
+            </TooltipTrigger>
+            {!expanded && (
+              <TooltipContent side="right" className="text-xs">Workbench (Home)</TooltipContent>
+            )}
+          </Tooltip>
+        </div>
+
+        {/* Divider */}
+        <div className="mx-3 border-t border-sidebar-border mb-1" />
+
         {/* Main nav */}
-        <nav className="flex-1 py-3 px-1.5 space-y-0.5 overflow-y-auto">
+        <nav className="flex-1 py-1 px-1.5 space-y-0.5 overflow-y-auto">
           {NAV_ITEMS.map((item) => {
             const active = isActive(item);
             const Icon = item.icon;

@@ -4,6 +4,7 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import Workbench from "./pages/Workbench";
 import ExecutiveOverview from "./pages/ExecutiveOverview";
 import Dashboard from "./pages/Dashboard";
 import ClientWorkspace from "./pages/ClientWorkspace";
@@ -13,7 +14,10 @@ import WorkflowBuilder from "./pages/WorkflowBuilder";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={ExecutiveOverview} />
+      {/* Workbench is the new root — task-first home screen */}
+      <Route path="/" component={Workbench} />
+      {/* Executive BU Overview — accessible from sidebar icon */}
+      <Route path="/bu-overview" component={ExecutiveOverview} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/client/:id" component={ClientWorkspace} />
       <Route path="/workflow/:id" component={WorkflowExecution} />

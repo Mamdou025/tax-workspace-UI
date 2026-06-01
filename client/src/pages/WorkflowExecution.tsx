@@ -29,6 +29,7 @@ function fmtNum(n: number) {
 
 // ─── Workpaper sections ───────────────────────────────────────────────────────
 const SECTIONS = [
+  { id: 'context', label: 'Technical Context', icon: <FileText size={12} />, badge: null },
   { id: 'sources', label: 'Sources', icon: <Database size={12} />, badge: 8 },
   { id: 'mapping', label: 'Keyword Mapping', icon: <Activity size={12} />, badge: null },
   { id: 'calculations', label: 'Calculations', icon: <Calculator size={12} />, badge: 2 },
@@ -113,6 +114,190 @@ function WorkpaperNav({ activeSection, onSelect }: {
             <span className="text-[10px] text-muted-foreground">{s.label}</span>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Technical Context Section ───────────────────────────────────────────────
+function TechnicalContextSection() {
+  const [expandedFact, setExpandedFact] = useState<string | null>(null);
+
+  const facts = [
+    {
+      id: 'northstar-inc',
+      label: 'Northstar Holdings Inc.',
+      tag: 'Canadian Corporation',
+      content: 'Northstar Holdings Inc. (\u201cNorthstar\u201d) is a Montreal-headquartered company incorporated under Quebec\u2019s Business Corporations Act on January 17, 2007, that manufactures nail clippers. Its taxation year-end is December\u00a031 and it has elected the United States dollar (USD) as its functional currency for Canadian tax purposes pursuant to subsection\u00a0261(3) of the Income Tax Act (\u201cITA\u201d). Northstar is a Canadian-controlled private corporation (\u201cCCPC\u201d) within the meaning of subsection\u00a0125(7) ITA.',
+    },
+    {
+      id: 'northstar-france',
+      label: 'Northstar Paris SAS',
+      tag: 'Foreign Affiliate',
+      content: 'In March 2010, Northstar acquired all of the issued and outstanding shares of Northstar Paris SAS (\u201cNorthstar France\u201d), a soci\u00e9t\u00e9 par actions simplifi\u00e9e incorporated and resident in France. Its taxation year-end is December\u00a031. Northstar owns 100% of the issued and outstanding shares of Northstar France. Northstar France owns a commercial building located in the \u00cele-de-France region that is used by Northstar for product storage. Northstar pays annual rent to Northstar France pursuant to a lease agreement dated April\u00a01, 2010.',
+    },
+    {
+      id: 'rental-income',
+      label: 'Rental Income \u2014 Lease Agreement',
+      tag: 'Key Transaction',
+      content: 'For the fiscal year ended December\u00a031, 2024, Northstar France received rental income of EUR\u00a01,200,000 from Northstar pursuant to the lease agreement. The lease is an arm\u2019s length arrangement and the rental rate is consistent with comparable commercial properties in the \u00cele-de-France region. No other income was earned by Northstar France during the year. The rental income constitutes the sole source of income of Northstar France for the relevant period.',
+    },
+    {
+      id: 'ownership',
+      label: 'Ownership Structure',
+      tag: 'Structure',
+      content: 'Northstar Holdings Inc. directly holds 100% of the issued and outstanding shares of Northstar Paris SAS. There are no intermediate holding companies, partnership interests, or trust arrangements between Northstar and Northstar France. No other person or group of persons holds any interest in Northstar France. The shares were acquired at a cost of CAD\u00a04,200,000 and have not been subject to any reorganization or restructuring since acquisition.',
+    },
+    {
+      id: 'assumptions',
+      label: 'Key Assumptions',
+      tag: 'Assumptions',
+      content: 'The following assumptions have been made for purposes of this analysis: (1) Northstar France is a corporation and not a trust, partnership, or other entity for French law purposes; (2) France is not a designated treaty country for purposes of the FAPI regime; (3) the rental income received by Northstar France does not qualify as income from an active business under subsection\u00a095(1) ITA; (4) the EUR/CAD exchange rate applied is the Bank of Canada noon rate as at December\u00a031, 2024 (1.4712); (5) no elections have been made under subsection\u00a093(1) ITA in respect of the shares of Northstar France.',
+    },
+  ];
+
+  const itaItems = [
+    {
+      id: 'fa-status',
+      provision: 'ss.\u00a095(1) ITA',
+      heading: 'Foreign Affiliate Status',
+      analysis: 'Northstar France is a \u201cforeign affiliate\u201d of Northstar within the meaning of subsection\u00a095(1) ITA because: (i) it is a non-resident corporation; and (ii) Northstar\u2019s equity percentage in Northstar France is not less than 1% and Northstar\u2019s total equity percentage (direct and indirect) is not less than 10%. Northstar France is also a \u201ccontrolled foreign affiliate\u201d (\u201cCFA\u201d) of Northstar because Northstar, together with no more than four other persons resident in Canada, controls Northstar France within the meaning of subsection\u00a095(1) ITA.',
+      conclusion: 'Northstar France qualifies as both a foreign affiliate and a controlled foreign affiliate of Northstar.',
+      status: 'confirmed',
+    },
+    {
+      id: 'fapi-component-a',
+      provision: 'ss.\u00a095(1) \u2014 FAPI Component A',
+      heading: 'Rental Income as FAPI',
+      analysis: 'The rental income earned by Northstar France from Northstar constitutes \u201cforeign accrual property income\u201d (\u201cFAPI\u201d) under Component A of the definition of FAPI in subsection\u00a095(1) ITA. Specifically, rental income is income from property (i.e., income from the use of real property) and therefore falls within Component A of the FAPI definition. The income is not excluded from FAPI as it does not arise from an active business carried on by Northstar France.',
+      conclusion: 'The EUR\u00a01,200,000 rental income constitutes FAPI under Component A of subsection\u00a095(1) ITA.',
+      status: 'confirmed',
+    },
+    {
+      id: 'recharacterization',
+      provision: 'ss.\u00a095(2) ITA',
+      heading: 'Recharacterization Analysis',
+      analysis: 'Subsection\u00a095(2) ITA provides for the recharacterization of certain income as income from an active business. The rental income paid by Northstar to Northstar France cannot be recharacterized as income from an active business under subsection\u00a095(2) ITA because: (i) the rental income is not derived from services rendered to Northstar in the course of an active business carried on by Northstar France; (ii) Northstar France does not carry on an active business; and (iii) none of the specific recharacterization rules in paragraphs\u00a095(2)(a) through (l) ITA apply to the rental income in the circumstances.',
+      conclusion: 'The rental income cannot be recharacterized as active business income. It remains FAPI.',
+      status: 'confirmed',
+    },
+    {
+      id: 'inclusion',
+      provision: 'ss.\u00a091(1) ITA',
+      heading: 'FAPI Inclusion in Northstar Income',
+      analysis: 'Pursuant to subsection\u00a091(1) ITA, Northstar is required to include in its income for the taxation year its \u201cprorated FAPI\u201d of Northstar France. The prorated FAPI is computed as Northstar\u2019s participating percentage in Northstar France (100%) multiplied by the FAPI of Northstar France for its taxation year ending in Northstar\u2019s taxation year. The FAPI is converted to Canadian dollars using the average exchange rate for the year pursuant to subsection\u00a0261(2) ITA.',
+      conclusion: 'Northstar must include 100% of Northstar France\u2019s FAPI (EUR\u00a01,200,000 \u00d7 1.4712\u00a0=\u00a0CAD\u00a01,765,440) in its income for the 2024 taxation year.',
+      status: 'confirmed',
+    },
+    {
+      id: 'fapit',
+      provision: 'ss.\u00a091(4) ITA',
+      heading: 'Foreign Accrual Tax (FAPIT) Deduction',
+      analysis: 'Northstar may be entitled to a deduction under subsection\u00a091(4) ITA for \u201cforeign accrual tax\u201d (\u201cFAPIT\u201d) paid by Northstar France on the FAPI. French corporate income tax paid by Northstar France on the rental income constitutes FAPIT to the extent it is reasonably attributable to the FAPI. The applicable French corporate income tax rate for 2024 is 25%. The FAPIT deduction reduces the net FAPI inclusion in Northstar\u2019s income.',
+      conclusion: 'FAPIT deduction to be confirmed upon receipt of French tax return. Estimated FAPIT: EUR\u00a0300,000 (CAD\u00a0441,360).',
+      status: 'pending',
+    },
+  ];
+
+  return (
+    <div className="flex flex-col h-full overflow-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+        <div>
+          <h3 className="text-sm font-600 text-foreground">Technical Context</h3>
+          <p className="text-[11px] text-muted-foreground">AI-generated tax technical summary \u2014 FAPI Workpaper 2025 \u00b7 Northstar Holdings Inc.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 text-[10px] text-primary bg-primary/8 border border-primary/20 px-2 py-1 rounded">
+            <Sparkles size={10} />
+            AI-generated \u00b7 Last updated Jun\u00a01, 2025
+          </div>
+          <button
+            onClick={() => toast.success('Technical context regenerated')}
+            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-border text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <RefreshCw size={11} /> Regenerate
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-auto p-4 space-y-5">
+
+        {/* Facts & Assumptions */}
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-1 h-4 rounded-full bg-primary" />
+            <h4 className="text-xs font-700 text-foreground uppercase tracking-wider">Facts &amp; Assumptions</h4>
+          </div>
+          <div className="space-y-2">
+            {facts.map(fact => (
+              <div key={fact.id} className="border border-border rounded bg-card overflow-hidden">
+                <button
+                  onClick={() => setExpandedFact(expandedFact === fact.id ? null : fact.id)}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-secondary/40 transition-colors"
+                >
+                  <ChevronRight
+                    size={12}
+                    className={cn('text-muted-foreground transition-transform shrink-0', expandedFact === fact.id && 'rotate-90')}
+                  />
+                  <span className="text-[12px] font-600 text-foreground flex-1">{fact.label}</span>
+                  <span className={cn(
+                    'text-[9px] px-1.5 py-0.5 rounded font-500',
+                    fact.tag === 'Foreign Affiliate' ? 'status-info' :
+                    fact.tag === 'Key Transaction' ? 'status-warning' :
+                    fact.tag === 'Canadian Corporation' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                    'bg-slate-100 text-slate-600 border border-slate-200'
+                  )}>{fact.tag}</span>
+                </button>
+                {expandedFact === fact.id && (
+                  <div className="px-4 pb-3 pt-0 border-t border-border bg-secondary/20">
+                    <p className="text-[11px] text-foreground leading-relaxed mt-2.5">{fact.content}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ITA Application */}
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-1 h-4 rounded-full bg-amber-500" />
+            <h4 className="text-xs font-700 text-foreground uppercase tracking-wider">ITA Application</h4>
+            <span className="text-[10px] text-muted-foreground">\u2014 Income Tax Act (Canada) analysis</span>
+          </div>
+          <div className="space-y-3">
+            {itaItems.map(item => (
+              <div key={item.id} className="border border-border rounded bg-card overflow-hidden">
+                <div className="flex items-start gap-3 px-3 py-3">
+                  <div className="shrink-0 mt-0.5">
+                    <div className={cn(
+                      'w-2 h-2 rounded-full mt-1',
+                      item.status === 'confirmed' ? 'bg-emerald-500' : 'bg-amber-500'
+                    )} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="text-[10px] font-700 font-mono text-primary bg-primary/8 border border-primary/20 px-1.5 py-0.5 rounded">{item.provision}</span>
+                      <span className="text-[12px] font-600 text-foreground">{item.heading}</span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed mb-2">{item.analysis}</p>
+                    <div className={cn(
+                      'flex items-start gap-2 px-2.5 py-2 rounded text-[11px] border',
+                      item.status === 'confirmed'
+                        ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                        : 'bg-amber-50 border-amber-200 text-amber-800'
+                    )}>
+                      <span className="font-600 shrink-0">{item.status === 'confirmed' ? '\u2713 Conclusion:' : '\u26a0 Pending:'}</span>
+                      <span>{item.conclusion}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
       </div>
     </div>
   );
@@ -713,10 +898,11 @@ function AIPanel({ onClose }: { onClose: () => void }) {
 
 // ─── Main Workflow Execution Page ─────────────────────────────────────────────
 export default function WorkflowExecution() {
-  const [activeSection, setActiveSection] = useState('sources');
+  const [activeSection, setActiveSection] = useState('context');
   const [showAI, setShowAI] = useState(true);
 
   const sectionContent: Record<string, React.ReactNode> = {
+    context: <TechnicalContextSection />,
     sources: <SourcesSection />,
     mapping: (
       <div className="flex items-center justify-center h-full text-muted-foreground">

@@ -8,7 +8,8 @@ import {
   ChevronRight, ChevronDown, FileText, Upload, AlertTriangle,
   CheckCircle2, Shield, Sparkles, Lock, Unlock, Download,
   MessageSquare, Eye, RefreshCw, Play, Send, X, Info,
-  Database, Calculator, ClipboardCheck, Package, Activity
+  Database, Calculator, ClipboardCheck, Package, Activity,
+  Mail, Plus, Trash2, Clock, Bell, PaperclipIcon, CheckSquare
 } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import StatusBadge, { AvatarInitials } from '@/components/StatusBadge';
@@ -30,6 +31,7 @@ function fmtNum(n: number) {
 // ─── Workpaper sections ───────────────────────────────────────────────────────
 const SECTIONS = [
   { id: 'context', label: 'Technical Context', icon: <FileText size={12} />, badge: null },
+  { id: 'irl', label: 'IRL', icon: <Send size={12} />, badge: 2 },
   { id: 'sources', label: 'Sources', icon: <Database size={12} />, badge: 8 },
   { id: 'mapping', label: 'Keyword Mapping', icon: <Activity size={12} />, badge: null },
   { id: 'calculations', label: 'Calculations', icon: <Calculator size={12} />, badge: 2 },
@@ -295,6 +297,255 @@ function TechnicalContextSection() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+// ─── IRL Section ────────────────────────────────────────────────────────────
+type IRLQuestion = {
+  id: string;
+  category: 'document' | 'confirmation' | 'data';
+  text: string;
+  status: 'pending' | 'received' | 'overdue';
+  required: boolean;
+};
+
+function IRLSection() {
+  const [questions, setQuestions] = useState<IRLQuestion[]>([
+    { id: 'q1', category: 'document', text: 'Please upload the lease agreement between Northstar Holdings Inc. and Northstar Paris SAS (including any amendments or renewals).', status: 'pending', required: true },
+    { id: 'q2', category: 'document', text: 'Please upload the 2024 French corporate income tax return (liasse fiscale) for Northstar Paris SAS, or provide the total income taxes paid in France for the fiscal year ended December 31, 2024.', status: 'overdue', required: true },
+    { id: 'q3', category: 'document', text: 'Please upload the audited financial statements of Northstar Paris SAS for the fiscal year ended December 31, 2024 (including balance sheet, income statement, and notes).', status: 'pending', required: true },
+    { id: 'q4', category: 'confirmation', text: 'Please confirm that there are no other transactions (loans, services, royalties, management fees, or otherwise) between Northstar Holdings Inc. and Northstar Paris SAS other than the rental income described in the lease agreement.', status: 'received', required: true },
+    { id: 'q5', category: 'data', text: 'Please provide the EUR/CAD exchange rate used internally by Northstar for the fiscal year ended December 31, 2024, if different from the Bank of Canada noon rate.', status: 'pending', required: false },
+    { id: 'q6', category: 'document', text: 'Please provide any transfer pricing documentation (TP study or benchmark analysis) supporting the rental rate charged under the lease agreement.', status: 'pending', required: false },
+  ]);
+
+  const [newQuestion, setNewQuestion] = useState('');
+  const [newCategory, setNewCategory] = useState<IRLQuestion['category']>('document');
+  const [followUpDays, setFollowUpDays] = useState('7');
+  const [sent, setSent] = useState(false);
+  const [sentDate] = useState('Jun 1, 2025');
+
+  const categoryIcon = (cat: IRLQuestion['category']) => {
+    if (cat === 'document') return <Upload size={11} className="text-primary" />;
+    if (cat === 'confirmation') return <CheckSquare size={11} className="text-emerald-600" />;
+    return <Database size={11} className="text-amber-600" />;
+  };
+
+  const categoryLabel = (cat: IRLQuestion['category']) => {
+    if (cat === 'document') return 'Document Upload';
+    if (cat === 'confirmation') return 'Confirmation';
+    return 'Data Request';
+  };
+
+  const statusStyle = (s: IRLQuestion['status']) => {
+    if (s === 'received') return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+    if (s === 'overdue') return 'bg-red-50 text-red-700 border border-red-200';
+    return 'bg-slate-100 text-slate-600 border border-slate-200';
+  };
+
+  const addQuestion = () => {
+    if (!newQuestion.trim()) return;
+    setQuestions(prev => [
+      ...prev,
+      { id: `q${Date.now()}`, category: newCategory, text: newQuestion.trim(), status: 'pending', required: false },
+    ]);
+    setNewQuestion('');
+  };
+
+  const removeQuestion = (id: string) => {
+    setQuestions(prev => prev.filter(q => q.id !== id));
+  };
+
+  const pendingCount = questions.filter(q => q.status === 'pending').length;
+  const overdueCount = questions.filter(q => q.status === 'overdue').length;
+  const receivedCount = questions.filter(q => q.status === 'received').length;
+
+  return (
+    <div className="flex flex-col h-full overflow-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+        <div>
+          <h3 className="text-sm font-600 text-foreground">Information Request Letter (IRL)</h3>
+          <p className="text-[11px] text-muted-foreground">
+            AI-generated questionnaire · {questions.length} items ·
+            <span className="text-emerald-600 ml-1">{receivedCount} received</span>
+            {overdueCount > 0 && <span className="text-red-600 ml-1">· {overdueCount} overdue</span>}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 text-[10px] text-primary bg-primary/8 border border-primary/20 px-2 py-1 rounded">
+            <Sparkles size={10} /> AI-generated · Jun 1, 2025
+          </div>
+          {sent && (
+            <div className="flex items-center gap-1.5 text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded">
+              <Mail size={10} /> Sent {sentDate}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-auto p-4 space-y-5">
+
+        {/* Status summary */}
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: 'Pending', count: pendingCount, color: 'text-slate-700', bg: 'bg-slate-50 border-slate-200' },
+            { label: 'Received', count: receivedCount, color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' },
+            { label: 'Overdue', count: overdueCount, color: 'text-red-700', bg: 'bg-red-50 border-red-200' },
+          ].map(s => (
+            <div key={s.label} className={`border rounded p-3 ${s.bg}`}>
+              <div className={`text-xl font-700 font-mono ${s.color}`}>{s.count}</div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Question list */}
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-1 h-4 rounded-full bg-primary" />
+            <h4 className="text-xs font-700 text-foreground uppercase tracking-wider">Questionnaire Items</h4>
+            <span className="text-[10px] text-muted-foreground">{questions.length} items · drag to reorder</span>
+          </div>
+          <div className="space-y-2">
+            {questions.map((q, idx) => (
+              <div key={q.id} className={cn(
+                'border rounded bg-card overflow-hidden transition-all',
+                q.status === 'overdue' ? 'border-red-200' :
+                q.status === 'received' ? 'border-emerald-200' : 'border-border'
+              )}>
+                <div className="flex items-start gap-3 px-3 py-2.5">
+                  <div className="shrink-0 mt-0.5 flex items-center gap-1.5">
+                    <span className="text-[10px] font-mono text-muted-foreground w-4">{idx + 1}.</span>
+                    {categoryIcon(q.category)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                        {categoryLabel(q.category)}
+                      </span>
+                      {q.required && (
+                        <span className="text-[9px] text-red-600 font-600">Required</span>
+                      )}
+                      <span className={cn('text-[9px] px-1.5 py-0.5 rounded ml-auto', statusStyle(q.status))}>
+                        {q.status === 'received' ? '✓ Received' : q.status === 'overdue' ? '⚠ Overdue' : 'Pending'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-foreground leading-relaxed">{q.text}</p>
+                    {q.status === 'received' && (
+                      <div className="flex items-center gap-1.5 mt-1.5 text-[10px] text-emerald-600">
+                        <PaperclipIcon size={9} /> Client response received · May 28, 2025
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => removeQuestion(q.id)}
+                    className="shrink-0 p-1 text-muted-foreground hover:text-red-500 transition-colors rounded"
+                    title="Remove question"
+                  >
+                    <Trash2 size={11} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Add question */}
+        <div className="border border-dashed border-border rounded p-3 bg-secondary/30">
+          <div className="text-[11px] font-600 text-foreground mb-2">Add a Question</div>
+          <div className="flex gap-2 mb-2">
+            <select
+              value={newCategory}
+              onChange={e => setNewCategory(e.target.value as IRLQuestion['category'])}
+              className="text-[11px] border border-border rounded px-2 py-1.5 bg-background text-foreground focus:outline-none focus:border-primary/50 shrink-0"
+            >
+              <option value="document">Document Upload</option>
+              <option value="confirmation">Confirmation</option>
+              <option value="data">Data Request</option>
+            </select>
+          </div>
+          <textarea
+            value={newQuestion}
+            onChange={e => setNewQuestion(e.target.value)}
+            placeholder="Type your question here..."
+            className="w-full bg-background border border-border rounded p-2.5 text-[11px] text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:border-primary/50 transition-colors"
+            rows={2}
+          />
+          <button
+            onClick={addQuestion}
+            disabled={!newQuestion.trim()}
+            className="mt-2 flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded bg-primary/15 text-primary border border-primary/25 hover:bg-primary/25 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Plus size={11} /> Add Question
+          </button>
+        </div>
+
+        {/* Send controls */}
+        <div className="border border-border rounded bg-card p-4">
+          <div className="text-xs font-600 text-foreground mb-3 flex items-center gap-2">
+            <Mail size={13} className="text-primary" /> Send to Client
+          </div>
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <div className="text-[10px] font-600 text-muted-foreground uppercase tracking-wider mb-1.5">Recipient</div>
+              <div className="flex items-center gap-2 border border-border rounded px-2.5 py-2 bg-secondary/30">
+                <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[9px] font-700 text-primary">NC</div>
+                <div>
+                  <div className="text-[11px] font-500 text-foreground">Nicolas Clement</div>
+                  <div className="text-[9px] text-muted-foreground">CFO · Northstar Holdings Inc.</div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div className="text-[10px] font-600 text-muted-foreground uppercase tracking-wider mb-1.5">Automatic Follow-up</div>
+              <div className="flex items-center gap-2">
+                <Bell size={11} className="text-muted-foreground shrink-0" />
+                <select
+                  value={followUpDays}
+                  onChange={e => setFollowUpDays(e.target.value)}
+                  className="flex-1 text-[11px] border border-border rounded px-2 py-1.5 bg-background text-foreground focus:outline-none focus:border-primary/50"
+                >
+                  <option value="3">Follow up after 3 days</option>
+                  <option value="5">Follow up after 5 days</option>
+                  <option value="7">Follow up after 7 days</option>
+                  <option value="10">Follow up after 10 days</option>
+                  <option value="14">Follow up after 14 days</option>
+                  <option value="none">No automatic follow-up</option>
+                </select>
+              </div>
+              {followUpDays !== 'none' && (
+                <div className="flex items-center gap-1.5 mt-1.5 text-[10px] text-muted-foreground">
+                  <Clock size={9} />
+                  Reminder scheduled {followUpDays === '3' ? 'Jun 4' : followUpDays === '5' ? 'Jun 6' : followUpDays === '7' ? 'Jun 8' : followUpDays === '10' ? 'Jun 11' : 'Jun 15'}, 2025
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => { setSent(true); toast.success('IRL sent to Nicolas Clement (CFO) · Follow-up scheduled in ' + followUpDays + ' days'); }}
+              className="flex items-center gap-2 text-xs px-4 py-2 rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-500"
+            >
+              <Send size={12} /> Send IRL to Client
+            </button>
+            <button
+              onClick={() => toast.info('IRL preview opened')}
+              className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-border text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Eye size={11} /> Preview Email
+            </button>
+            <button
+              onClick={() => toast.info('IRL downloaded as PDF')}
+              className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-border text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Download size={11} /> Download PDF
+            </button>
           </div>
         </div>
 
@@ -903,6 +1154,7 @@ export default function WorkflowExecution() {
 
   const sectionContent: Record<string, React.ReactNode> = {
     context: <TechnicalContextSection />,
+    irl: <IRLSection />,
     sources: <SourcesSection />,
     mapping: (
       <div className="flex items-center justify-center h-full text-muted-foreground">

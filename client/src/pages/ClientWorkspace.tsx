@@ -1,13 +1,15 @@
-// Screen 2: Client Workspace — Northstar Holdings Inc.
-// Design: "Precision Instrument" — Dense client tax workspace with all workflow cards
-// Shows: client overview, teams, active workflows, review trail, deliverables
+// Screen 2: Client Workspace
+// Design: Clean, task-focused. Client switcher at top.
+// Workflow cards show only the essentials by default; details expand via accordion.
+// Palette: grayscale + deep navy (#0F2044), status colors only for signals.
 
 import { useState } from 'react';
-import { Link } from 'wouter';
+import { useRoute, useLocation } from 'wouter';
 import {
-  Building2, Users, FileText, ChevronRight, AlertTriangle,
-  CheckCircle2, Clock, Upload, Shield, Star, MoreHorizontal,
-  Calendar, Activity, Folder, History, Package, Sparkles
+  Building2, ChevronDown, ChevronRight,
+  AlertTriangle, CheckCircle2, Clock, Upload,
+  Star, Activity, Users, Calendar, FileText,
+  Shield, Folder, History, Package
 } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import StatusBadge, { TeamBadge, AvatarInitials } from '@/components/StatusBadge';
@@ -19,254 +21,329 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-const client = CLIENTS[0]; // Northstar Holdings Inc.
+// ─── Review stage pipeline ─────────────────────────────────────────────────────
+const REVIEW_STAGES: Array<WorkflowCard['reviewStage']> = [
+  'Consultant', 'Manager', 'Senior Manager', 'Partner', 'Delivered'
+];
 
-// ─── Workflow Card ─────────────────────────────────────────────────────────────
-function WorkflowCardItem({ wf, index }: { wf: WorkflowCard; index: number }) {
+// ─── Workflow card — collapsed by default, expand to see details ───────────────
+function WorkflowCardItem({ wf }: { wf: WorkflowCard }) {
+  const [expanded, setExpanded] = useState(false);
   const isFapi = wf.id === 'wf-fapi';
-  const reviewStages: Array<WorkflowCard['reviewStage']> = ['Consultant', 'Manager', 'Senior Manager', 'Partner', 'Delivered'];
-  const currentStageIdx = reviewStages.indexOf(wf.reviewStage);
+  const currentStageIdx = REVIEW_STAGES.indexOf(wf.reviewStage);
+  const isAtRisk = wf.status === 'At Risk';
 
   return (
     <div
       className={cn(
-        'bg-card border border-border rounded overflow-hidden animate-fade-slide-up hover:border-primary/30 transition-colors',
-        `stagger-${Math.min(index + 1, 6)}`,
-        wf.status === 'At Risk' && 'border-red-500/30'
+        'bg-white border rounded-xl overflow-hidden transition-all duration-150',
+        isAtRisk ? 'border-red-300' : 'border-slate-200',
+        'hover:border-slate-300 hover:shadow-sm'
       )}
     >
-      {/* Card header */}
-      <div className="flex items-start justify-between px-4 py-3 border-b border-border">
+      {/* ── Always-visible row ─────────────────────────────────────────────── */}
+      <div className="flex items-center gap-3 px-4 py-3">
+        {/* Status dot */}
+        <div className={cn(
+          'w-2 h-2 rounded-full shrink-0',
+          isAtRisk ? 'bg-red-500' :
+          wf.status === 'Complete' ? 'bg-emerald-500' :
+          wf.status === 'In Progress' ? 'bg-blue-500' :
+          wf.status === 'Under Review' ? 'bg-amber-500' :
+          'bg-slate-300'
+        )} />
+
+        {/* Name + team */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-sm font-600 text-foreground truncate">{wf.name}</span>
-            {wf.status === 'At Risk' && (
-              <AlertTriangle size={12} className="text-red-500 shrink-0" />
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[13px] font-semibold text-slate-800 truncate">{wf.name}</span>
+            {isAtRisk && (
+              <span className="flex items-center gap-1 text-[10px] text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-full">
+                <AlertTriangle size={9} />
+                At Risk
+              </span>
+            )}
+            {wf.status === 'Under Review' && (
+              <span className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full">
+                Under Review
+              </span>
+            )}
+            {wf.status === 'Complete' && (
+              <span className="flex items-center gap-1 text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full">
+                <CheckCircle2 size={9} />
+                Complete
+              </span>
             )}
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 mt-0.5">
             <TeamBadge
               name={wf.team}
               color={wf.teamColor}
               abbreviation={TAX_TEAMS.find(t => t.name === wf.team)?.abbreviation}
             />
-            <StatusBadge status={wf.status} />
-            <span className="text-[10px] text-muted-foreground">FY {wf.year}</span>
+            <span className="text-[10px] text-slate-400">FY {wf.year}</span>
+            <span className="text-[10px] text-slate-400">·</span>
+            <span className="text-[10px] text-slate-400">Due {wf.dueDate}</span>
+            {wf.exceptions !== undefined && wf.exceptions > 0 && (
+              <>
+                <span className="text-[10px] text-slate-400">·</span>
+                <span className="text-[10px] text-red-600 font-medium">{wf.exceptions} exception{wf.exceptions !== 1 ? 's' : ''}</span>
+              </>
+            )}
+            {wf.openItems !== undefined && wf.openItems > 0 && (
+              <>
+                <span className="text-[10px] text-slate-400">·</span>
+                <span className="text-[10px] text-amber-600 font-medium">{wf.openItems} open item{wf.openItems !== 1 ? 's' : ''}</span>
+              </>
+            )}
           </div>
         </div>
-        <div className="flex items-center gap-1 shrink-0 ml-2">
+
+        {/* Actions */}
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Open Workflow button */}
           {isFapi ? (
-            <Link href="/workflow/fapi">
-              <button className="text-[10px] px-2.5 py-1 rounded bg-primary/15 text-primary border border-primary/25 hover:bg-primary/25 transition-colors">
-                Open →
+            <a href="/workflow/fapi">
+              <button className="text-[12px] font-semibold px-3 py-1.5 rounded-lg bg-[#0F2044] text-white hover:bg-[#1a3060] active:scale-95 transition-all duration-100">
+                Open Workflow →
               </button>
-            </Link>
+            </a>
           ) : (
             <button
               onClick={() => toast.info('Workflow execution — coming soon')}
-              className="text-[10px] px-2.5 py-1 rounded bg-secondary text-muted-foreground border border-border hover:text-foreground transition-colors"
+              className="text-[12px] font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-800 transition-colors"
             >
-              Open
+              Open Workflow
             </button>
           )}
+
+          {/* View details toggle */}
           <button
-            onClick={() => toast.info('Workflow options')}
-            className="p-1 rounded hover:bg-secondary transition-colors"
+            onClick={() => setExpanded(v => !v)}
+            className={cn(
+              'flex items-center gap-1 text-[11px] px-2.5 py-1.5 rounded-lg border transition-colors',
+              expanded
+                ? 'border-slate-300 bg-slate-50 text-slate-700'
+                : 'border-slate-200 text-slate-400 hover:text-slate-600 hover:border-slate-300'
+            )}
           >
-            <MoreHorizontal size={13} className="text-muted-foreground" />
+            {expanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+            <span>Details</span>
           </button>
         </div>
       </div>
 
-      {/* Review stage timeline */}
-      <div className="px-4 py-2.5 border-b border-border">
-        <div className="flex items-center gap-0">
-          {reviewStages.map((stage, i) => {
-            const isDone = i < currentStageIdx;
-            const isCurrent = i === currentStageIdx;
-            const isLast = i === reviewStages.length - 1;
-            return (
-              <div key={stage} className="flex items-center flex-1">
-                <div className="flex flex-col items-center">
+      {/* ── Expandable details ─────────────────────────────────────────────── */}
+      {expanded && (
+        <div className="border-t border-slate-100 bg-slate-50/60 px-4 py-4 space-y-4">
+
+          {/* Review stage pipeline */}
+          <div>
+            <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Review Stage</div>
+            <div className="flex items-center gap-0">
+              {REVIEW_STAGES.map((stage, i) => {
+                const isDone = i < currentStageIdx;
+                const isCurrent = i === currentStageIdx;
+                const isLast = i === REVIEW_STAGES.length - 1;
+                return (
+                  <div key={stage} className="flex items-center flex-1">
+                    <div className="flex flex-col items-center">
+                      <div className={cn(
+                        'w-2.5 h-2.5 rounded-full border',
+                        isDone ? 'bg-emerald-500 border-emerald-500' :
+                        isCurrent ? 'bg-[#0F2044] border-[#0F2044]' :
+                        'bg-white border-slate-300'
+                      )} />
+                      <span className={cn(
+                        'text-[9px] mt-1 whitespace-nowrap',
+                        isCurrent ? 'text-[#0F2044] font-semibold' :
+                        isDone ? 'text-emerald-600' :
+                        'text-slate-400'
+                      )}>
+                        {stage === 'Senior Manager' ? 'Sr. Mgr' : stage}
+                      </span>
+                    </div>
+                    {!isLast && (
+                      <div className={cn('flex-1 h-px mx-1 mb-3', isDone ? 'bg-emerald-400/50' : 'bg-slate-200')} />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Team */}
+          <div>
+            <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Team</div>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+              {[
+                { role: 'Preparer', name: wf.preparer },
+                { role: 'Manager', name: wf.manager },
+                { role: 'Sr. Manager', name: wf.seniorManager },
+                { role: 'Partner', name: wf.partner },
+              ].map(m => (
+                <div key={m.role} className="flex items-center gap-2">
+                  <AvatarInitials
+                    initials={m.name.split(' ').map(n => n[0]).join('')}
+                    name={m.name}
+                    size="xs"
+                  />
+                  <div>
+                    <div className="text-[9px] text-slate-400 uppercase tracking-wider">{m.role}</div>
+                    <div className="text-[11px] text-slate-700 font-medium">{m.name}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Milestones */}
+          <div>
+            <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Milestones</div>
+            <div className="space-y-1.5">
+              {[
+                { label: 'Source documents received', done: true },
+                { label: 'First draft complete', done: currentStageIdx >= 1 },
+                { label: 'Manager review', done: currentStageIdx >= 2 },
+                { label: 'Partner sign-off', done: currentStageIdx >= 4 },
+                { label: 'Delivered to client', done: wf.status === 'Complete' },
+              ].map((m, i) => (
+                <div key={i} className="flex items-center gap-2">
                   <div className={cn(
-                    'w-2 h-2 rounded-full',
-                    isDone ? 'bg-emerald-500' : isCurrent ? 'bg-primary animate-pulse-dot' : 'bg-border'
-                  )} />
-                  <span className={cn(
-                    'text-[9px] mt-0.5 whitespace-nowrap',
-                    isCurrent ? 'text-primary font-600' : isDone ? 'text-emerald-600' : 'text-muted-foreground'
+                    'w-4 h-4 rounded-full flex items-center justify-center shrink-0',
+                    m.done ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
                   )}>
-                    {stage === 'Senior Manager' ? 'Sr. Mgr' : stage}
+                    {m.done ? <CheckCircle2 size={10} /> : <Clock size={9} />}
+                  </div>
+                  <span className={cn(
+                    'text-[11px]',
+                    m.done ? 'text-slate-600 line-through' : 'text-slate-700'
+                  )}>
+                    {m.label}
                   </span>
                 </div>
-                {!isLast && (
-                  <div className={cn('flex-1 h-px mx-1', isDone ? 'bg-emerald-500/40' : 'bg-border')} />
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* People + metadata */}
-      <div className="px-4 py-2.5 grid grid-cols-2 gap-x-4 gap-y-1.5">
-        <div className="flex items-center gap-1.5">
-          <AvatarInitials initials={wf.preparer.split(' ').map(n => n[0]).join('')} name={wf.preparer} size="xs" />
-          <div>
-            <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Preparer</div>
-            <div className="text-[11px] text-foreground">{wf.preparer}</div>
-          </div>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <AvatarInitials initials={wf.manager.split(' ').map(n => n[0]).join('')} name={wf.manager} size="xs" color="#F0883E" />
-          <div>
-            <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Manager</div>
-            <div className="text-[11px] text-foreground">{wf.manager}</div>
-          </div>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <AvatarInitials initials={wf.seniorManager.split(' ').map(n => n[0]).join('')} name={wf.seniorManager} size="xs" color="#A371F7" />
-          <div>
-            <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Sr. Manager</div>
-            <div className="text-[11px] text-foreground">{wf.seniorManager}</div>
-          </div>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <AvatarInitials initials={wf.partner.split(' ').map(n => n[0]).join('')} name={wf.partner} size="xs" color="#3FB950" />
-          <div>
-            <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Partner</div>
-            <div className="text-[11px] text-foreground">{wf.partner}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="flex items-center justify-between px-4 py-2 bg-secondary/20 border-t border-border">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-            <Clock size={10} />
-            <span>Due {wf.dueDate}</span>
-          </div>
-          {wf.exceptions !== undefined && wf.exceptions > 0 && (
-            <span className="text-[10px] status-error px-1.5 py-0.5 rounded">
-              {wf.exceptions} exception{wf.exceptions !== 1 ? 's' : ''}
-            </span>
-          )}
-          {wf.openItems !== undefined && wf.openItems > 0 && (
-            <span className="text-[10px] status-warning px-1.5 py-0.5 rounded">
-              {wf.openItems} open item{wf.openItems !== 1 ? 's' : ''}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-          <Activity size={10} />
-          <span>{wf.lastActivity}</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Review Trail ─────────────────────────────────────────────────────────────
-function ReviewTrail() {
-  return (
-    <div className="space-y-3">
-      {FAPI_REVIEW_TRAIL.map((item, i) => (
-        <div key={item.id} className={cn('review-step animate-fade-slide-up', `stagger-${i + 1}`)}>
-          <div className="absolute left-0 top-1.5 w-4 h-4 rounded-full border-2 flex items-center justify-center"
-            style={{
-              borderColor: item.type === 'change-request' ? '#F0883E' : item.type === 'approval' ? '#3FB950' : '#2F81F7',
-              backgroundColor: item.type === 'change-request' ? '#F0883E18' : item.type === 'approval' ? '#3FB95018' : '#2F81F718',
-            }}
-          >
-            {item.type === 'change-request' ? (
-              <AlertTriangle size={8} style={{ color: '#F0883E' }} />
-            ) : item.type === 'approval' ? (
-              <CheckCircle2 size={8} style={{ color: '#3FB950' }} />
-            ) : (
-              <FileText size={8} style={{ color: '#2F81F7' }} />
-            )}
-          </div>
-          <div className="bg-card border border-border rounded p-3 ml-1">
-            <div className="flex items-center justify-between mb-1.5">
-              <div className="flex items-center gap-2">
-                <AvatarInitials
-                  initials={item.author.split(' ').map(n => n[0]).join('')}
-                  name={item.author}
-                  size="xs"
-                />
-                <span className="text-xs font-500 text-foreground">{item.author}</span>
-                <span className="text-[10px] text-muted-foreground">{item.role}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                {item.type === 'change-request' && (
-                  <span className="text-[10px] status-warning px-1.5 py-0.5 rounded">
-                    {item.resolved ? 'Resolved' : 'Open'}
-                  </span>
-                )}
-                <span className="text-[10px] text-muted-foreground">{item.timestamp}</span>
-              </div>
+              ))}
             </div>
-            <p className="text-[11px] text-foreground/80 leading-relaxed">{item.content}</p>
+          </div>
+
+          {/* Last activity */}
+          <div className="flex items-center gap-1.5 text-[10px] text-slate-400 pt-1 border-t border-slate-200">
+            <Activity size={10} />
+            <span>Last activity: {wf.lastActivity}</span>
           </div>
         </div>
-      ))}
+      )}
     </div>
   );
 }
 
 // ─── Client Workspace Page ────────────────────────────────────────────────────
 export default function ClientWorkspace() {
+  // Determine which client to show based on route param
+  const [, params] = useRoute('/client/:clientId');
+  const clientId = params?.clientId ?? 'northstar';
+  const [selectedClientId, setSelectedClientId] = useState(clientId);
+  const [, navigate] = useLocation();
+
+  const client = CLIENTS.find(c => c.id === selectedClientId) ?? CLIENTS[0];
   const [activeTab, setActiveTab] = useState('workflows');
 
   const teams = client.teams.map(name => TAX_TEAMS.find(t => t.name === name)).filter(Boolean);
   const partners = TEAM_MEMBERS.filter(m => client.partners.includes(m.name));
 
+  function handleClientChange(id: string) {
+    setSelectedClientId(id);
+    navigate(`/client/${id}`);
+  }
+
   return (
     <AppShell
       breadcrumbs={[
-        { label: 'Tax LOS Dashboard', href: '/dashboard' },
+        { label: 'Practitioner Dashboard', href: '/dashboard' },
         { label: client.name },
       ]}
       actions={
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => toast.info('Upload documents — coming soon')}
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-border text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
-          >
-            <Upload size={12} />
-            <span className="hidden sm:inline">Upload</span>
-          </button>
-        </div>
+        <button
+          onClick={() => toast.info('Upload documents — coming soon')}
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:text-slate-700 hover:border-slate-300 transition-colors"
+        >
+          <Upload size={12} />
+          <span className="hidden sm:inline">Upload</span>
+        </button>
       }
     >
       <div className="flex flex-col h-full">
-        {/* Client header banner */}
-        <div className="border-b border-border bg-card/50 px-5 py-4">
-          <div className="flex items-start gap-4">
-            {/* Client avatar */}
-            <div className="w-12 h-12 rounded border border-border bg-secondary flex items-center justify-center shrink-0">
-              <Building2 size={22} className="text-primary" />
+
+        {/* ── Client header ──────────────────────────────────────────────────── */}
+        <div className="border-b border-slate-200 bg-white px-5 py-4">
+          <div className="flex items-center gap-4">
+            {/* Client logo */}
+            <div className="w-11 h-11 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center shrink-0">
+              <Building2 size={20} className="text-[#0F2044]" />
             </div>
 
+            {/* Client selector + meta */}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2.5 flex-wrap mb-1.5">
-                <h1 className="text-lg font-700 text-foreground">{client.name}</h1>
-                <StatusBadge status={client.tier} size="md" />
-                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                  <Star size={10} className="text-amber-600" />
-                  <span>Platinum Client</span>
+              {/* Client name as dropdown */}
+              <div className="flex items-center gap-2 mb-1.5">
+                <div className="relative group">
+                  <button className="flex items-center gap-1.5 text-[17px] font-bold text-[#0F2044] hover:text-[#1a3060] transition-colors">
+                    {client.name}
+                    <ChevronDown size={15} className="text-slate-400 group-hover:text-slate-600 transition-colors" />
+                  </button>
+                  {/* Dropdown */}
+                  <div className="absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 min-w-[240px] py-1.5 hidden group-hover:block">
+                    {CLIENTS.map(c => (
+                      <button
+                        key={c.id}
+                        onClick={() => handleClientChange(c.id)}
+                        className={cn(
+                          'flex items-center gap-3 w-full text-left px-3 py-2 transition-colors',
+                          c.id === selectedClientId
+                            ? 'bg-slate-50 text-[#0F2044]'
+                            : 'text-slate-700 hover:bg-slate-50'
+                        )}
+                      >
+                        <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+                          <Building2 size={13} className="text-slate-500" />
+                        </div>
+                        <div>
+                          <div className="text-[12px] font-semibold">{c.name}</div>
+                          <div className="text-[10px] text-slate-400">{c.leadPartner} · {c.tier}</div>
+                        </div>
+                        {c.id === selectedClientId && (
+                          <CheckCircle2 size={13} className="text-emerald-500 ml-auto shrink-0" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
                 </div>
+                <span className={cn(
+                  'text-[10px] px-2 py-0.5 rounded-full font-semibold border',
+                  client.tier === 'Platinum' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                  client.tier === 'Strategic' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                  'bg-slate-50 text-slate-600 border-slate-200'
+                )}>
+                  {client.tier}
+                </span>
+                {client.tier === 'Platinum' && (
+                  <Star size={11} className="text-amber-500" />
+                )}
               </div>
 
+              {/* Meta row */}
               <div className="flex items-center gap-4 flex-wrap">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Lead Partner</span>
-                  <AvatarInitials initials="MC" name="Margaret Chen" size="xs" />
-                  <span className="text-[11px] text-foreground">{client.leadPartner}</span>
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider">Lead Partner</span>
+                  <AvatarInitials
+                    initials={client.leadPartner.split(' ').map(n => n[0]).join('')}
+                    name={client.leadPartner}
+                    size="xs"
+                  />
+                  <span className="text-[11px] text-slate-700 font-medium">{client.leadPartner}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Partners</span>
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider">Partners</span>
                   <div className="flex -space-x-1">
                     {partners.map(p => (
                       <AvatarInitials key={p!.id} initials={p!.initials} name={p!.name} size="xs" />
@@ -274,7 +351,7 @@ export default function ClientWorkspace() {
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Teams</span>
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider">Teams</span>
                   {teams.map(t => t && (
                     <TeamBadge key={t.id} name={t.name} color={t.color} abbreviation={t.abbreviation} />
                   ))}
@@ -282,42 +359,47 @@ export default function ClientWorkspace() {
               </div>
             </div>
 
-            {/* Quick stats */}
-            <div className="hidden lg:flex items-center gap-4 shrink-0">
-              {[
-                { label: 'Workflows', value: client.workflows.length, color: 'text-foreground' },
-                { label: 'Open Reviews', value: client.openReviewItems, color: 'text-amber-600' },
-                { label: 'At Risk', value: client.atRiskDeliverables, color: 'text-red-500' },
-                { label: 'Deadlines', value: client.upcomingDeadlines, color: 'text-amber-600' },
-              ].map(s => (
-                <div key={s.label} className="text-center">
-                  <div className={cn('tabular-nums text-xl font-700', s.color)}>{s.value}</div>
-                  <div className="text-[10px] text-muted-foreground">{s.label}</div>
+            {/* Quick stats — only workflow count and due items */}
+            <div className="hidden lg:flex items-center gap-5 shrink-0 border-l border-slate-100 pl-5">
+              <div className="text-center">
+                <div className="text-xl font-bold text-[#0F2044] tabular-nums">{client.workflows.length}</div>
+                <div className="text-[10px] text-slate-400">Workflows</div>
+              </div>
+              {client.atRiskDeliverables > 0 && (
+                <div className="text-center">
+                  <div className="text-xl font-bold text-red-500 tabular-nums">{client.atRiskDeliverables}</div>
+                  <div className="text-[10px] text-slate-400">At Risk</div>
                 </div>
-              ))}
+              )}
+              {client.openReviewItems > 0 && (
+                <div className="text-center">
+                  <div className="text-xl font-bold text-amber-600 tabular-nums">{client.openReviewItems}</div>
+                  <div className="text-[10px] text-slate-400">Open Reviews</div>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Tabs */}
+        {/* ── Tabs ───────────────────────────────────────────────────────────── */}
         <div className="flex-1 overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
-            <div className="border-b border-border px-5">
+            <div className="border-b border-slate-200 bg-white px-5">
               <TabsList className="bg-transparent h-10 gap-0 p-0">
                 {[
-                  { value: 'workflows', label: 'Active Workflows', icon: <Activity size={12} /> },
-                  { value: 'review', label: 'Review Trail', icon: <Shield size={12} /> },
-                  { value: 'sources', label: 'Uploaded Sources', icon: <Folder size={12} /> },
-                  { value: 'history', label: 'Prior-Year Context', icon: <History size={12} /> },
-                  { value: 'deliverables', label: 'Deliverables', icon: <Package size={12} /> },
+                  { value: 'workflows',    label: 'Active Workflows',   icon: <Activity size={12} /> },
+                  { value: 'review',       label: 'Review Trail',        icon: <Shield size={12} /> },
+                  { value: 'sources',      label: 'Sources',             icon: <Folder size={12} /> },
+                  { value: 'history',      label: 'Prior-Year',          icon: <History size={12} /> },
+                  { value: 'deliverables', label: 'Deliverables',        icon: <Package size={12} /> },
                 ].map(tab => (
                   <TabsTrigger
                     key={tab.value}
                     value={tab.value}
                     className={cn(
                       'flex items-center gap-1.5 text-xs px-3 py-2 rounded-none border-b-2 border-transparent',
-                      'data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent',
-                      'text-muted-foreground hover:text-foreground transition-colors'
+                      'data-[state=active]:border-[#0F2044] data-[state=active]:text-[#0F2044] data-[state=active]:bg-transparent',
+                      'text-slate-400 hover:text-slate-600 transition-colors'
                     )}
                   >
                     {tab.icon}
@@ -327,121 +409,125 @@ export default function ClientWorkspace() {
               </TabsList>
             </div>
 
-            <div className="flex-1 overflow-auto">
-              {/* Active Workflows */}
+            <div className="flex-1 overflow-auto bg-slate-50">
+
+              {/* ── Active Workflows ──────────────────────────────────────── */}
               <TabsContent value="workflows" className="p-5 mt-0">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h2 className="text-sm font-600 text-foreground">Active Workflows</h2>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
-                      {client.workflows.length} workflows across {client.teams.length} tax teams
+                    <h2 className="text-sm font-semibold text-slate-800">Active Workflows</h2>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      {client.workflows.length} workflows · click "Details" to expand team, milestones & review stage
                     </p>
                   </div>
                   <button
                     onClick={() => toast.info('New workflow — coming soon')}
-                    className="text-xs px-3 py-1.5 rounded bg-primary/15 text-primary border border-primary/25 hover:bg-primary/25 transition-colors"
+                    className="text-xs px-3 py-1.5 rounded-lg bg-[#0F2044] text-white hover:bg-[#1a3060] transition-colors"
                   >
                     + New Workflow
                   </button>
                 </div>
 
-                {/* Annual recurring section */}
-                <div className="section-divider">
-                  <span className="section-divider-label">Annual Recurring Work</span>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 mb-4">
-                  {client.workflows.filter(w => ['wf-fapi', 'wf-t2', 'wf-t1134', 'wf-surplus', 'wf-pillar2'].includes(w.id)).map((wf, i) => (
-                    <WorkflowCardItem key={wf.id} wf={wf} index={i} />
-                  ))}
+                {/* Annual recurring */}
+                <div className="mb-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="h-px flex-1 bg-slate-200" />
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-2">Annual Recurring</span>
+                    <div className="h-px flex-1 bg-slate-200" />
+                  </div>
+                  <div className="space-y-2">
+                    {client.workflows
+                      .filter(w => ['wf-fapi', 'wf-t2', 'wf-t1134', 'wf-surplus', 'wf-pillar2'].includes(w.id))
+                      .map(wf => <WorkflowCardItem key={wf.id} wf={wf} />)}
+                  </div>
                 </div>
 
-                {/* Consulting section */}
-                <div className="section-divider">
-                  <span className="section-divider-label">Consulting Work</span>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                  {client.workflows.filter(w => ['wf-ma'].includes(w.id)).map((wf, i) => (
-                    <WorkflowCardItem key={wf.id} wf={wf} index={i} />
-                  ))}
+                {/* Consulting */}
+                <div className="mt-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="h-px flex-1 bg-slate-200" />
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-2">Consulting</span>
+                    <div className="h-px flex-1 bg-slate-200" />
+                  </div>
+                  <div className="space-y-2">
+                    {client.workflows
+                      .filter(w => ['wf-ma'].includes(w.id))
+                      .map(wf => <WorkflowCardItem key={wf.id} wf={wf} />)}
+                  </div>
                 </div>
               </TabsContent>
 
-              {/* Review Trail */}
+              {/* ── Review Trail ──────────────────────────────────────────── */}
               <TabsContent value="review" className="p-5 mt-0">
                 <div className="max-w-2xl">
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <h2 className="text-sm font-600 text-foreground">Review Trail — FAPI Workpaper 2025</h2>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">
-                        Consultant → Manager → Senior Manager → Partner → Delivery
-                      </p>
+                      <h2 className="text-sm font-semibold text-slate-800">Review Trail — FAPI Workpaper 2025</h2>
+                      <p className="text-[11px] text-slate-400 mt-0.5">Consultant → Manager → Senior Manager → Partner → Delivery</p>
                     </div>
-                    <StatusBadge status="Manager" size="md" />
                   </div>
-
-                  {/* Review stage progress */}
-                  <div className="bg-card border border-border rounded p-4 mb-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs font-600 text-foreground">Review Progress</span>
-                      <span className="text-[10px] text-muted-foreground">Stage 2 of 5</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {[
-                        { label: 'Consultant', done: true },
-                        { label: 'Manager', current: true },
-                        { label: 'Sr. Manager', done: false },
-                        { label: 'Partner', done: false },
-                        { label: 'Delivered', done: false },
-                      ].map((s, i) => (
-                        <div key={s.label} className="flex items-center flex-1">
-                          <div className="flex flex-col items-center w-full">
-                            <div className={cn(
-                              'w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-600',
-                              s.done ? 'bg-emerald-500/20 text-emerald-600 border border-green-400/40' :
-                              s.current ? 'bg-primary/20 text-primary border border-primary/40' :
-                              'bg-secondary text-muted-foreground border border-border'
-                            )}>
-                              {s.done ? '✓' : i + 1}
-                            </div>
-                            <span className={cn(
-                              'text-[9px] mt-1 text-center',
-                              s.current ? 'text-primary font-600' : s.done ? 'text-emerald-600' : 'text-muted-foreground'
-                            )}>
-                              {s.label}
-                            </span>
-                          </div>
-                          {i < 4 && <div className={cn('h-px flex-1 mx-1 -mt-4', s.done ? 'bg-emerald-500/40' : 'bg-border')} />}
+                  <div className="space-y-3">
+                    {FAPI_REVIEW_TRAIL.map(item => (
+                      <div key={item.id} className="relative pl-6">
+                        <div
+                          className="absolute left-0 top-2 w-4 h-4 rounded-full border-2 flex items-center justify-center"
+                          style={{
+                            borderColor: item.type === 'change-request' ? '#d97706' : item.type === 'approval' ? '#059669' : '#3b82f6',
+                            backgroundColor: item.type === 'change-request' ? '#fef3c710' : item.type === 'approval' ? '#d1fae510' : '#eff6ff10',
+                          }}
+                        >
+                          {item.type === 'change-request' ? <AlertTriangle size={8} className="text-amber-600" /> :
+                           item.type === 'approval' ? <CheckCircle2 size={8} className="text-emerald-600" /> :
+                           <FileText size={8} className="text-blue-500" />}
                         </div>
-                      ))}
-                    </div>
+                        <div className="bg-white border border-slate-200 rounded-xl p-3">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <div className="flex items-center gap-2">
+                              <AvatarInitials initials={item.author.split(' ').map(n => n[0]).join('')} name={item.author} size="xs" />
+                              <span className="text-xs font-semibold text-slate-800">{item.author}</span>
+                              <span className="text-[10px] text-slate-400">{item.role}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {item.type === 'change-request' && (
+                                <span className={cn(
+                                  'text-[10px] px-1.5 py-0.5 rounded-full border',
+                                  item.resolved
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                    : 'bg-amber-50 text-amber-700 border-amber-200'
+                                )}>
+                                  {item.resolved ? 'Resolved' : 'Open'}
+                                </span>
+                              )}
+                              <span className="text-[10px] text-slate-400">{item.timestamp}</span>
+                            </div>
+                          </div>
+                          <p className="text-[11px] text-slate-600 leading-relaxed">{item.content}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-
-                  <ReviewTrail />
                 </div>
               </TabsContent>
 
-              {/* Uploaded Sources */}
+              {/* ── Sources ───────────────────────────────────────────────── */}
               <TabsContent value="sources" className="p-5 mt-0">
                 <div className="max-w-3xl">
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-sm font-600 text-foreground">Uploaded Sources</h2>
+                    <h2 className="text-sm font-semibold text-slate-800">Uploaded Sources</h2>
                     <button
                       onClick={() => toast.info('Upload source — coming soon')}
-                      className="text-xs px-3 py-1.5 rounded bg-primary/15 text-primary border border-primary/25 hover:bg-primary/25 transition-colors flex items-center gap-1.5"
+                      className="text-xs px-3 py-1.5 rounded-lg bg-[#0F2044] text-white hover:bg-[#1a3060] transition-colors flex items-center gap-1.5"
                     >
                       <Upload size={11} /> Upload
                     </button>
                   </div>
-                  <div className="bg-card border border-border rounded overflow-hidden">
-                    <table className="workpaper-table">
+                  <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                    <table className="w-full text-left">
                       <thead>
-                        <tr>
-                          <th>File Name</th>
-                          <th>Workflow</th>
-                          <th>Type</th>
-                          <th>Uploaded By</th>
-                          <th>Date</th>
-                          <th>Status</th>
+                        <tr className="border-b border-slate-100 bg-slate-50">
+                          {['File Name', 'Workflow', 'Type', 'Uploaded By', 'Date', 'Status'].map(h => (
+                            <th key={h} className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-3 py-2">{h}</th>
+                          ))}
                         </tr>
                       </thead>
                       <tbody>
@@ -453,32 +539,35 @@ export default function ClientWorkspace() {
                           { name: 'ProjectMaple_LOI_Signed.pdf', workflow: 'M&A Transaction Memo', type: 'PDF', by: 'Marcus Webb', date: '2025-05-17', status: 'Pending' },
                           { name: 'Northstar_Pillar2_EntityData_2024.xlsx', workflow: 'Pillar 2 GloBE Assessment', type: 'Excel', by: 'Aisha Kamara', date: '2025-05-13', status: 'Processing' },
                         ].map((f, i) => (
-                          <tr key={i}>
-                            <td>
+                          <tr key={i} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
+                            <td className="px-3 py-2">
                               <div className="flex items-center gap-1.5">
-                                <FileText size={11} className="text-muted-foreground shrink-0" />
-                                <span className="text-[11px] text-primary hover:underline cursor-pointer" onClick={() => toast.info('File viewer — coming soon')}>
+                                <FileText size={11} className="text-slate-400 shrink-0" />
+                                <span className="text-[11px] text-[#0F2044] hover:underline cursor-pointer" onClick={() => toast.info('File viewer — coming soon')}>
                                   {f.name}
                                 </span>
                               </div>
                             </td>
-                            <td className="text-[11px]">{f.workflow}</td>
-                            <td>
+                            <td className="px-3 py-2 text-[11px] text-slate-600">{f.workflow}</td>
+                            <td className="px-3 py-2">
                               <span className={cn(
-                                'text-[10px] px-1.5 py-0.5 rounded',
-                                f.type === 'Excel' ? 'status-approved' : 'status-info'
+                                'text-[10px] px-1.5 py-0.5 rounded-full border',
+                                f.type === 'Excel' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-blue-50 text-blue-700 border-blue-200'
                               )}>
                                 {f.type}
                               </span>
                             </td>
-                            <td className="text-[11px]">{f.by}</td>
-                            <td className="text-[11px] tabular-nums">{f.date}</td>
-                            <td>
-                              <StatusBadge
-                                status={f.status === 'Processed' ? 'Approved' : f.status === 'Pending' ? 'Pending' : 'In Progress'}
-                                size="sm"
-                                showDot={false}
-                              />
+                            <td className="px-3 py-2 text-[11px] text-slate-600">{f.by}</td>
+                            <td className="px-3 py-2 text-[11px] text-slate-500 tabular-nums">{f.date}</td>
+                            <td className="px-3 py-2">
+                              <span className={cn(
+                                'text-[10px] px-1.5 py-0.5 rounded-full border',
+                                f.status === 'Processed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                f.status === 'Pending' ? 'bg-slate-50 text-slate-500 border-slate-200' :
+                                'bg-amber-50 text-amber-700 border-amber-200'
+                              )}>
+                                {f.status}
+                              </span>
                             </td>
                           </tr>
                         ))}
@@ -488,26 +577,26 @@ export default function ClientWorkspace() {
                 </div>
               </TabsContent>
 
-              {/* Prior-Year Context */}
+              {/* ── Prior-Year ────────────────────────────────────────────── */}
               <TabsContent value="history" className="p-5 mt-0">
                 <div className="max-w-3xl">
-                  <h2 className="text-sm font-600 text-foreground mb-4">Prior-Year Context</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <h2 className="text-sm font-semibold text-slate-800 mb-4">Prior-Year Context</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     {[
-                      { year: 'FY 2023', workflows: 6, partner: 'Margaret Chen', status: 'Delivered', notes: 'FAPI net income: CAD 15.2M. No material exceptions. Surplus pool updated.' },
-                      { year: 'FY 2022', workflows: 5, partner: 'Margaret Chen', status: 'Delivered', notes: 'First year with Pillar 2 assessment. T1134 filed for 8 foreign affiliates.' },
-                      { year: 'FY 2021', workflows: 4, partner: 'David Okafor', status: 'Delivered', notes: 'COVID-related adjustments to FAPI calculations. Treaty positions reviewed.' },
+                      { year: 'FY 2023', workflows: 6, partner: 'Margaret Chen', notes: 'FAPI net income: CAD 15.2M. No material exceptions. Surplus pool updated.' },
+                      { year: 'FY 2022', workflows: 5, partner: 'Margaret Chen', notes: 'First year with Pillar 2 assessment. T1134 filed for 8 foreign affiliates.' },
+                      { year: 'FY 2021', workflows: 4, partner: 'David Okafor', notes: 'COVID-related adjustments to FAPI calculations. Treaty positions reviewed.' },
                     ].map((y, i) => (
-                      <div key={i} className="bg-card border border-border rounded p-4 animate-fade-slide-up" style={{ animationDelay: `${i * 60}ms` }}>
+                      <div key={i} className="bg-white border border-slate-200 rounded-xl p-4">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-600 text-foreground">{y.year}</span>
-                          <StatusBadge status="Complete" size="sm" />
+                          <span className="text-sm font-bold text-[#0F2044]">{y.year}</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Delivered</span>
                         </div>
-                        <div className="text-[11px] text-muted-foreground mb-2">{y.workflows} workflows · Lead: {y.partner}</div>
-                        <p className="text-[11px] text-foreground/70 leading-relaxed">{y.notes}</p>
+                        <div className="text-[11px] text-slate-400 mb-2">{y.workflows} workflows · {y.partner}</div>
+                        <p className="text-[11px] text-slate-600 leading-relaxed">{y.notes}</p>
                         <button
                           onClick={() => toast.info('Prior-year workpapers — coming soon')}
-                          className="mt-2 text-[10px] text-primary hover:underline"
+                          className="mt-3 text-[10px] text-[#0F2044] font-semibold hover:underline"
                         >
                           View workpapers →
                         </button>
@@ -517,47 +606,53 @@ export default function ClientWorkspace() {
                 </div>
               </TabsContent>
 
-              {/* Deliverables */}
+              {/* ── Deliverables ──────────────────────────────────────────── */}
               <TabsContent value="deliverables" className="p-5 mt-0">
                 <div className="max-w-3xl">
-                  <h2 className="text-sm font-600 text-foreground mb-4">Deliverables</h2>
-                  <div className="bg-card border border-border rounded overflow-hidden">
-                    <table className="workpaper-table">
+                  <h2 className="text-sm font-semibold text-slate-800 mb-4">Deliverables</h2>
+                  <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                    <table className="w-full text-left">
                       <thead>
-                        <tr>
-                          <th>Deliverable</th>
-                          <th>Workflow</th>
-                          <th>Format</th>
-                          <th>Status</th>
-                          <th>Partner Sign-off</th>
-                          <th>Action</th>
+                        <tr className="border-b border-slate-100 bg-slate-50">
+                          {['Deliverable', 'Format', 'Status', 'Partner Sign-off', 'Action'].map(h => (
+                            <th key={h} className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-3 py-2">{h}</th>
+                          ))}
                         </tr>
                       </thead>
                       <tbody>
                         {[
-                          { name: 'FAPI Workpaper 2025', workflow: 'FAPI Workpaper 2025', format: 'Excel + PDF', status: 'Pending', signoff: false },
-                          { name: 'T2 Corporate Return 2024', workflow: 'T2 Corporate Return 2024', format: 'Taxprep', status: 'In Progress', signoff: false },
-                          { name: 'T1134 Foreign Affiliate 2024', workflow: 'T1134 Foreign Affiliate 2024', format: 'Taxprep', status: 'In Progress', signoff: false },
-                          { name: 'M&A Transaction Memo', workflow: 'M&A Transaction Memo', format: 'PowerPoint + PDF', status: 'Under Review', signoff: false },
-                          { name: 'Pillar 2 GloBE Assessment', workflow: 'Pillar 2 GloBE Assessment', format: 'Excel + JSON', status: 'At Risk', signoff: false },
+                          { name: 'FAPI Workpaper 2025', format: 'Excel + PDF', status: 'Pending', signoff: false },
+                          { name: 'T2 Corporate Return 2024', format: 'Taxprep', status: 'In Progress', signoff: false },
+                          { name: 'T1134 Foreign Affiliate 2024', format: 'Taxprep', status: 'In Progress', signoff: false },
+                          { name: 'M&A Transaction Memo', format: 'PowerPoint + PDF', status: 'Under Review', signoff: false },
+                          { name: 'Pillar 2 GloBE Assessment', format: 'Excel + JSON', status: 'At Risk', signoff: false },
                         ].map((d, i) => (
-                          <tr key={i}>
-                            <td className="font-500 text-[11px]">{d.name}</td>
-                            <td className="text-[11px] text-muted-foreground">{d.workflow}</td>
-                            <td>
-                              <span className="text-[10px] status-info px-1.5 py-0.5 rounded">{d.format}</span>
+                          <tr key={i} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
+                            <td className="px-3 py-2 text-[12px] font-semibold text-slate-800">{d.name}</td>
+                            <td className="px-3 py-2">
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">{d.format}</span>
                             </td>
-                            <td><StatusBadge status={d.status as any} size="sm" /></td>
-                            <td>
-                              <div className="flex items-center gap-1">
-                                <div className={cn('w-2 h-2 rounded-full', d.signoff ? 'bg-emerald-500' : 'bg-border')} />
-                                <span className="text-[10px] text-muted-foreground">{d.signoff ? 'Signed' : 'Pending'}</span>
+                            <td className="px-3 py-2">
+                              <span className={cn(
+                                'text-[10px] px-1.5 py-0.5 rounded-full border',
+                                d.status === 'At Risk' ? 'bg-red-50 text-red-700 border-red-200' :
+                                d.status === 'Under Review' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                d.status === 'In Progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                'bg-slate-50 text-slate-500 border-slate-200'
+                              )}>
+                                {d.status}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2">
+                              <div className="flex items-center gap-1.5">
+                                <div className={cn('w-2 h-2 rounded-full', d.signoff ? 'bg-emerald-500' : 'bg-slate-300')} />
+                                <span className="text-[10px] text-slate-500">{d.signoff ? 'Signed' : 'Pending'}</span>
                               </div>
                             </td>
-                            <td>
+                            <td className="px-3 py-2">
                               <button
                                 onClick={() => toast.info('Output generation — coming soon')}
-                                className="text-[10px] text-primary hover:underline"
+                                className="text-[11px] text-[#0F2044] font-semibold hover:underline"
                               >
                                 Generate
                               </button>
@@ -569,6 +664,7 @@ export default function ClientWorkspace() {
                   </div>
                 </div>
               </TabsContent>
+
             </div>
           </Tabs>
         </div>

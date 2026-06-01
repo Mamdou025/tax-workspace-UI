@@ -13,11 +13,12 @@ import { useRoute, useLocation } from 'wouter';
 import {
   Building2, ChevronDown, ChevronRight,
   CheckCircle2, Clock, Upload, Activity,
-  Lock, Globe, MapPin, X, ChevronUp
+  Lock, Globe, MapPin, X, ChevronUp, Network, Map
 } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import { AvatarInitials, TeamBadge } from '@/components/StatusBadge';
 import WorldMap from '@/components/WorldMap';
+import AffiliateOrgChart from '@/components/AffiliateOrgChart';
 import {
   CLIENTS, TAX_TEAMS,
   type WorkflowCard
@@ -679,6 +680,61 @@ function TaxAttributesMap() {
   );
 }
 
+// ─── Tax Attributes Tab (map + org chart flip) ───────────────────────────────
+function TaxAttributesTab({ clientName }: { clientName: string }) {
+  const [view, setView] = useState<'map' | 'orgchart'>('map');
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Header row with flip button */}
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-sm font-semibold text-slate-800">Tax Attributes</h2>
+          <p className="text-[11px] text-slate-400 mt-0.5">
+            {view === 'map'
+              ? `Foreign affiliates of ${clientName} — click a country to view tax attributes`
+              : `Corporate structure of ${clientName} — click an entity to view tax attributes`
+            }
+          </p>
+        </div>
+
+        {/* Flip toggle */}
+        <div className="flex items-center bg-slate-100 rounded-lg p-0.5 gap-0.5">
+          <button
+            onClick={() => setView('map')}
+            className={cn(
+              'flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 rounded-md transition-all duration-150',
+              view === 'map'
+                ? 'bg-white text-[#0F2044] shadow-sm border border-slate-200'
+                : 'text-slate-400 hover:text-slate-600'
+            )}
+          >
+            <Globe size={12} />
+            World Map
+          </button>
+          <button
+            onClick={() => setView('orgchart')}
+            className={cn(
+              'flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 rounded-md transition-all duration-150',
+              view === 'orgchart'
+                ? 'bg-white text-[#0F2044] shadow-sm border border-slate-200'
+                : 'text-slate-400 hover:text-slate-600'
+            )}
+          >
+            <Network size={12} />
+            Org Chart
+          </button>
+        </div>
+      </div>
+
+      {/* View content */}
+      <div className="flex-1 min-h-0">
+        {view === 'map' ? <WorldMap /> : <AffiliateOrgChart />}
+      </div>
+    </div>
+  );
+}
+
 // ─── Client Workspace Page ────────────────────────────────────────────────────
 export default function ClientWorkspace() {
   const [, params] = useRoute('/client/:clientId');
@@ -891,13 +947,7 @@ export default function ClientWorkspace() {
 
               {/* ── Tax Attributes ────────────────────────────────────────── */}
               <TabsContent value="taxattributes" className="p-5 mt-0 h-full">
-                <div className="mb-4">
-                  <h2 className="text-sm font-semibold text-slate-800">Tax Attributes</h2>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
-                    Foreign affiliates of {client.name} — click a country to view tax attributes
-                  </p>
-                </div>
-                <WorldMap />
+                <TaxAttributesTab clientName={client.name} />
               </TabsContent>
 
             </div>

@@ -1,20 +1,25 @@
 // Screen 2: Client Workspace
 // Design: Clean, task-focused. Client switcher at top.
-// Workflow cards show only the essentials by default; details expand via accordion.
-// Palette: grayscale + deep navy (#0F2044), status colors only for signals.
+// Header: client name + tier only (no star, no lead partner/partners/teams row).
+// Workflow cards: name + status signal + Open button + Details accordion.
+// Status signals: "Under Review" (amber), "Awaiting Partner Sign-off" (red) only.
+// No colored dots, no exceptions/open-items counts, no At Risk tag.
+// Team-based access: T2 (TC team) is greyed out for ICT/M&A user.
+// Tabs: Active Workflows | Tax Attributes (world map)
+// Palette: grayscale + deep navy (#0F2044), status colors for signals only.
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRoute, useLocation } from 'wouter';
 import {
   Building2, ChevronDown, ChevronRight,
-  AlertTriangle, CheckCircle2, Clock, Upload,
-  Star, Activity, Users, Calendar, FileText,
-  Shield, Folder, History, Package
+  CheckCircle2, Clock, Upload, Activity,
+  Lock, Globe, MapPin, X, ChevronUp
 } from 'lucide-react';
 import AppShell from '@/components/AppShell';
-import StatusBadge, { TeamBadge, AvatarInitials } from '@/components/StatusBadge';
+import { AvatarInitials, TeamBadge } from '@/components/StatusBadge';
+import WorldMap from '@/components/WorldMap';
 import {
-  CLIENTS, TAX_TEAMS, TEAM_MEMBERS, FAPI_REVIEW_TRAIL,
+  CLIENTS, TAX_TEAMS,
   type WorkflowCard
 } from '@/lib/data';
 import { cn } from '@/lib/utils';
@@ -26,44 +31,55 @@ const REVIEW_STAGES: Array<WorkflowCard['reviewStage']> = [
   'Consultant', 'Manager', 'Senior Manager', 'Partner', 'Delivered'
 ];
 
-// ─── Workflow card — collapsed by default, expand to see details ───────────────
-function WorkflowCardItem({ wf }: { wf: WorkflowCard }) {
+// ─── Current user's teams (ICT + M&A) ─────────────────────────────────────────
+const MY_TEAMS = ['International Corporate Tax', 'M&A / Structuring'];
+
+// ─── Workflow card ─────────────────────────────────────────────────────────────
+function WorkflowCardItem({ wf, restricted }: { wf: WorkflowCard; restricted?: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const isFapi = wf.id === 'wf-fapi';
   const currentStageIdx = REVIEW_STAGES.indexOf(wf.reviewStage);
-  const isAtRisk = wf.status === 'At Risk';
+  const isAwaitingSignoff = wf.status === 'Awaiting Partner Sign-off';
+  const isUnderReview = wf.status === 'Under Review';
+
+  if (restricted) {
+    return (
+      <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 flex items-center gap-3 opacity-50">
+        <Lock size={13} className="text-slate-400 shrink-0" />
+        <div className="flex-1 min-w-0">
+          <span className="text-[13px] font-semibold text-slate-500 truncate block">{wf.name}</span>
+          <div className="flex items-center gap-2 mt-0.5">
+            <TeamBadge
+              name={wf.team}
+              color={wf.teamColor}
+              abbreviation={TAX_TEAMS.find(t => t.name === wf.team)?.abbreviation}
+            />
+            <span className="text-[10px] text-slate-400">FY {wf.year} · Due {wf.dueDate}</span>
+          </div>
+        </div>
+        <span className="text-[10px] text-slate-400 italic shrink-0">Not in your team</span>
+      </div>
+    );
+  }
 
   return (
-    <div
-      className={cn(
-        'bg-white border rounded-xl overflow-hidden transition-all duration-150',
-        isAtRisk ? 'border-red-300' : 'border-slate-200',
-        'hover:border-slate-300 hover:shadow-sm'
-      )}
-    >
+    <div className={cn(
+      'bg-white border rounded-xl overflow-hidden transition-all duration-150',
+      isAwaitingSignoff ? 'border-red-300' : 'border-slate-200',
+      'hover:border-slate-300 hover:shadow-sm'
+    )}>
       {/* ── Always-visible row ─────────────────────────────────────────────── */}
       <div className="flex items-center gap-3 px-4 py-3">
-        {/* Status dot */}
-        <div className={cn(
-          'w-2 h-2 rounded-full shrink-0',
-          isAtRisk ? 'bg-red-500' :
-          wf.status === 'Complete' ? 'bg-emerald-500' :
-          wf.status === 'In Progress' ? 'bg-blue-500' :
-          wf.status === 'Under Review' ? 'bg-amber-500' :
-          'bg-slate-300'
-        )} />
-
-        {/* Name + team */}
+        {/* Name + status signal */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[13px] font-semibold text-slate-800 truncate">{wf.name}</span>
-            {isAtRisk && (
-              <span className="flex items-center gap-1 text-[10px] text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-full">
-                <AlertTriangle size={9} />
-                At Risk
+            {isAwaitingSignoff && (
+              <span className="text-[10px] text-red-700 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-full font-medium">
+                Awaiting Partner Sign-off
               </span>
             )}
-            {wf.status === 'Under Review' && (
+            {isUnderReview && (
               <span className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full">
                 Under Review
               </span>
@@ -81,27 +97,12 @@ function WorkflowCardItem({ wf }: { wf: WorkflowCard }) {
               color={wf.teamColor}
               abbreviation={TAX_TEAMS.find(t => t.name === wf.team)?.abbreviation}
             />
-            <span className="text-[10px] text-slate-400">FY {wf.year}</span>
-            <span className="text-[10px] text-slate-400">·</span>
-            <span className="text-[10px] text-slate-400">Due {wf.dueDate}</span>
-            {wf.exceptions !== undefined && wf.exceptions > 0 && (
-              <>
-                <span className="text-[10px] text-slate-400">·</span>
-                <span className="text-[10px] text-red-600 font-medium">{wf.exceptions} exception{wf.exceptions !== 1 ? 's' : ''}</span>
-              </>
-            )}
-            {wf.openItems !== undefined && wf.openItems > 0 && (
-              <>
-                <span className="text-[10px] text-slate-400">·</span>
-                <span className="text-[10px] text-amber-600 font-medium">{wf.openItems} open item{wf.openItems !== 1 ? 's' : ''}</span>
-              </>
-            )}
+            <span className="text-[10px] text-slate-400">FY {wf.year} · Due {wf.dueDate}</span>
           </div>
         </div>
 
         {/* Actions */}
         <div className="flex items-center gap-2 shrink-0">
-          {/* Open Workflow button */}
           {isFapi ? (
             <a href="/workflow/fapi">
               <button className="text-[12px] font-semibold px-3 py-1.5 rounded-lg bg-[#0F2044] text-white hover:bg-[#1a3060] active:scale-95 transition-all duration-100">
@@ -117,7 +118,6 @@ function WorkflowCardItem({ wf }: { wf: WorkflowCard }) {
             </button>
           )}
 
-          {/* View details toggle */}
           <button
             onClick={() => setExpanded(v => !v)}
             className={cn(
@@ -127,7 +127,7 @@ function WorkflowCardItem({ wf }: { wf: WorkflowCard }) {
                 : 'border-slate-200 text-slate-400 hover:text-slate-600 hover:border-slate-300'
             )}
           >
-            {expanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+            {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
             <span>Details</span>
           </button>
         </div>
@@ -136,8 +136,7 @@ function WorkflowCardItem({ wf }: { wf: WorkflowCard }) {
       {/* ── Expandable details ─────────────────────────────────────────────── */}
       {expanded && (
         <div className="border-t border-slate-100 bg-slate-50/60 px-4 py-4 space-y-4">
-
-          {/* Review stage pipeline */}
+          {/* Review stage */}
           <div>
             <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Review Stage</div>
             <div className="flex items-center gap-0">
@@ -157,8 +156,7 @@ function WorkflowCardItem({ wf }: { wf: WorkflowCard }) {
                       <span className={cn(
                         'text-[9px] mt-1 whitespace-nowrap',
                         isCurrent ? 'text-[#0F2044] font-semibold' :
-                        isDone ? 'text-emerald-600' :
-                        'text-slate-400'
+                        isDone ? 'text-emerald-600' : 'text-slate-400'
                       )}>
                         {stage === 'Senior Manager' ? 'Sr. Mgr' : stage}
                       </span>
@@ -215,10 +213,7 @@ function WorkflowCardItem({ wf }: { wf: WorkflowCard }) {
                   )}>
                     {m.done ? <CheckCircle2 size={10} /> : <Clock size={9} />}
                   </div>
-                  <span className={cn(
-                    'text-[11px]',
-                    m.done ? 'text-slate-600 line-through' : 'text-slate-700'
-                  )}>
+                  <span className={cn('text-[11px]', m.done ? 'text-slate-400 line-through' : 'text-slate-700')}>
                     {m.label}
                   </span>
                 </div>
@@ -226,7 +221,6 @@ function WorkflowCardItem({ wf }: { wf: WorkflowCard }) {
             </div>
           </div>
 
-          {/* Last activity */}
           <div className="flex items-center gap-1.5 text-[10px] text-slate-400 pt-1 border-t border-slate-200">
             <Activity size={10} />
             <span>Last activity: {wf.lastActivity}</span>
@@ -237,24 +231,492 @@ function WorkflowCardItem({ wf }: { wf: WorkflowCard }) {
   );
 }
 
+// ─── Tax Attributes World Map ──────────────────────────────────────────────────
+// Foreign affiliates data for Northstar Holdings
+const FOREIGN_AFFILIATES: Record<string, {
+  countryName: string;
+  affiliates: Array<{
+    name: string;
+    taxableIncome: string;
+    fapiIncome: string;
+    exemptSurplus: string;
+    taxableSurplus: string;
+    preAcquisitionSurplus: string;
+    taxYear: string;
+    currency: string;
+  }>;
+}> = {
+  FR: {
+    countryName: 'France',
+    affiliates: [
+      {
+        name: 'Northstar Paris SAS',
+        taxableIncome: '2,340,000',
+        fapiIncome: '180,000',
+        exemptSurplus: '4,120,000',
+        taxableSurplus: '890,000',
+        preAcquisitionSurplus: '1,200,000',
+        taxYear: '2024',
+        currency: 'EUR',
+      },
+    ],
+  },
+  DE: {
+    countryName: 'Germany',
+    affiliates: [
+      {
+        name: 'Northstar GmbH',
+        taxableIncome: '5,670,000',
+        fapiIncome: '320,000',
+        exemptSurplus: '9,800,000',
+        taxableSurplus: '1,450,000',
+        preAcquisitionSurplus: '2,100,000',
+        taxYear: '2024',
+        currency: 'EUR',
+      },
+    ],
+  },
+  GB: {
+    countryName: 'United Kingdom',
+    affiliates: [
+      {
+        name: 'Northstar UK Ltd',
+        taxableIncome: '8,120,000',
+        fapiIncome: '0',
+        exemptSurplus: '14,300,000',
+        taxableSurplus: '2,100,000',
+        preAcquisitionSurplus: '3,400,000',
+        taxYear: '2024',
+        currency: 'GBP',
+      },
+    ],
+  },
+  US: {
+    countryName: 'United States',
+    affiliates: [
+      {
+        name: 'Northstar Corp (US)',
+        taxableIncome: '22,400,000',
+        fapiIncome: '1,200,000',
+        exemptSurplus: '0',
+        taxableSurplus: '18,700,000',
+        preAcquisitionSurplus: '4,500,000',
+        taxYear: '2024',
+        currency: 'USD',
+      },
+      {
+        name: 'Northstar Finance LLC',
+        taxableIncome: '3,100,000',
+        fapiIncome: '2,900,000',
+        exemptSurplus: '0',
+        taxableSurplus: '3,100,000',
+        preAcquisitionSurplus: '0',
+        taxYear: '2024',
+        currency: 'USD',
+      },
+    ],
+  },
+  LU: {
+    countryName: 'Luxembourg',
+    affiliates: [
+      {
+        name: 'Northstar Capital S.à r.l.',
+        taxableIncome: '1,890,000',
+        fapiIncome: '1,650,000',
+        exemptSurplus: '6,200,000',
+        taxableSurplus: '440,000',
+        preAcquisitionSurplus: '900,000',
+        taxYear: '2024',
+        currency: 'EUR',
+      },
+    ],
+  },
+  SG: {
+    countryName: 'Singapore',
+    affiliates: [
+      {
+        name: 'Northstar Asia Pte Ltd',
+        taxableIncome: '4,560,000',
+        fapiIncome: '210,000',
+        exemptSurplus: '7,800,000',
+        taxableSurplus: '980,000',
+        preAcquisitionSurplus: '1,600,000',
+        taxYear: '2024',
+        currency: 'SGD',
+      },
+    ],
+  },
+  AU: {
+    countryName: 'Australia',
+    affiliates: [
+      {
+        name: 'Northstar Australia Pty Ltd',
+        taxableIncome: '3,240,000',
+        fapiIncome: '0',
+        exemptSurplus: '5,100,000',
+        taxableSurplus: '720,000',
+        preAcquisitionSurplus: '1,100,000',
+        taxYear: '2024',
+        currency: 'AUD',
+      },
+    ],
+  },
+  MX: {
+    countryName: 'Mexico',
+    affiliates: [
+      {
+        name: 'Northstar México S.A.',
+        taxableIncome: '1,120,000',
+        fapiIncome: '890,000',
+        exemptSurplus: '1,800,000',
+        taxableSurplus: '340,000',
+        preAcquisitionSurplus: '500,000',
+        taxYear: '2024',
+        currency: 'MXN',
+      },
+    ],
+  },
+  IE: {
+    countryName: 'Ireland',
+    affiliates: [
+      {
+        name: 'Northstar Ireland Ltd',
+        taxableIncome: '6,780,000',
+        fapiIncome: '4,200,000',
+        exemptSurplus: '2,300,000',
+        taxableSurplus: '6,780,000',
+        preAcquisitionSurplus: '800,000',
+        taxYear: '2024',
+        currency: 'EUR',
+      },
+    ],
+  },
+};
+
+// SVG world map — simplified path data for key countries
+// We use a simplified Mercator-style SVG map with country paths
+const COUNTRY_PATHS: Record<string, { d: string; labelX: number; labelY: number; name: string }> = {
+  CA: { name: 'Canada', labelX: 200, labelY: 120, d: 'M 120 80 L 340 80 L 340 160 L 280 160 L 280 180 L 200 180 L 200 160 L 120 160 Z' },
+  US: { name: 'United States', labelX: 200, labelY: 210, d: 'M 130 185 L 310 185 L 310 250 L 130 250 Z' },
+  MX: { name: 'Mexico', labelX: 185, labelY: 275, d: 'M 145 255 L 270 255 L 255 295 L 160 295 Z' },
+  GB: { name: 'United Kingdom', labelX: 470, labelY: 130, d: 'M 460 115 L 490 115 L 490 145 L 460 145 Z' },
+  IE: { name: 'Ireland', labelX: 448, labelY: 130, d: 'M 440 118 L 458 118 L 458 140 L 440 140 Z' },
+  FR: { name: 'France', labelX: 475, labelY: 158, d: 'M 460 148 L 500 148 L 500 175 L 460 175 Z' },
+  DE: { name: 'Germany', labelX: 498, labelY: 140, d: 'M 490 128 L 525 128 L 525 158 L 490 158 Z' },
+  LU: { name: 'Luxembourg', labelX: 492, labelY: 155, d: 'M 488 150 L 498 150 L 498 162 L 488 162 Z' },
+  SG: { name: 'Singapore', labelX: 720, labelY: 290, d: 'M 716 285 L 728 285 L 728 297 L 716 297 Z' },
+  AU: { name: 'Australia', labelX: 745, labelY: 360, d: 'M 700 330 L 800 330 L 800 400 L 700 400 Z' },
+};
+
+// Background continents (simplified shapes for visual context)
+const CONTINENT_PATHS = [
+  // North America
+  { d: 'M 100 70 L 350 70 L 350 310 L 220 310 L 200 340 L 160 340 L 140 310 L 100 310 Z', key: 'na' },
+  // South America
+  { d: 'M 200 345 L 290 345 L 310 450 L 240 490 L 195 450 Z', key: 'sa' },
+  // Europe
+  { d: 'M 430 90 L 560 90 L 570 200 L 430 200 Z', key: 'eu' },
+  // Africa
+  { d: 'M 450 210 L 560 210 L 570 380 L 490 400 L 440 370 Z', key: 'af' },
+  // Asia
+  { d: 'M 560 80 L 820 80 L 820 310 L 680 320 L 560 280 Z', key: 'as' },
+  // Australia
+  { d: 'M 690 325 L 820 325 L 820 410 L 690 410 Z', key: 'oc' },
+];
+
+function TaxAttributesMap() {
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
+  const [selectedAffiliate, setSelectedAffiliate] = useState<string>('');
+  const [affiliateDropdownOpen, setAffiliateDropdownOpen] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  const activeCountries = Object.keys(FOREIGN_AFFILIATES);
+
+  function handleCountryClick(code: string) {
+    if (!activeCountries.includes(code)) return;
+    setSelectedCountry(code);
+    const affiliates = FOREIGN_AFFILIATES[code].affiliates;
+    setSelectedAffiliate(affiliates[0].name);
+    setAffiliateDropdownOpen(false);
+  }
+
+  const countryData = selectedCountry ? FOREIGN_AFFILIATES[selectedCountry] : null;
+  const affiliate = countryData?.affiliates.find(a => a.name === selectedAffiliate);
+
+  return (
+    <div className="flex gap-4 h-full min-h-[520px]">
+      {/* Map */}
+      <div className="flex-1 bg-white border border-slate-200 rounded-xl overflow-hidden relative">
+        <div className="absolute top-3 left-3 z-10">
+          <div className="text-[11px] font-semibold text-slate-700 bg-white/90 backdrop-blur-sm border border-slate-200 rounded-lg px-2.5 py-1.5">
+            <Globe size={11} className="inline mr-1.5 text-[#0F2044]" />
+            Foreign Affiliates — Northstar Holdings Inc.
+          </div>
+        </div>
+        <div className="absolute bottom-3 left-3 z-10 flex items-center gap-3">
+          <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
+            <div className="w-3 h-3 rounded-sm bg-[#0F2044]/20 border border-[#0F2044]/30" />
+            Active affiliate
+          </div>
+          <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
+            <div className="w-3 h-3 rounded-sm bg-[#0F2044] border border-[#0F2044]" />
+            Selected
+          </div>
+        </div>
+
+        <svg
+          viewBox="0 0 900 480"
+          className="w-full h-full"
+          style={{ background: '#f0f4f8' }}
+        >
+          {/* Ocean background */}
+          <rect width="900" height="480" fill="#e8eef4" />
+
+          {/* Continent backgrounds */}
+          {CONTINENT_PATHS.map(c => (
+            <path key={c.key} d={c.d} fill="#d4dce6" stroke="#c8d4e0" strokeWidth="0.5" />
+          ))}
+
+          {/* Active country fills */}
+          {activeCountries.map(code => {
+            const cp = COUNTRY_PATHS[code];
+            if (!cp) return null;
+            const isSelected = selectedCountry === code;
+            const isHovered = hoveredCountry === code;
+            return (
+              <path
+                key={code}
+                d={cp.d}
+                fill={isSelected ? '#0F2044' : isHovered ? '#1a3060' : '#0F2044'}
+                fillOpacity={isSelected ? 1 : isHovered ? 0.5 : 0.2}
+                stroke="#0F2044"
+                strokeWidth={isSelected ? 1.5 : 0.8}
+                strokeOpacity={isSelected ? 1 : 0.4}
+                className="cursor-pointer transition-all duration-150"
+                onMouseEnter={() => setHoveredCountry(code)}
+                onMouseLeave={() => setHoveredCountry(null)}
+                onClick={() => handleCountryClick(code)}
+              />
+            );
+          })}
+
+          {/* Country labels for active countries */}
+          {activeCountries.map(code => {
+            const cp = COUNTRY_PATHS[code];
+            if (!cp) return null;
+            const isSelected = selectedCountry === code;
+            return (
+              <g key={`label-${code}`}>
+                <circle
+                  cx={cp.labelX}
+                  cy={cp.labelY}
+                  r="5"
+                  fill={isSelected ? '#0F2044' : '#0F2044'}
+                  fillOpacity={isSelected ? 1 : 0.6}
+                  className="cursor-pointer"
+                  onClick={() => handleCountryClick(code)}
+                />
+                <text
+                  x={cp.labelX + 7}
+                  y={cp.labelY + 4}
+                  fontSize="8"
+                  fill={isSelected ? '#0F2044' : '#334155'}
+                  fontWeight={isSelected ? '700' : '500'}
+                  fontFamily="IBM Plex Sans, sans-serif"
+                  className="cursor-pointer select-none"
+                  onClick={() => handleCountryClick(code)}
+                >
+                  {cp.name}
+                </text>
+              </g>
+            );
+          })}
+
+          {/* Canada — always shown as home country */}
+          <path
+            d={COUNTRY_PATHS.CA?.d ?? ''}
+            fill="#1e3a5f"
+            fillOpacity={0.08}
+            stroke="#1e3a5f"
+            strokeWidth="1"
+            strokeOpacity={0.2}
+            strokeDasharray="3,2"
+          />
+          <text x="200" y="125" fontSize="8" fill="#1e3a5f" fontWeight="600" fontFamily="IBM Plex Sans, sans-serif" textAnchor="middle" opacity="0.6">
+            Canada (Parent)
+          </text>
+        </svg>
+
+        {/* Hover tooltip */}
+        {hoveredCountry && !selectedCountry && (
+          <div className="absolute top-12 left-1/2 -translate-x-1/2 bg-[#0F2044] text-white text-[11px] px-2.5 py-1.5 rounded-lg shadow-lg pointer-events-none">
+            <MapPin size={10} className="inline mr-1" />
+            {FOREIGN_AFFILIATES[hoveredCountry]?.countryName} — {FOREIGN_AFFILIATES[hoveredCountry]?.affiliates.length} affiliate{FOREIGN_AFFILIATES[hoveredCountry]?.affiliates.length !== 1 ? 's' : ''}
+          </div>
+        )}
+      </div>
+
+      {/* Side panel */}
+      {selectedCountry && countryData && affiliate ? (
+        <div ref={panelRef} className="w-80 bg-white border border-slate-200 rounded-xl flex flex-col overflow-hidden shrink-0">
+          {/* Panel header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50">
+            <div>
+              <div className="flex items-center gap-1.5">
+                <MapPin size={12} className="text-[#0F2044]" />
+                <span className="text-[13px] font-bold text-[#0F2044]">{countryData.countryName}</span>
+              </div>
+              <div className="text-[10px] text-slate-400 mt-0.5">{countryData.affiliates.length} foreign affiliate{countryData.affiliates.length !== 1 ? 's' : ''}</div>
+            </div>
+            <button
+              onClick={() => setSelectedCountry(null)}
+              className="w-6 h-6 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+            >
+              <X size={12} className="text-slate-500" />
+            </button>
+          </div>
+
+          {/* Affiliate selector */}
+          <div className="px-4 py-3 border-b border-slate-100">
+            <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Foreign Affiliate</div>
+            <div className="relative">
+              <button
+                onClick={() => setAffiliateDropdownOpen(v => !v)}
+                className="w-full flex items-center justify-between text-[12px] font-semibold text-[#0F2044] bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 hover:border-slate-300 transition-colors"
+              >
+                <span className="truncate">{selectedAffiliate}</span>
+                <ChevronDown size={13} className="text-slate-400 shrink-0 ml-2" />
+              </button>
+              {affiliateDropdownOpen && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-20 py-1">
+                  {countryData.affiliates.map(a => (
+                    <button
+                      key={a.name}
+                      onClick={() => { setSelectedAffiliate(a.name); setAffiliateDropdownOpen(false); }}
+                      className={cn(
+                        'w-full text-left px-3 py-2 text-[12px] transition-colors',
+                        a.name === selectedAffiliate ? 'bg-slate-50 text-[#0F2044] font-semibold' : 'text-slate-700 hover:bg-slate-50'
+                      )}
+                    >
+                      {a.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Tax attributes */}
+          <div className="flex-1 overflow-auto px-4 py-3 space-y-3">
+            <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+              Tax Attributes — FY {affiliate.taxYear} ({affiliate.currency})
+            </div>
+
+            {/* Income */}
+            <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 space-y-2">
+              <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Income</div>
+              {[
+                { label: 'Taxable Income / (Loss)', value: affiliate.taxableIncome, color: 'text-slate-800' },
+                { label: 'FAPI Income', value: affiliate.fapiIncome, color: affiliate.fapiIncome !== '0' ? 'text-amber-700' : 'text-slate-400' },
+              ].map(row => (
+                <div key={row.label} className="flex items-center justify-between">
+                  <span className="text-[11px] text-slate-600">{row.label}</span>
+                  <span className={cn('text-[12px] font-semibold tabular-nums', row.color)}>
+                    {row.value === '0' ? '—' : row.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Surplus balances */}
+            <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 space-y-2">
+              <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Surplus Balances</div>
+              {[
+                { label: 'Exempt Surplus', value: affiliate.exemptSurplus, color: 'text-emerald-700' },
+                { label: 'Taxable Surplus', value: affiliate.taxableSurplus, color: 'text-slate-800' },
+                { label: 'Pre-Acquisition Surplus', value: affiliate.preAcquisitionSurplus, color: 'text-slate-600' },
+              ].map(row => (
+                <div key={row.label} className="flex items-center justify-between">
+                  <span className="text-[11px] text-slate-600">{row.label}</span>
+                  <span className={cn('text-[12px] font-semibold tabular-nums', row.color)}>
+                    {row.value === '0' ? '—' : row.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Actions */}
+            <div className="pt-1 space-y-1.5">
+              <button
+                onClick={() => toast.info('Open FAPI Calculator for this affiliate — coming soon')}
+                className="w-full text-[11px] font-semibold py-2 rounded-lg bg-[#0F2044] text-white hover:bg-[#1a3060] transition-colors"
+              >
+                Open in FAPI Calculator →
+              </button>
+              <button
+                onClick={() => toast.info('Open Surplus Calculator — coming soon')}
+                className="w-full text-[11px] py-2 rounded-lg border border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-800 transition-colors"
+              >
+                Open in Surplus Calculator
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="w-80 bg-white border border-slate-200 rounded-xl flex flex-col items-center justify-center shrink-0 text-center px-6">
+          <Globe size={32} className="text-slate-300 mb-3" />
+          <div className="text-[13px] font-semibold text-slate-600 mb-1">Select a country</div>
+          <div className="text-[11px] text-slate-400 leading-relaxed">
+            Click on a highlighted country on the map to view foreign affiliate details and tax attributes.
+          </div>
+          <div className="mt-4 text-[10px] text-slate-400">
+            {activeCountries.length} countries with active affiliates
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Client Workspace Page ────────────────────────────────────────────────────
 export default function ClientWorkspace() {
-  // Determine which client to show based on route param
   const [, params] = useRoute('/client/:clientId');
   const clientId = params?.clientId ?? 'northstar';
   const [selectedClientId, setSelectedClientId] = useState(clientId);
   const [, navigate] = useLocation();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('workflows');
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const client = CLIENTS.find(c => c.id === selectedClientId) ?? CLIENTS[0];
-  const [activeTab, setActiveTab] = useState('workflows');
 
-  const teams = client.teams.map(name => TAX_TEAMS.find(t => t.name === name)).filter(Boolean);
-  const partners = TEAM_MEMBERS.filter(m => client.partners.includes(m.name));
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
 
   function handleClientChange(id: string) {
     setSelectedClientId(id);
+    setDropdownOpen(false);
     navigate(`/client/${id}`);
   }
+
+  // Separate workflows by team access
+  const myWorkflows = client.workflows.filter(wf => MY_TEAMS.includes(wf.team));
+  const restrictedWorkflows = client.workflows.filter(wf => !MY_TEAMS.includes(wf.team));
+
+  // Group my workflows by category
+  const annualWorkflows = myWorkflows.filter(w =>
+    ['wf-fapi', 'wf-t1134', 'wf-surplus', 'wf-pillar2'].includes(w.id)
+  );
+  const consultingWorkflows = myWorkflows.filter(w => ['wf-ma'].includes(w.id));
 
   return (
     <AppShell
@@ -277,106 +739,65 @@ export default function ClientWorkspace() {
         {/* ── Client header ──────────────────────────────────────────────────── */}
         <div className="border-b border-slate-200 bg-white px-5 py-4">
           <div className="flex items-center gap-4">
-            {/* Client logo */}
-            <div className="w-11 h-11 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center shrink-0">
-              <Building2 size={20} className="text-[#0F2044]" />
+            {/* Logo */}
+            <div className="w-10 h-10 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center shrink-0">
+              <Building2 size={18} className="text-[#0F2044]" />
             </div>
 
-            {/* Client selector + meta */}
-            <div className="flex-1 min-w-0">
-              {/* Client name as dropdown */}
-              <div className="flex items-center gap-2 mb-1.5">
-                <div className="relative group">
-                  <button className="flex items-center gap-1.5 text-[17px] font-bold text-[#0F2044] hover:text-[#1a3060] transition-colors">
-                    {client.name}
-                    <ChevronDown size={15} className="text-slate-400 group-hover:text-slate-600 transition-colors" />
-                  </button>
-                  {/* Dropdown */}
-                  <div className="absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 min-w-[240px] py-1.5 hidden group-hover:block">
-                    {CLIENTS.map(c => (
-                      <button
-                        key={c.id}
-                        onClick={() => handleClientChange(c.id)}
-                        className={cn(
-                          'flex items-center gap-3 w-full text-left px-3 py-2 transition-colors',
-                          c.id === selectedClientId
-                            ? 'bg-slate-50 text-[#0F2044]'
-                            : 'text-slate-700 hover:bg-slate-50'
-                        )}
-                      >
-                        <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
-                          <Building2 size={13} className="text-slate-500" />
-                        </div>
-                        <div>
-                          <div className="text-[12px] font-semibold">{c.name}</div>
-                          <div className="text-[10px] text-slate-400">{c.leadPartner} · {c.tier}</div>
-                        </div>
-                        {c.id === selectedClientId && (
-                          <CheckCircle2 size={13} className="text-emerald-500 ml-auto shrink-0" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+            {/* Client name + tier + switcher */}
+            <div className="flex-1 min-w-0" ref={dropdownRef}>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setDropdownOpen(v => !v)}
+                  className="flex items-center gap-1.5 text-[17px] font-bold text-[#0F2044] hover:text-[#1a3060] transition-colors"
+                >
+                  {client.name}
+                  <ChevronDown size={15} className={cn('text-slate-400 transition-transform duration-150', dropdownOpen && 'rotate-180')} />
+                </button>
                 <span className={cn(
                   'text-[10px] px-2 py-0.5 rounded-full font-semibold border',
-                  client.tier === 'Platinum' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                  client.tier === 'Platinum' ? 'bg-slate-100 text-slate-600 border-slate-300' :
                   client.tier === 'Strategic' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                  'bg-slate-50 text-slate-600 border-slate-200'
+                  'bg-slate-50 text-slate-500 border-slate-200'
                 )}>
                   {client.tier}
                 </span>
-                {client.tier === 'Platinum' && (
-                  <Star size={11} className="text-amber-500" />
-                )}
               </div>
 
-              {/* Meta row */}
-              <div className="flex items-center gap-4 flex-wrap">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider">Lead Partner</span>
-                  <AvatarInitials
-                    initials={client.leadPartner.split(' ').map(n => n[0]).join('')}
-                    name={client.leadPartner}
-                    size="xs"
-                  />
-                  <span className="text-[11px] text-slate-700 font-medium">{client.leadPartner}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider">Partners</span>
-                  <div className="flex -space-x-1">
-                    {partners.map(p => (
-                      <AvatarInitials key={p!.id} initials={p!.initials} name={p!.name} size="xs" />
-                    ))}
-                  </div>
-                </div>
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider">Teams</span>
-                  {teams.map(t => t && (
-                    <TeamBadge key={t.id} name={t.name} color={t.color} abbreviation={t.abbreviation} />
+              {/* Dropdown */}
+              {dropdownOpen && (
+                <div className="absolute mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 min-w-[260px] py-1.5">
+                  {CLIENTS.map(c => (
+                    <button
+                      key={c.id}
+                      onClick={() => handleClientChange(c.id)}
+                      className={cn(
+                        'flex items-center gap-3 w-full text-left px-3 py-2 transition-colors',
+                        c.id === selectedClientId ? 'bg-slate-50 text-[#0F2044]' : 'text-slate-700 hover:bg-slate-50'
+                      )}
+                    >
+                      <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+                        <Building2 size={13} className="text-slate-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[12px] font-semibold truncate">{c.name}</div>
+                        <div className="text-[10px] text-slate-400">{c.leadPartner} · {c.tier}</div>
+                      </div>
+                      {c.id === selectedClientId && (
+                        <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
+                      )}
+                    </button>
                   ))}
                 </div>
-              </div>
+              )}
             </div>
 
-            {/* Quick stats — only workflow count and due items */}
-            <div className="hidden lg:flex items-center gap-5 shrink-0 border-l border-slate-100 pl-5">
+            {/* Workflow count only */}
+            <div className="hidden lg:flex items-center gap-2 shrink-0 border-l border-slate-100 pl-4">
               <div className="text-center">
                 <div className="text-xl font-bold text-[#0F2044] tabular-nums">{client.workflows.length}</div>
                 <div className="text-[10px] text-slate-400">Workflows</div>
               </div>
-              {client.atRiskDeliverables > 0 && (
-                <div className="text-center">
-                  <div className="text-xl font-bold text-red-500 tabular-nums">{client.atRiskDeliverables}</div>
-                  <div className="text-[10px] text-slate-400">At Risk</div>
-                </div>
-              )}
-              {client.openReviewItems > 0 && (
-                <div className="text-center">
-                  <div className="text-xl font-bold text-amber-600 tabular-nums">{client.openReviewItems}</div>
-                  <div className="text-[10px] text-slate-400">Open Reviews</div>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -387,11 +808,8 @@ export default function ClientWorkspace() {
             <div className="border-b border-slate-200 bg-white px-5">
               <TabsList className="bg-transparent h-10 gap-0 p-0">
                 {[
-                  { value: 'workflows',    label: 'Active Workflows',   icon: <Activity size={12} /> },
-                  { value: 'review',       label: 'Review Trail',        icon: <Shield size={12} /> },
-                  { value: 'sources',      label: 'Sources',             icon: <Folder size={12} /> },
-                  { value: 'history',      label: 'Prior-Year',          icon: <History size={12} /> },
-                  { value: 'deliverables', label: 'Deliverables',        icon: <Package size={12} /> },
+                  { value: 'workflows', label: 'Active Workflows', icon: <Activity size={12} /> },
+                  { value: 'taxattributes', label: 'Tax Attributes', icon: <Globe size={12} /> },
                 ].map(tab => (
                   <TabsTrigger
                     key={tab.value}
@@ -417,7 +835,7 @@ export default function ClientWorkspace() {
                   <div>
                     <h2 className="text-sm font-semibold text-slate-800">Active Workflows</h2>
                     <p className="text-[11px] text-slate-400 mt-0.5">
-                      {client.workflows.length} workflows · click "Details" to expand team, milestones & review stage
+                      {myWorkflows.length} accessible · {restrictedWorkflows.length} restricted
                     </p>
                   </div>
                   <button
@@ -428,241 +846,58 @@ export default function ClientWorkspace() {
                   </button>
                 </div>
 
-                {/* Annual recurring */}
-                <div className="mb-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="h-px flex-1 bg-slate-200" />
-                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-2">Annual Recurring</span>
-                    <div className="h-px flex-1 bg-slate-200" />
-                  </div>
-                  <div className="space-y-2">
-                    {client.workflows
-                      .filter(w => ['wf-fapi', 'wf-t2', 'wf-t1134', 'wf-surplus', 'wf-pillar2'].includes(w.id))
-                      .map(wf => <WorkflowCardItem key={wf.id} wf={wf} />)}
-                  </div>
-                </div>
-
-                {/* Consulting */}
-                <div className="mt-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="h-px flex-1 bg-slate-200" />
-                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-2">Consulting</span>
-                    <div className="h-px flex-1 bg-slate-200" />
-                  </div>
-                  <div className="space-y-2">
-                    {client.workflows
-                      .filter(w => ['wf-ma'].includes(w.id))
-                      .map(wf => <WorkflowCardItem key={wf.id} wf={wf} />)}
-                  </div>
-                </div>
-              </TabsContent>
-
-              {/* ── Review Trail ──────────────────────────────────────────── */}
-              <TabsContent value="review" className="p-5 mt-0">
-                <div className="max-w-2xl">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h2 className="text-sm font-semibold text-slate-800">Review Trail — FAPI Workpaper 2025</h2>
-                      <p className="text-[11px] text-slate-400 mt-0.5">Consultant → Manager → Senior Manager → Partner → Delivery</p>
+                {/* Annual recurring (my team) */}
+                {annualWorkflows.length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="h-px flex-1 bg-slate-200" />
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-2">Annual Recurring</span>
+                      <div className="h-px flex-1 bg-slate-200" />
+                    </div>
+                    <div className="space-y-2">
+                      {annualWorkflows.map(wf => <WorkflowCardItem key={wf.id} wf={wf} />)}
                     </div>
                   </div>
-                  <div className="space-y-3">
-                    {FAPI_REVIEW_TRAIL.map(item => (
-                      <div key={item.id} className="relative pl-6">
-                        <div
-                          className="absolute left-0 top-2 w-4 h-4 rounded-full border-2 flex items-center justify-center"
-                          style={{
-                            borderColor: item.type === 'change-request' ? '#d97706' : item.type === 'approval' ? '#059669' : '#3b82f6',
-                            backgroundColor: item.type === 'change-request' ? '#fef3c710' : item.type === 'approval' ? '#d1fae510' : '#eff6ff10',
-                          }}
-                        >
-                          {item.type === 'change-request' ? <AlertTriangle size={8} className="text-amber-600" /> :
-                           item.type === 'approval' ? <CheckCircle2 size={8} className="text-emerald-600" /> :
-                           <FileText size={8} className="text-blue-500" />}
-                        </div>
-                        <div className="bg-white border border-slate-200 rounded-xl p-3">
-                          <div className="flex items-center justify-between mb-1.5">
-                            <div className="flex items-center gap-2">
-                              <AvatarInitials initials={item.author.split(' ').map(n => n[0]).join('')} name={item.author} size="xs" />
-                              <span className="text-xs font-semibold text-slate-800">{item.author}</span>
-                              <span className="text-[10px] text-slate-400">{item.role}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {item.type === 'change-request' && (
-                                <span className={cn(
-                                  'text-[10px] px-1.5 py-0.5 rounded-full border',
-                                  item.resolved
-                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                    : 'bg-amber-50 text-amber-700 border-amber-200'
-                                )}>
-                                  {item.resolved ? 'Resolved' : 'Open'}
-                                </span>
-                              )}
-                              <span className="text-[10px] text-slate-400">{item.timestamp}</span>
-                            </div>
-                          </div>
-                          <p className="text-[11px] text-slate-600 leading-relaxed">{item.content}</p>
-                        </div>
-                      </div>
-                    ))}
+                )}
+
+                {/* Consulting (my team) */}
+                {consultingWorkflows.length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="h-px flex-1 bg-slate-200" />
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-2">Consulting</span>
+                      <div className="h-px flex-1 bg-slate-200" />
+                    </div>
+                    <div className="space-y-2">
+                      {consultingWorkflows.map(wf => <WorkflowCardItem key={wf.id} wf={wf} />)}
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* Restricted workflows */}
+                {restrictedWorkflows.length > 0 && (
+                  <div className="mt-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="h-px flex-1 bg-slate-200" />
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-2">Other Teams</span>
+                      <div className="h-px flex-1 bg-slate-200" />
+                    </div>
+                    <div className="space-y-2">
+                      {restrictedWorkflows.map(wf => <WorkflowCardItem key={wf.id} wf={wf} restricted />)}
+                    </div>
+                  </div>
+                )}
               </TabsContent>
 
-              {/* ── Sources ───────────────────────────────────────────────── */}
-              <TabsContent value="sources" className="p-5 mt-0">
-                <div className="max-w-3xl">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-sm font-semibold text-slate-800">Uploaded Sources</h2>
-                    <button
-                      onClick={() => toast.info('Upload source — coming soon')}
-                      className="text-xs px-3 py-1.5 rounded-lg bg-[#0F2044] text-white hover:bg-[#1a3060] transition-colors flex items-center gap-1.5"
-                    >
-                      <Upload size={11} /> Upload
-                    </button>
-                  </div>
-                  <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-                    <table className="w-full text-left">
-                      <thead>
-                        <tr className="border-b border-slate-100 bg-slate-50">
-                          {['File Name', 'Workflow', 'Type', 'Uploaded By', 'Date', 'Status'].map(h => (
-                            <th key={h} className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-3 py-2">{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {[
-                          { name: 'Northstar_FAPI_FinancialStatements_2024.xlsx', workflow: 'FAPI Workpaper 2025', type: 'Excel', by: 'Ryan Tran', date: '2025-05-14', status: 'Processed' },
-                          { name: 'Northstar_FX_Rates_BoC_Dec2024.pdf', workflow: 'FAPI Workpaper 2025', type: 'PDF', by: 'Ryan Tran', date: '2025-05-14', status: 'Processed' },
-                          { name: 'Northstar_T2_TrialBalance_2024.xlsx', workflow: 'T2 Corporate Return 2024', type: 'Excel', by: 'Aisha Kamara', date: '2025-05-10', status: 'Processed' },
-                          { name: 'Northstar_T1134_EntityList_2024.xlsx', workflow: 'T1134 Foreign Affiliate 2024', type: 'Excel', by: 'Marcus Webb', date: '2025-05-12', status: 'Processed' },
-                          { name: 'ProjectMaple_LOI_Signed.pdf', workflow: 'M&A Transaction Memo', type: 'PDF', by: 'Marcus Webb', date: '2025-05-17', status: 'Pending' },
-                          { name: 'Northstar_Pillar2_EntityData_2024.xlsx', workflow: 'Pillar 2 GloBE Assessment', type: 'Excel', by: 'Aisha Kamara', date: '2025-05-13', status: 'Processing' },
-                        ].map((f, i) => (
-                          <tr key={i} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
-                            <td className="px-3 py-2">
-                              <div className="flex items-center gap-1.5">
-                                <FileText size={11} className="text-slate-400 shrink-0" />
-                                <span className="text-[11px] text-[#0F2044] hover:underline cursor-pointer" onClick={() => toast.info('File viewer — coming soon')}>
-                                  {f.name}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="px-3 py-2 text-[11px] text-slate-600">{f.workflow}</td>
-                            <td className="px-3 py-2">
-                              <span className={cn(
-                                'text-[10px] px-1.5 py-0.5 rounded-full border',
-                                f.type === 'Excel' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-blue-50 text-blue-700 border-blue-200'
-                              )}>
-                                {f.type}
-                              </span>
-                            </td>
-                            <td className="px-3 py-2 text-[11px] text-slate-600">{f.by}</td>
-                            <td className="px-3 py-2 text-[11px] text-slate-500 tabular-nums">{f.date}</td>
-                            <td className="px-3 py-2">
-                              <span className={cn(
-                                'text-[10px] px-1.5 py-0.5 rounded-full border',
-                                f.status === 'Processed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                                f.status === 'Pending' ? 'bg-slate-50 text-slate-500 border-slate-200' :
-                                'bg-amber-50 text-amber-700 border-amber-200'
-                              )}>
-                                {f.status}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+              {/* ── Tax Attributes ────────────────────────────────────────── */}
+              <TabsContent value="taxattributes" className="p-5 mt-0 h-full">
+                <div className="mb-4">
+                  <h2 className="text-sm font-semibold text-slate-800">Tax Attributes</h2>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Foreign affiliates of {client.name} — click a country to view tax attributes
+                  </p>
                 </div>
-              </TabsContent>
-
-              {/* ── Prior-Year ────────────────────────────────────────────── */}
-              <TabsContent value="history" className="p-5 mt-0">
-                <div className="max-w-3xl">
-                  <h2 className="text-sm font-semibold text-slate-800 mb-4">Prior-Year Context</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    {[
-                      { year: 'FY 2023', workflows: 6, partner: 'Margaret Chen', notes: 'FAPI net income: CAD 15.2M. No material exceptions. Surplus pool updated.' },
-                      { year: 'FY 2022', workflows: 5, partner: 'Margaret Chen', notes: 'First year with Pillar 2 assessment. T1134 filed for 8 foreign affiliates.' },
-                      { year: 'FY 2021', workflows: 4, partner: 'David Okafor', notes: 'COVID-related adjustments to FAPI calculations. Treaty positions reviewed.' },
-                    ].map((y, i) => (
-                      <div key={i} className="bg-white border border-slate-200 rounded-xl p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-bold text-[#0F2044]">{y.year}</span>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Delivered</span>
-                        </div>
-                        <div className="text-[11px] text-slate-400 mb-2">{y.workflows} workflows · {y.partner}</div>
-                        <p className="text-[11px] text-slate-600 leading-relaxed">{y.notes}</p>
-                        <button
-                          onClick={() => toast.info('Prior-year workpapers — coming soon')}
-                          className="mt-3 text-[10px] text-[#0F2044] font-semibold hover:underline"
-                        >
-                          View workpapers →
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </TabsContent>
-
-              {/* ── Deliverables ──────────────────────────────────────────── */}
-              <TabsContent value="deliverables" className="p-5 mt-0">
-                <div className="max-w-3xl">
-                  <h2 className="text-sm font-semibold text-slate-800 mb-4">Deliverables</h2>
-                  <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-                    <table className="w-full text-left">
-                      <thead>
-                        <tr className="border-b border-slate-100 bg-slate-50">
-                          {['Deliverable', 'Format', 'Status', 'Partner Sign-off', 'Action'].map(h => (
-                            <th key={h} className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-3 py-2">{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {[
-                          { name: 'FAPI Workpaper 2025', format: 'Excel + PDF', status: 'Pending', signoff: false },
-                          { name: 'T2 Corporate Return 2024', format: 'Taxprep', status: 'In Progress', signoff: false },
-                          { name: 'T1134 Foreign Affiliate 2024', format: 'Taxprep', status: 'In Progress', signoff: false },
-                          { name: 'M&A Transaction Memo', format: 'PowerPoint + PDF', status: 'Under Review', signoff: false },
-                          { name: 'Pillar 2 GloBE Assessment', format: 'Excel + JSON', status: 'At Risk', signoff: false },
-                        ].map((d, i) => (
-                          <tr key={i} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
-                            <td className="px-3 py-2 text-[12px] font-semibold text-slate-800">{d.name}</td>
-                            <td className="px-3 py-2">
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">{d.format}</span>
-                            </td>
-                            <td className="px-3 py-2">
-                              <span className={cn(
-                                'text-[10px] px-1.5 py-0.5 rounded-full border',
-                                d.status === 'At Risk' ? 'bg-red-50 text-red-700 border-red-200' :
-                                d.status === 'Under Review' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                                d.status === 'In Progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                'bg-slate-50 text-slate-500 border-slate-200'
-                              )}>
-                                {d.status}
-                              </span>
-                            </td>
-                            <td className="px-3 py-2">
-                              <div className="flex items-center gap-1.5">
-                                <div className={cn('w-2 h-2 rounded-full', d.signoff ? 'bg-emerald-500' : 'bg-slate-300')} />
-                                <span className="text-[10px] text-slate-500">{d.signoff ? 'Signed' : 'Pending'}</span>
-                              </div>
-                            </td>
-                            <td className="px-3 py-2">
-                              <button
-                                onClick={() => toast.info('Output generation — coming soon')}
-                                className="text-[11px] text-[#0F2044] font-semibold hover:underline"
-                              >
-                                Generate
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                <WorldMap />
               </TabsContent>
 
             </div>

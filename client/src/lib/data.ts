@@ -2,7 +2,7 @@
 // Design: "Precision Instrument" — Bloomberg/terminal dark aesthetic
 
 export type ClientTier = 'Platinum' | 'Strategic' | 'Standard';
-export type WorkflowStatus = 'In Progress' | 'Under Review' | 'Approved' | 'Pending' | 'At Risk' | 'Complete' | 'Not Started';
+export type WorkflowStatus = 'In Progress' | 'Under Review' | 'Approved' | 'Pending' | 'At Risk' | 'Complete' | 'Not Started' | 'Awaiting Partner Sign-off';
 export type ReviewStage = 'Consultant' | 'Manager' | 'Senior Manager' | 'Partner' | 'Delivered';
 export type BlockType = 'source' | 'logic' | 'review' | 'protected' | 'output' | 'ai';
 

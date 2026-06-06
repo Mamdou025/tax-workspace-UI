@@ -150,6 +150,24 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
+function vitePluginUriSafety(): Plugin {
+  return {
+    name: "uri-safety",
+    configureServer(server) {
+      server.middlewares.use((req, _res, next) => {
+        if (req.url) {
+          try {
+            decodeURI(req.url);
+          } catch {
+            req.url = req.url.replace(/%(?![0-9A-Fa-f]{2})/g, "%25");
+          }
+        }
+        next();
+      });
+    },
+  };
+}
+
 function vitePluginStorageProxy(): Plugin {
   return {
     name: "manus-storage-proxy",
@@ -203,7 +221,7 @@ function vitePluginStorageProxy(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector(), vitePluginStorageProxy()];
+const plugins = [vitePluginUriSafety(), react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector(), vitePluginStorageProxy()];
 
 export default defineConfig({
   plugins,

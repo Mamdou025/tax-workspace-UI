@@ -1,13 +1,4 @@
-// OrbitalStage.tsx — Sinaxe InScope v2.0
-// Design philosophy:
-// - Full greyscale UI — no colour anywhere except the animated InScope logo
-// - Animated logo: small, orange inner ring + purple outer ring of tapering dots
-//   directly surrounding the client name (no separate white circle)
-// - Circular nodes: lock icon + label + subtitle inside the circle
-// - Dotted orbit ring (small spaced dots, greyscale)
-// - Top bar: greeting left, wordmark center, triangle Workflow Builder right
-// - No Sophia button
-// - Client dropdown: plain greyscale, no colours
+// OrbitalStage.tsx — Sinaxe InScope v2.0 — Skeuomorphic edition
 
 import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'wouter';
@@ -137,9 +128,6 @@ const SUB_ACTIONS: Record<string, { id: string; label: string; subtitle: string;
 };
 
 // ─── Animated InScope logo ────────────────────────────────────────────────────
-// Small SVG: orange inner ring + purple outer ring of tapering dots
-// Client name sits at the center, directly surrounded by the orange ring
-// CSS-animated rings — uniform small dots, smooth rotation
 function InScopeLogo({ clientName, level, levelLabel, onClick }: {
   clientName: string;
   level: number;
@@ -149,25 +137,52 @@ function InScopeLogo({ clientName, level, levelLabel, onClick }: {
   const SIZE = 170;  // larger to fit longer client names
   const CX = SIZE / 2;
   const CY = SIZE / 2;
+<<<<<<< Updated upstream
   const OUTER_R = 74;  // larger outer ring
   const INNER_R = 52;  // larger inner ring
   const outerDots = 52;  // more dots for smoother arc on larger ring
   const innerDots = 36;
+=======
+  const OUTER_R = 57;
+  const INNER_R = 43;
+  const outerDots = 40;
+  const innerDots = 26;
+>>>>>>> Stashed changes
 
   return (
     <>
       <style>{`
         @keyframes logo-cw  { from { transform: rotate(0deg);   } to { transform: rotate(360deg);  } }
         @keyframes logo-ccw { from { transform: rotate(0deg);   } to { transform: rotate(-360deg); } }
-        .logo-cw  { animation: logo-cw  9s linear infinite; transform-origin: ${CX}px ${CY}px; }
-        .logo-ccw { animation: logo-ccw 6s linear infinite; transform-origin: ${CX}px ${CY}px; }
+        .logo-cw  { animation: logo-cw  22s linear infinite; transform-origin: ${CX}px ${CY}px; }
+        .logo-ccw { animation: logo-ccw 15s linear infinite; transform-origin: ${CX}px ${CY}px; }
       `}</style>
       <button
         onClick={onClick}
-        className="relative z-10 select-none transition-transform duration-200 hover:scale-105 active:scale-95"
-        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, width: SIZE, height: SIZE }}
+        className="relative z-10 select-none"
+        style={{
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          padding: 0,
+          width: SIZE,
+          height: SIZE,
+          // Override global active scale for this button
+          transition: 'transform 150ms cubic-bezier(0.34,1.56,0.64,1)',
+        }}
       >
+        {/* Flat center disc behind the logo */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            borderRadius: '50%',
+            background: '#eaeaef',
+          }}
+        />
+
         <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} style={{ position: 'absolute', inset: 0 }}>
+<<<<<<< Updated upstream
           {/* Purple outer ring — clockwise
                Seamless symmetric fade: dots fade in from nothing at one end of the arc,
                peak in the middle, then fade back to nothing at the other end.
@@ -188,11 +203,25 @@ function InScopeLogo({ clientName, level, levelLabel, onClick }: {
               const r = 1.4 * env;
               const opacity = 0.88 * env;
               if (raw === 0) return null;
+=======
+          {/* Purple outer ring — clockwise, fixed fade spots */}
+          <g className="logo-cw">
+            {Array.from({ length: outerDots }, (_, i) => {
+              const a = (i / outerDots) * Math.PI * 2;
+              const animDur = 22;
+              const begin = -(i / outerDots) * animDur;
+              const kt = "0;0.02;0.07;0.93;0.98;1";
+              const ks = "0 0 1 1;0.42 0 1 1;0 0 1 1;0 0 0.58 1;0 0 1 1";
+>>>>>>> Stashed changes
               return (
-                <circle key={i} cx={CX + OUTER_R * Math.cos(a)} cy={CY + OUTER_R * Math.sin(a)} r={r} fill={PURPLE} opacity={opacity} />
+                <circle key={i} cx={CX + OUTER_R * Math.cos(a)} cy={CY + OUTER_R * Math.sin(a)} r={0} fill={PURPLE}>
+                  <animate attributeName="r" values="0;0;0.15;2.0;0;0" keyTimes={kt} dur={`${animDur}s`} begin={`${begin}s`} repeatCount="indefinite" calcMode="spline" keySplines={ks} />
+                  <animate attributeName="opacity" values="0;0;0.85;0.85;0;0" keyTimes={kt} dur={`${animDur}s`} begin={`${begin}s`} repeatCount="indefinite" calcMode="spline" keySplines={ks} />
+                </circle>
               );
             })}
           </g>
+<<<<<<< Updated upstream
           {/* Orange inner ring — counter-clockwise, same taper */}
           <g className="logo-ccw">
             {Array.from({ length: innerDots }, (_, i) => {
@@ -204,8 +233,21 @@ function InScopeLogo({ clientName, level, levelLabel, onClick }: {
               const r = 1.2 * env;
               const opacity = 0.88 * env;
               if (raw === 0) return null;
+=======
+          {/* Orange inner ring — counter-clockwise, fixed fade spots */}
+          <g className="logo-ccw">
+            {Array.from({ length: innerDots }, (_, i) => {
+              const a = (i / innerDots) * Math.PI * 2;
+              const animDur = 15;
+              const begin = -((innerDots - i) / innerDots) * animDur;
+              const kt = "0;0.02;0.07;0.93;0.98;1";
+              const ks = "0 0 1 1;0.42 0 1 1;0 0 1 1;0 0 0.58 1;0 0 1 1";
+>>>>>>> Stashed changes
               return (
-                <circle key={i} cx={CX + INNER_R * Math.cos(a)} cy={CY + INNER_R * Math.sin(a)} r={r} fill={ORANGE} opacity={opacity} />
+                <circle key={i} cx={CX + INNER_R * Math.cos(a)} cy={CY + INNER_R * Math.sin(a)} r={0} fill={ORANGE}>
+                  <animate attributeName="r" values="0;0;0.15;1.7;0;0" keyTimes={kt} dur={`${animDur}s`} begin={`${begin}s`} repeatCount="indefinite" calcMode="spline" keySplines={ks} />
+                  <animate attributeName="opacity" values="0;0;0.85;0.85;0;0" keyTimes={kt} dur={`${animDur}s`} begin={`${begin}s`} repeatCount="indefinite" calcMode="spline" keySplines={ks} />
+                </circle>
               );
             })}
           </g>
@@ -265,7 +307,7 @@ function InScopeLogo({ clientName, level, levelLabel, onClick }: {
   );
 }
 
-// ─── Client switcher overlay — plain greyscale ────────────────────────────────
+// ─── Client switcher overlay ──────────────────────────────────────────────────
 function ClientSwitcher({
   currentClient,
   onSelect,
@@ -295,7 +337,6 @@ function ClientSwitcher({
         }}
       >
         <style>{`@keyframes fadeScaleIn { from { opacity:0; transform:scale(0.96); } to { opacity:1; transform:scale(1); } }`}</style>
-        {/* Search */}
         <div className="flex items-center gap-2.5 px-4 py-3 border-b border-gray-100">
           <Search size={13} className="text-gray-400 shrink-0" />
           <input
@@ -309,7 +350,6 @@ function ClientSwitcher({
             <X size={13} />
           </button>
         </div>
-        {/* List — greyscale only */}
         <div className="max-h-64 overflow-y-auto py-1">
           {filtered.map((client) => (
             <button
@@ -320,7 +360,6 @@ function ClientSwitcher({
                 client === currentClient ? 'font-600 text-gray-900' : 'font-400 text-gray-600',
               )}
             >
-              {/* Plain greyscale initial badge */}
               <span className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 text-[10px] font-600 shrink-0">
                 {client.charAt(0)}
               </span>
@@ -336,7 +375,7 @@ function ClientSwitcher({
   );
 }
 
-// ─── Circular orbital node ────────────────────────────────────────────────────
+// ─── Skeuomorphic orbital node ────────────────────────────────────────────────
 function OrbitalNode({
   label,
   subtitle,
@@ -348,7 +387,11 @@ function OrbitalNode({
   hasOverflow,
   overflowItems,
   staggerIndex = 0,
+<<<<<<< Updated upstream
   icon: NodeIcon = undefined,
+=======
+  exiting = false,
+>>>>>>> Stashed changes
 }: {
   label: string;
   subtitle: string;
@@ -360,11 +403,87 @@ function OrbitalNode({
   hasOverflow?: boolean;
   overflowItems?: { id: string; label: string; subtitle: string }[];
   staggerIndex?: number;
+<<<<<<< Updated upstream
   icon?: IconComponent;
+=======
+  exiting?: boolean;
+>>>>>>> Stashed changes
 }) {
   const [showOverflow, setShowOverflow] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
   const x = Math.cos(angle) * radius;
   const y = Math.sin(angle) * radius;
+
+  // Neumorphic orb style — flat extruded look, same color as background
+  const NEU_BG = '#eaeaef';
+  const NEU_SHADOW_DARK = 'rgba(158,158,178,0.42)';
+  const NEU_SHADOW_LIGHT = 'rgba(255,255,255,0.86)';
+  const transition = [
+    'background 180ms ease-out',
+    'box-shadow 180ms ease-out',
+    'transform 180ms cubic-bezier(0.34,1.56,0.64,1)',
+  ].join(', ');
+
+  const orbStyle: React.CSSProperties = isPressed
+    ? {
+        width: 110,
+        height: 110,
+        borderRadius: '50%',
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 3,
+        background: '#e2e2e9',
+        boxShadow: [
+          `inset 5px 5px 12px ${NEU_SHADOW_DARK}`,
+          `inset -5px -5px 12px ${NEU_SHADOW_LIGHT}`,
+        ].join(', '),
+        border: 'none',
+        transform: 'scale(0.96)',
+        transition,
+      }
+    : highlighted
+    ? {
+        width: 110,
+        height: 110,
+        borderRadius: '50%',
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 3,
+        background: NEU_BG,
+        boxShadow: [
+          `11px 11px 24px ${NEU_SHADOW_DARK}`,
+          `-11px -11px 24px ${NEU_SHADOW_LIGHT}`,
+          '0 0 0 2px rgba(168,139,250,0.30)',
+        ].join(', '),
+        border: 'none',
+        transform: 'scale(1.05)',
+        transition,
+      }
+    : {
+        width: 110,
+        height: 110,
+        borderRadius: '50%',
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 3,
+        background: NEU_BG,
+        boxShadow: [
+          `8px 8px 18px ${NEU_SHADOW_DARK}`,
+          `-8px -8px 18px ${NEU_SHADOW_LIGHT}`,
+        ].join(', '),
+        border: 'none',
+        transform: 'scale(1)',
+        transition,
+      };
 
   return (
     <div
@@ -375,20 +494,32 @@ function OrbitalNode({
         transform: 'translate(-50%, -50%)',
       }}
     >
-      {/* Entrance animation on inner wrapper — keeps position stable */}
       <div
         className="relative flex flex-col items-center"
         style={{
-          animation: 'nodeEnter 420ms cubic-bezier(0.34,1.56,0.64,1) both',
-          animationDelay: `${staggerIndex * 45}ms`,
+          animation: exiting
+            ? `nodeExit 260ms ease-in both`
+            : `nodeEnter 460ms cubic-bezier(0.34,1.56,0.64,1) both`,
+          animationDelay: `${staggerIndex * (exiting ? 22 : 48)}ms`,
         }}
       >
         <button
           onClick={() => { if (hasOverflow) setShowOverflow((v) => !v); else onClick(); }}
           onMouseEnter={() => onHover(label)}
-          onMouseLeave={() => onHover(null)}
-          style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
+          onMouseLeave={() => { setIsPressed(false); onHover(null); }}
+          onMouseDown={() => setIsPressed(true)}
+          onMouseUp={() => setIsPressed(false)}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            padding: 0,
+            display: 'block',
+            // Prevent the global button:active scale from stacking
+            transform: 'none',
+          }}
         >
+<<<<<<< Updated upstream
           <div
             className="flex flex-col items-center justify-center"
             style={{
@@ -406,18 +537,84 @@ function OrbitalNode({
           >
             {NodeIcon && <NodeIcon size={18} style={{ color: highlighted ? '#7C3AED' : '#9CA3AF', transition: 'color 200ms ease-out', flexShrink: 0 }} />}
             <span className="text-[11px] font-800 leading-tight text-center px-2" style={{ color: highlighted ? '#5B21B6' : '#111827', fontWeight: 800, transition: 'color 200ms ease-out', maxWidth: 96 }}>
+=======
+          <div style={orbStyle}>
+            {/* LED indicator dot — small inset circle */}
+            <div
+              style={{
+                position: 'absolute',
+                top: 14,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                background: highlighted
+                  ? 'linear-gradient(135deg, #e879f9 0%, #a855f7 100%)'
+                  : 'linear-gradient(135deg, #d1d1da 0%, #c4c4cf 100%)',
+                boxShadow: highlighted
+                  ? '0 0 5px rgba(168,85,247,0.55)'
+                  : 'inset 1px 1px 2px rgba(255,255,255,0.7), inset -1px -1px 2px rgba(158,158,178,0.3)',
+                animation: 'ledPulse 3s ease-in-out infinite',
+                transition: 'background 300ms ease-out, box-shadow 300ms ease-out',
+              }}
+            />
+
+            {/* Lock icon */}
+            <Lock
+              size={17}
+              style={{
+                color: highlighted ? '#9333ea' : '#a0a0b8',
+                transition: 'color 200ms ease-out',
+                marginTop: 8,
+                flexShrink: 0,
+              }}
+            />
+
+            {/* Label */}
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                lineHeight: 1.2,
+                textAlign: 'center',
+                padding: '0 8px',
+                color: highlighted ? '#6b21a8' : '#5c5c7a',
+                transition: 'color 200ms ease-out',
+                maxWidth: 94,
+              }}
+            >
+>>>>>>> Stashed changes
               {label}
             </span>
-            <span className="text-[9px] leading-tight text-center px-2" style={{ color: highlighted ? '#8B5CF6' : '#9CA3AF', transition: 'color 200ms ease-out', maxWidth: 96 }}>
+
+            {/* Subtitle */}
+            <span
+              style={{
+                fontSize: 9,
+                lineHeight: 1.2,
+                textAlign: 'center',
+                padding: '0 8px',
+                color: highlighted ? '#a855f7' : '#9898b2',
+                transition: 'color 200ms ease-out',
+                maxWidth: 94,
+              }}
+            >
               {subtitle}
             </span>
-            {hasOverflow && <ChevronDown size={10} style={{ color: highlighted ? '#7C3AED' : '#9CA3AF' }} />}
+
+            {hasOverflow && (
+              <ChevronDown
+                size={9}
+                style={{ color: highlighted ? '#a855f7' : '#9898b2', marginTop: -1 }}
+              />
+            )}
           </div>
         </button>
 
         {hasOverflow && showOverflow && overflowItems && (
           <div
-            className="absolute top-full mt-2 z-50 bg-white rounded-xl overflow-hidden min-w-[140px]"
+            className="absolute top-full mt-2 z-50 bg-white rounded-xl overflow-hidden min-w-35"
             style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.11)', border: '1px solid rgba(0,0,0,0.06)' }}
           >
             {overflowItems.map((item, idx) => (
@@ -460,8 +657,8 @@ function DottedOrbitRing({ radius }: { radius: number }) {
             cx={cx + radius * Math.cos(a)}
             cy={cy + radius * Math.sin(a)}
             r={large ? 2 : 1.2}
-            fill={large ? '#ADADB5' : '#C8C8CE'}
-            opacity={large ? 0.7 : 0.4}
+            fill={large ? '#b8b8c8' : '#d0d0da'}
+            opacity={large ? 0.55 : 0.32}
           />
         );
       })}
@@ -469,11 +666,10 @@ function DottedOrbitRing({ radius }: { radius: number }) {
   );
 }
 
-
 // ─── AI Chat Bar ──────────────────────────────────────────────────────────────
 function AIChatBar({ clientName }: { clientName: string }) {
   const [active, setActive] = useState(false);
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handlePillClick = () => {
@@ -483,18 +679,13 @@ function AIChatBar({ clientName }: { clientName: string }) {
     }
   };
 
-  const handleBlur = () => {
-    if (!value) setActive(false);
-  };
+  const handleBlur = () => { if (!value) setActive(false); };
 
-  const handleSend = () => {
-    if (value.trim()) setValue("");
-    setActive(false);
-  };
+  const handleSend = () => { if (value.trim()) setValue(''); setActive(false); };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") handleSend();
-    if (e.key === "Escape") { setValue(""); setActive(false); }
+    if (e.key === 'Enter') handleSend();
+    if (e.key === 'Escape') { setValue(''); setActive(false); }
   };
 
   return (
@@ -502,12 +693,13 @@ function AIChatBar({ clientName }: { clientName: string }) {
       onClick={handlePillClick}
       className="flex items-center gap-2.5 w-full rounded-full px-3.5 py-2.5 cursor-text transition-shadow"
       style={{
-        background: "#FFFFFF",
-        border: "1px solid rgba(0,0,0,0.08)",
-        boxShadow: active ? "0 2px 12px rgba(0,0,0,0.10)" : "0 1px 6px rgba(0,0,0,0.06)",
+        background: '#eaeaef',
+        border: 'none',
+        boxShadow: active
+          ? 'inset 4px 4px 10px rgba(158,158,178,0.38), inset -4px -4px 10px rgba(255,255,255,0.84)'
+          : '6px 6px 14px rgba(158,158,178,0.38), -6px -6px 14px rgba(255,255,255,0.84)',
       }}
     >
-      {/* Static InScope logo — single orange dotted ring, well-spaced dots */}
       <svg width="18" height="18" viewBox="0 0 18 18" className="shrink-0">
         {Array.from({ length: 10 }, (_, i) => {
           const a = (i / 10) * Math.PI * 2;
@@ -515,7 +707,6 @@ function AIChatBar({ clientName }: { clientName: string }) {
         })}
       </svg>
 
-      {/* Instruction text OR input */}
       {active ? (
         <input
           ref={inputRef}
@@ -524,7 +715,7 @@ function AIChatBar({ clientName }: { clientName: string }) {
           onChange={(e) => setValue(e.target.value)}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
-          placeholder={"Ask anything about " + clientName + "…"}
+          placeholder={`Ask anything about ${clientName}…`}
           className="flex-1 text-[12px] text-gray-700 outline-none bg-transparent placeholder:text-gray-300"
         />
       ) : (
@@ -533,7 +724,6 @@ function AIChatBar({ clientName }: { clientName: string }) {
         </span>
       )}
 
-      {/* Send button — solid black circle with white upward arrow (Manus style) */}
       <button
         onMouseDown={(e) => { e.preventDefault(); handleSend(); }}
         className="flex items-center justify-center w-7 h-7 rounded-full shrink-0 transition-all"
@@ -559,7 +749,7 @@ export default function OrbitalStage() {
 
   const [level, setLevel] = useState(0);
   const [animKey, setAnimKey] = useState(0);
-  const [transitioning, setTransitioning] = useState(false);
+  const [exiting, setExiting] = useState(false);
   const [flyingNode, setFlyingNode] = useState<{ id: string; x: number; y: number; label: string } | null>(null);
   const [selectedClient, setSelectedClient] = useState('Northstar Inc.');
   const [selectedService, setSelectedService] = useState<string | null>(null);
@@ -568,8 +758,6 @@ export default function OrbitalStage() {
   const [showClientSwitcher, setShowClientSwitcher] = useState(false);
   const stageRef = useRef<HTMLDivElement>(null);
 
-  // Dynamic radius: scales with the smaller of viewport width/height
-  // Laptop (~1280–1440px wide): ~210px  |  Wide screen (1920px+): ~300px
   const [stageSize, setStageSize] = useState({ w: window.innerWidth, h: window.innerHeight });
   useEffect(() => {
     const onResize = () => setStageSize({ w: window.innerWidth, h: window.innerHeight });
@@ -592,7 +780,6 @@ export default function OrbitalStage() {
   })();
 
   const nodeCount = currentNodes.length + (overflowItems.length > 0 ? 1 : 0);
-  // Orbit radius: 28% of the shorter viewport dimension, clamped between 190px (small laptop) and 340px (ultra-wide)
   const RADIUS = Math.min(340, Math.max(190, Math.min(stageSize.w, stageSize.h) * 0.28));
 
   const handleNodeClick = (nodeId: string, nodeX: number, nodeY: number, nodeLabel: string) => {
@@ -601,28 +788,26 @@ export default function OrbitalStage() {
       if (sub?.route) navigate(sub.route);
       return;
     }
-    // Phase 1: fly clicked node to center
-    setTransitioning(true);
+    setExiting(true);
     setFlyingNode({ id: nodeId, x: nodeX, y: nodeY, label: nodeLabel });
     setTimeout(() => {
-      // Phase 2: commit level change, burst new nodes out
       if (level === 0) { setSelectedService(nodeId); setLevel(1); }
       else if (level === 1) { setSelectedAction(nodeId); setLevel(2); }
       setAnimKey((k) => k + 1);
       setFlyingNode(null);
-      setTransitioning(false);
-    }, 320);
+      setExiting(false);
+    }, 310);
   };
 
   const handleCenterClick = () => {
     if (level === 0) { setShowClientSwitcher(true); return; }
-    setTransitioning(true);
+    setExiting(true);
     setTimeout(() => {
       if (level === 1) { setLevel(0); setSelectedService(null); }
       else if (level === 2) { setLevel(1); setSelectedAction(null); }
       setAnimKey((k) => k + 1);
-      setTransitioning(false);
-    }, 200);
+      setExiting(false);
+    }, 240);
   };
 
   // Returns the current drill-down context label shown inside the scope at level 1+
@@ -638,11 +823,10 @@ export default function OrbitalStage() {
   return (
     <div
       className="relative w-full h-screen overflow-hidden flex flex-col"
-      style={{ background: '#F4F4F6' }}
+      style={{ background: '#eaeaef' }}
     >
-      {/* ── Top section: row 1 = wordmark centered | row 2 = greeting left + workflow builder right ── */}
+      {/* ── Top bar ── */}
       <div className="flex flex-col px-8 pt-5 pb-2 z-20 shrink-0">
-        {/* Row 1 — wordmark centered */}
         <div className="flex justify-center mb-3">
           <div className="flex items-baseline gap-1 select-none">
             <span style={{ fontSize: 22, fontWeight: 700, color: '#1F2937', letterSpacing: '-0.01em' }}>Sinaxe</span>
@@ -651,15 +835,12 @@ export default function OrbitalStage() {
           </div>
         </div>
 
-        {/* Row 2 — greeting left, workflow builder right */}
         <div className="flex items-center justify-between">
-          {/* Greeting */}
           <div className="flex flex-col">
             <span style={{ fontSize: 32, fontWeight: 700, color: '#1F2937', lineHeight: 1.1, letterSpacing: '-0.02em' }}>{greeting}, Sophia</span>
             <span style={{ fontSize: 13, color: '#9CA3AF', marginTop: 4 }}>What is in scope today?</span>
           </div>
 
-          {/* Workflow Builder — icon + label with light grey border */}
           <button
             onClick={() => navigate('/builder')}
             className="flex flex-col items-center gap-1.5 cursor-pointer shrink-0"
@@ -718,9 +899,9 @@ export default function OrbitalStage() {
       {/* ── Orbital stage ── */}
       <div ref={stageRef} className="flex-1 relative flex items-center justify-center">
 
-        {/* Dotted orbit ring */}
         <DottedOrbitRing radius={RADIUS} />
 
+<<<<<<< Updated upstream
         {/* Animated InScope logo */}
         <div className="relative flex flex-col items-center" style={{ zIndex: 10 }}>
           <InScopeLogo
@@ -754,13 +935,21 @@ export default function OrbitalStage() {
             </div>
           )}
         </div>
+=======
+        <InScopeLogo
+          clientName={selectedClient}
+          level={level}
+          levelLabel={getCenterLevelLabel()}
+          onClick={handleCenterClick}
+        />
+>>>>>>> Stashed changes
 
-        {/* Orbital nodes — staggered entrance on level change, fade out during transition */}
+        {/* Orbital nodes */}
         <div
           style={{
-            opacity: transitioning ? 0 : 1,
-            transition: 'opacity 200ms ease-out',
-            position: 'absolute', inset: 0, pointerEvents: transitioning ? 'none' : 'auto',
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: exiting ? 'none' : 'auto',
           }}
         >
           {currentNodes.map((node, i) => {
@@ -778,12 +967,15 @@ export default function OrbitalStage() {
                 highlighted={hoveredNode === node.label}
                 onHover={setHoveredNode}
                 staggerIndex={i}
+<<<<<<< Updated upstream
                 icon={node.icon}
+=======
+                exiting={exiting}
+>>>>>>> Stashed changes
               />
             );
           })}
 
-          {/* Overflow node */}
           {overflowItems.length > 0 && (() => {
             const angle = (currentNodes.length / nodeCount) * Math.PI * 2 - Math.PI / 2;
             return (
@@ -799,12 +991,13 @@ export default function OrbitalStage() {
                 hasOverflow
                 overflowItems={overflowItems}
                 staggerIndex={currentNodes.length}
+                exiting={exiting}
               />
             );
           })()}
         </div>
 
-        {/* Flying node ghost — animates from orbit position toward center, then fades */}
+        {/* Flying node ghost — skeuomorphic purple orb */}
         {flyingNode && (
           <div
             style={{
@@ -812,24 +1005,34 @@ export default function OrbitalStage() {
               left: `calc(50% + ${flyingNode.x}px)`,
               top: `calc(50% + ${flyingNode.y}px)`,
               transform: 'translate(-50%, -50%)',
-              // fly-dx/dy = offset needed to reach center from current position
               '--fly-dx': `${-flyingNode.x}px`,
               '--fly-dy': `${-flyingNode.y}px`,
-              animation: 'flyToCenter 300ms cubic-bezier(0.4,0,0.2,1) both',
+              animation: 'flyToCenter 340ms cubic-bezier(0.4,0,0.2,1) both',
               pointerEvents: 'none',
               zIndex: 50,
             } as React.CSSProperties}
           >
             <div
               style={{
-                width: 88, height: 88, borderRadius: '50%',
-                background: 'rgba(124,58,237,0.12)',
-                boxShadow: '0 0 0 2px rgba(124,58,237,0.3)',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
+                width: 94,
+                height: 94,
+                borderRadius: '50%',
+                background: '#eaeaef',
+                boxShadow: [
+                  '10px 10px 22px rgba(158,158,178,0.44)',
+                  '-10px -10px 22px rgba(255,255,255,0.88)',
+                  '0 0 0 2.5px rgba(168,85,247,0.32)',
+                ].join(', '),
+                border: 'none',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 4,
               }}
             >
-              <Lock size={15} style={{ color: '#7C3AED' }} />
-              <span style={{ fontSize: 10, fontWeight: 700, color: '#5B21B6', textAlign: 'center', maxWidth: 76, padding: '0 8px' }}>
+              <Lock size={15} style={{ color: '#9333ea' }} />
+              <span style={{ fontSize: 10, fontWeight: 600, color: '#6b21a8', textAlign: 'center', maxWidth: 78, padding: '0 8px' }}>
                 {flyingNode.label}
               </span>
             </div>
@@ -837,7 +1040,7 @@ export default function OrbitalStage() {
         )}
       </div>
 
-      {/* ── AI chat bar — centered, shorter, sits just below orbital ── */}
+      {/* ── AI chat bar ── */}
       <div className="shrink-0 flex justify-center px-6 pb-6 pt-1">
         <div className="w-full max-w-md">
           <AIChatBar clientName={selectedClient} />

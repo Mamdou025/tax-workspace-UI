@@ -777,7 +777,7 @@ export default function ClientWorkspace() {
   return (
     <AppShell
       breadcrumbs={[
-        { label: 'Practitioner Dashboard', href: '/dashboard' },
+        { label: 'InScope', href: '/' },
         { label: client.name },
       ]}
       actions={

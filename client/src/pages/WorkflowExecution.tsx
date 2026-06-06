@@ -1054,7 +1054,7 @@ function AIPanel({ onClose }: { onClose: () => void }) {
       <div className="flex items-center justify-between px-3 py-2.5 border-b border-border shrink-0">
         <div className="flex items-center gap-2">
           <Sparkles size={13} className="text-primary" />
-          <span className="text-xs font-600 text-foreground">AI Assistant</span>
+          <span className="text-xs font-600 text-foreground">Sophia</span>
         </div>
         <button onClick={onClose} className="p-1 rounded hover:bg-secondary transition-colors">
           <X size={13} className="text-muted-foreground" />
@@ -1177,7 +1177,7 @@ export default function WorkflowExecution() {
   return (
     <AppShell
       breadcrumbs={[
-        { label: 'Tax LOS Dashboard', href: '/dashboard' },
+        { label: 'InScope', href: '/' },
         { label: 'Northstar Holdings Inc.', href: '/client/northstar' },
         { label: 'FAPI Workpaper 2025' },
       ]}

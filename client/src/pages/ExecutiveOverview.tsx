@@ -363,7 +363,7 @@ export default function ExecutiveOverview() {
 
   return (
     <AppShell
-      breadcrumbs={[{ label: 'Tax BU Overview' }]}
+      breadcrumbs={[{ label: 'InScope', href: '/' }, { label: 'Tax BU Overview' }]}
       // hideTopBar not needed — breadcrumbs are shown
       actions={
         <div className="flex items-center gap-2">

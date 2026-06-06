@@ -406,7 +406,7 @@ export default function WorkflowBuilder() {
             <div className="w-5 h-5 rounded bg-primary/20 border border-primary/30 flex items-center justify-center">
               <Activity size={11} className="text-primary" />
             </div>
-            <span className="text-xs">Tax Workspace</span>
+            <span className="text-xs">InScope</span>
           </div>
         </Link>
         <span className="text-muted-foreground">/</span>

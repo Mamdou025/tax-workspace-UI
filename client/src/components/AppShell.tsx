@@ -1,4 +1,4 @@
-// AppShell — Sinaxe TaxWorkbench
+// AppShell — Sinaxe InScope
 // Design: Narrow icon-only collapsible sidebar (56px collapsed / 200px expanded).
 // Matches the Genspark-style reference: icon column on left, workspace fills the rest.
 // Grayscale + deep navy palette. No top bar — sidebar is the only chrome.
@@ -73,13 +73,13 @@ export default function AppShell({ children, breadcrumbs, actions, hideTopBar }:
           </div>
           {expanded && (
             <div className="min-w-0">
-              <div className="text-[11px] font-700 text-[#0F2044] leading-tight truncate">Sinaxe</div>
-              <div className="text-[10px] text-slate-400 leading-tight truncate">TaxWorkbench</div>
+              <div className="text-[11px] font-700 text-[#0F2044] leading-tight truncate">Sinaxe™</div>
+              <div className="text-[10px] text-slate-400 leading-tight truncate">InScope</div>
             </div>
           )}
         </div>
 
-        {/* Home button — always navigates back to Workbench */}
+        {/* Home button — always navigates back to OrbitalStage */}
         <div className="px-1.5 pt-2 pb-1">
           <Tooltip delayDuration={expanded ? 9999 : 80}>
             <TooltipTrigger asChild>
@@ -96,12 +96,12 @@ export default function AppShell({ children, breadcrumbs, actions, hideTopBar }:
                     <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r bg-[#0F2044]" />
                   )}
                   <Home size={18} className={location === '/' ? 'text-[#0F2044]' : 'text-slate-400'} />
-                  {expanded && <span className="flex-1 truncate text-[12px] font-500">Workbench</span>}
+                  {expanded && <span className="flex-1 truncate text-[12px] font-500">InScope</span>}
                 </div>
               </Link>
             </TooltipTrigger>
             {!expanded && (
-              <TooltipContent side="right" className="text-xs">Workbench (Home)</TooltipContent>
+              <TooltipContent side="right" className="text-xs">InScope (Home)</TooltipContent>
             )}
           </Tooltip>
         </div>
@@ -217,19 +217,24 @@ export default function AppShell({ children, breadcrumbs, actions, hideTopBar }:
             {!expanded && <TooltipContent side="right" className="text-xs">Expand</TooltipContent>}
           </Tooltip>
 
-          {/* User avatar */}
+          {/* Sophia — user avatar at bottom of sidebar */}
           <div className={cn(
             'flex items-center mt-1 pt-2 border-t border-sidebar-border',
             expanded ? 'gap-2 px-2.5 py-1.5' : 'justify-center py-1.5'
           )}>
-            <div className="w-7 h-7 rounded-full bg-[#0F2044] flex items-center justify-center text-[10px] font-700 text-white shrink-0">
-              MC
+            {/* Sophia avatar: small orange dot ring around initials */}
+            <div className="relative shrink-0">
+              <div className="w-7 h-7 rounded-full bg-[#0F2044] flex items-center justify-center text-[10px] font-700 text-white">
+                S
+              </div>
+              {/* Small orange dot indicator */}
+              <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-[#F97316] border border-white" />
             </div>
             {expanded && (
               <>
                 <div className="min-w-0 flex-1">
-                  <div className="text-[11px] font-500 text-slate-700 truncate">Margaret Chen</div>
-                  <div className="text-[10px] text-slate-400 truncate">Partner</div>
+                  <div className="text-[11px] font-500 text-slate-700 truncate">Sophia</div>
+                  <div className="text-[10px] text-slate-400 truncate">AI Assistant</div>
                 </div>
                 <LogOut size={13} className="text-slate-400 shrink-0" />
               </>
@@ -240,7 +245,7 @@ export default function AppShell({ children, breadcrumbs, actions, hideTopBar }:
 
       {/* ── Main content area ─────────────────────────────────────────────────── */}
       <div className="flex flex-col flex-1 min-w-0">
-        {/* Contextual top bar — only shown on inner pages (not the workbench home) */}
+        {/* Contextual top bar — only shown on inner pages (not the orbital stage home) */}
         {!hideTopBar && breadcrumbs && (
           <header className="h-12 border-b border-border flex items-center px-5 gap-3 shrink-0 bg-background/95 backdrop-blur-sm">
             <div className="flex items-center gap-1.5 flex-1 min-w-0 text-xs text-slate-500">

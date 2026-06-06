@@ -272,7 +272,7 @@ export default function Dashboard() {
   return (
     <AppShell
       breadcrumbs={[
-        { label: 'Tax BU Overview', href: '/' },
+        { label: 'InScope', href: '/' },
         { label: 'Practitioner Dashboard' }
       ]}
       actions={

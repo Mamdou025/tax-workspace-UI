@@ -616,6 +616,37 @@ export default function OrbitalStage() {
         </div>
       </div>
 
+      {/* ── Breadcrumb nav — shown when drilling into level 1 or 2 ── */}
+      {level > 0 && (
+        <div className="flex items-center gap-1.5 px-8 pb-1 z-20 shrink-0" style={{ fontSize: 12 }}>
+          <button
+            onClick={() => { setLevel(0); setSelectedService(null); setSelectedAction(null); setAnimKey(k => k + 1); }}
+            className="text-gray-400 hover:text-gray-700 transition-colors"
+          >
+            InScope
+          </button>
+          {level >= 1 && selectedService && (
+            <>
+              <span style={{ color: '#D1D5DB' }}>›</span>
+              <button
+                onClick={() => { if (level === 2) { setLevel(1); setSelectedAction(null); setAnimKey(k => k + 1); } }}
+                className={level === 2 ? 'text-gray-400 hover:text-gray-700 transition-colors' : 'text-gray-700 font-600 cursor-default'}
+              >
+                {SERVICE_LINES.find(s => s.id === selectedService)?.label}
+              </button>
+            </>
+          )}
+          {level === 2 && selectedAction && (
+            <>
+              <span style={{ color: '#D1D5DB' }}>›</span>
+              <span className="text-gray-700 font-600">
+                {(ACTIONS[selectedService!] || []).find(a => a.id === selectedAction)?.label}
+              </span>
+            </>
+          )}
+        </div>
+      )}
+
       {/* ── Orbital stage ── */}
       <div ref={stageRef} className="flex-1 relative flex items-center justify-center">
 

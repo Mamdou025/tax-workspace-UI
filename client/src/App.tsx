@@ -4,24 +4,26 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import Workbench from "./pages/Workbench";
+import OrbitalStage from "./components/OrbitalStage";
 import ExecutiveOverview from "./pages/ExecutiveOverview";
 import Dashboard from "./pages/Dashboard";
 import ClientWorkspace from "./pages/ClientWorkspace";
 import WorkflowExecution from "./pages/WorkflowExecution";
 import WorkflowBuilder from "./pages/WorkflowBuilder";
+import FapiWorksheet from "./pages/FapiWorksheet";
 
 function Router() {
   return (
     <Switch>
-      {/* Workbench is the new root — task-first home screen */}
-      <Route path="/" component={Workbench} />
-      {/* Executive BU Overview — accessible from sidebar icon */}
+      {/* InScope V2 — OrbitalStage is the root */}
+      <Route path="/" component={OrbitalStage} />
+      {/* V1 pages accessible via direct URL */}
       <Route path="/bu-overview" component={ExecutiveOverview} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/client/:id" component={ClientWorkspace} />
       <Route path="/workflow/:id" component={WorkflowExecution} />
       <Route path="/builder" component={WorkflowBuilder} />
+      <Route path="/fapi" component={FapiWorksheet} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

@@ -137,10 +137,10 @@ function InScopeLogo({ clientName, level, levelLabel, onClick }: {
   const SIZE = 170;  // larger to fit longer client names
   const CX = SIZE / 2;
   const CY = SIZE / 2;
-  const OUTER_R = 74;  // larger outer ring
-  const INNER_R = 52;  // larger inner ring
-  const outerDots = 52;  // more dots for smoother arc on larger ring
-  const innerDots = 36;
+  const OUTER_R = 57;
+  const INNER_R = 43;
+  const outerDots = 40;
+  const innerDots = 26;
 
   return (
     <>
@@ -175,44 +175,35 @@ function InScopeLogo({ clientName, level, levelLabel, onClick }: {
         />
 
         <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} style={{ position: 'absolute', inset: 0 }}>
-          {/* Purple outer ring — clockwise
-               Seamless symmetric fade: dots fade in from nothing at one end of the arc,
-               peak in the middle, then fade back to nothing at the other end.
-               This creates a continuous comet-like arc with no visible start or end point.
-               Envelope: sin(t * π) — peaks at t=0.5, zero at both t=0 and t=1.
-               The arc covers ~270° (leaving a ~90° invisible gap) so it reads as a comet.
-               Dot size is small (max 1.4px) matching the reference image.
-          */}
+          {/* Purple outer ring — clockwise, fixed fade spots */}
           <g className="logo-cw">
             {Array.from({ length: outerDots }, (_, i) => {
               const a = (i / outerDots) * Math.PI * 2;
-              // Taper starts 8 dots from each end, easeOut curve (t^0.5)
-              // so size and opacity shrink gradually then accelerate to zero.
-              const FADE = 8;
-              const distFromEnd = Math.min(i, outerDots - 1 - i);
-              const raw = distFromEnd >= FADE ? 1 : distFromEnd / FADE;
-              const env = Math.pow(raw, 0.5); // easeOut: slow start, fast finish
-              const r = 1.4 * env;
-              const opacity = 0.88 * env;
-              if (raw === 0) return null;
+              const animDur = 22;
+              const begin = -(i / outerDots) * animDur;
+              const kt = "0;0.02;0.07;0.93;0.98;1";
+              const ks = "0 0 1 1;0.42 0 1 1;0 0 1 1;0 0 0.58 1;0 0 1 1";
               return (
-                <circle key={i} cx={CX + OUTER_R * Math.cos(a)} cy={CY + OUTER_R * Math.sin(a)} r={r} fill={PURPLE} opacity={opacity} />
+                <circle key={i} cx={CX + OUTER_R * Math.cos(a)} cy={CY + OUTER_R * Math.sin(a)} r={0} fill={PURPLE}>
+                  <animate attributeName="r" values="0;0;0.15;2.0;0;0" keyTimes={kt} dur={`${animDur}s`} begin={`${begin}s`} repeatCount="indefinite" calcMode="spline" keySplines={ks} />
+                  <animate attributeName="opacity" values="0;0;0.85;0.85;0;0" keyTimes={kt} dur={`${animDur}s`} begin={`${begin}s`} repeatCount="indefinite" calcMode="spline" keySplines={ks} />
+                </circle>
               );
             })}
           </g>
-          {/* Orange inner ring — counter-clockwise, same taper */}
+          {/* Orange inner ring — counter-clockwise, fixed fade spots */}
           <g className="logo-ccw">
             {Array.from({ length: innerDots }, (_, i) => {
               const a = (i / innerDots) * Math.PI * 2;
-              const FADE = 6;
-              const distFromEnd = Math.min(i, innerDots - 1 - i);
-              const raw = distFromEnd >= FADE ? 1 : distFromEnd / FADE;
-              const env = Math.pow(raw, 0.5);
-              const r = 1.2 * env;
-              const opacity = 0.88 * env;
-              if (raw === 0) return null;
+              const animDur = 15;
+              const begin = -((innerDots - i) / innerDots) * animDur;
+              const kt = "0;0.02;0.07;0.93;0.98;1";
+              const ks = "0 0 1 1;0.42 0 1 1;0 0 1 1;0 0 0.58 1;0 0 1 1";
               return (
-                <circle key={i} cx={CX + INNER_R * Math.cos(a)} cy={CY + INNER_R * Math.sin(a)} r={r} fill={ORANGE} opacity={opacity} />
+                <circle key={i} cx={CX + INNER_R * Math.cos(a)} cy={CY + INNER_R * Math.sin(a)} r={0} fill={ORANGE}>
+                  <animate attributeName="r" values="0;0;0.15;1.7;0;0" keyTimes={kt} dur={`${animDur}s`} begin={`${begin}s`} repeatCount="indefinite" calcMode="spline" keySplines={ks} />
+                  <animate attributeName="opacity" values="0;0;0.85;0.85;0;0" keyTimes={kt} dur={`${animDur}s`} begin={`${begin}s`} repeatCount="indefinite" calcMode="spline" keySplines={ks} />
+                </circle>
               );
             })}
           </g>
@@ -352,7 +343,6 @@ function OrbitalNode({
   hasOverflow,
   overflowItems,
   staggerIndex = 0,
-  icon: NodeIcon = undefined,
   exiting = false,
 }: {
   label: string;
@@ -365,7 +355,6 @@ function OrbitalNode({
   hasOverflow?: boolean;
   overflowItems?: { id: string; label: string; subtitle: string }[];
   staggerIndex?: number;
-  icon?: IconComponent;
   exiting?: boolean;
 }) {
   const [showOverflow, setShowOverflow] = useState(false);
@@ -478,23 +467,52 @@ function OrbitalNode({
             transform: 'none',
           }}
         >
-          <div
-            className="flex flex-col items-center justify-center"
-            style={{
-              width: 110,
-              height: 110,
-              borderRadius: '50%',
-              background: highlighted ? 'rgba(124,58,237,0.08)' : '#FFFFFF',
-              boxShadow: highlighted
-                ? '0 6px 24px rgba(124,58,237,0.18), 0 2px 8px rgba(124,58,237,0.10), 0 0 0 1.5px rgba(124,58,237,0.20)'
-                : '0 3px 12px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.05)',
-              transform: highlighted ? 'scale(1.08)' : 'scale(1)',
-              transition: 'background 200ms ease-out, box-shadow 200ms ease-out, transform 200ms cubic-bezier(0.23,1,0.32,1)',
-              gap: 4,
-            }}
-          >
-            {NodeIcon && <NodeIcon size={18} style={{ color: highlighted ? '#7C3AED' : '#9CA3AF', transition: 'color 200ms ease-out', flexShrink: 0 }} />}
-            <span className="text-[11px] font-800 leading-tight text-center px-2" style={{ color: highlighted ? '#5B21B6' : '#111827', fontWeight: 800, transition: 'color 200ms ease-out', maxWidth: 96 }}>
+          <div style={orbStyle}>
+            {/* LED indicator dot — small inset circle */}
+            <div
+              style={{
+                position: 'absolute',
+                top: 14,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                background: highlighted
+                  ? 'linear-gradient(135deg, #e879f9 0%, #a855f7 100%)'
+                  : 'linear-gradient(135deg, #d1d1da 0%, #c4c4cf 100%)',
+                boxShadow: highlighted
+                  ? '0 0 5px rgba(168,85,247,0.55)'
+                  : 'inset 1px 1px 2px rgba(255,255,255,0.7), inset -1px -1px 2px rgba(158,158,178,0.3)',
+                animation: 'ledPulse 3s ease-in-out infinite',
+                transition: 'background 300ms ease-out, box-shadow 300ms ease-out',
+              }}
+            />
+
+            {/* Lock icon */}
+            <Lock
+              size={17}
+              style={{
+                color: highlighted ? '#9333ea' : '#a0a0b8',
+                transition: 'color 200ms ease-out',
+                marginTop: 8,
+                flexShrink: 0,
+              }}
+            />
+
+            {/* Label */}
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                lineHeight: 1.2,
+                textAlign: 'center',
+                padding: '0 8px',
+                color: highlighted ? '#6b21a8' : '#5c5c7a',
+                transition: 'color 200ms ease-out',
+                maxWidth: 94,
+              }}
+            >
               {label}
             </span>
 
@@ -811,39 +829,12 @@ export default function OrbitalStage() {
 
         <DottedOrbitRing radius={RADIUS} />
 
-        {/* Animated InScope logo */}
-        <div className="relative flex flex-col items-center" style={{ zIndex: 10 }}>
-          <InScopeLogo
-            clientName={selectedClient}
-            level={level}
-            levelLabel={getCenterContextLabel()}
-            onClick={handleCenterClick}
-          />
-          {/* Client name outside the ring — visible at level 1+ */}
-          {level > 0 && (
-            <div
-              className="flex flex-col items-center"
-              style={{
-                marginTop: 6,
-                animation: 'fadeIn 220ms ease-out both',
-                pointerEvents: 'none',
-              }}
-            >
-              <span
-                style={{
-                  fontSize: 13,
-                  fontWeight: 800,
-                  color: '#374151',
-                  lineHeight: 1.2,
-                  textAlign: 'center',
-                  letterSpacing: '-0.01em',
-                }}
-              >
-                {selectedClient}
-              </span>
-            </div>
-          )}
-        </div>
+        <InScopeLogo
+          clientName={selectedClient}
+          level={level}
+          levelLabel={getCenterContextLabel()}
+          onClick={handleCenterClick}
+        />
 
         {/* Orbital nodes */}
         <div
@@ -868,7 +859,6 @@ export default function OrbitalStage() {
                 highlighted={hoveredNode === node.label}
                 onHover={setHoveredNode}
                 staggerIndex={i}
-                icon={node.icon}
                 exiting={exiting}
               />
             );

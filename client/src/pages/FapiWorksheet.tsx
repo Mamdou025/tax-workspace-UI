@@ -15,10 +15,9 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// ─── Brand colours ────────────────────────────────────────────────────────────
-const PURPLE = '#5E2E93';
-const ORANGE = '#DA5E2C';
-const ORANGE_DARK = '#B83A00';
+// ─── Brand colours (matching OrbitalStage exactly) ──────────────────────────
+const PURPLE = '#6B21A8';
+const ORANGE = '#C2410C';
 
 // ─── Milestone menu items (clockwise order) ───────────────────────────────────
 type MilestoneId =
@@ -547,10 +546,9 @@ function FapiCalculator({
 
     return (
       <div key={row.id}>
-        {/* Section header */}
+        {/* Section header — no colored bar */}
         {row.isSection ? (
           <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-100">
-            <div className="w-1 h-4 rounded-full" style={{ background: `linear-gradient(180deg, ${PURPLE}, ${ORANGE})` }} />
             <span className="text-[10px] font-700 text-gray-500 uppercase tracking-widest">{row.label}</span>
           </div>
         ) : (
@@ -777,6 +775,79 @@ function FapiCalculator({
 }
 
 // ─── Main FapiWorksheet ───────────────────────────────────────────────────────
+
+// ─── InScope animated logo trigger (exact OrbitalStage style) ────────────────
+function InScopeLogoTrigger({
+  onClick, activeMilestone, doneCount, total,
+}: {
+  open: boolean;
+  onClick: () => void;
+  activeMilestone: MilestoneId | null;
+  doneCount: number;
+  total: number;
+}) {
+  const SIZE = 120;
+  const CX = SIZE / 2;
+  const CY = SIZE / 2;
+  const OUTER_R = 52;
+  const INNER_R = 36;
+  const outerDots = 44;
+  const innerDots = 30;
+  const centerLabel = activeMilestone
+    ? (MILESTONES.find((m) => m.id === activeMilestone)?.label ?? '')
+    : '';
+  return (
+    <>
+      <style>{`
+        @keyframes fapi-cw  { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes fapi-ccw { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
+        .fapi-cw  { animation: fapi-cw  9s linear infinite; transform-origin: ${CX}px ${CY}px; }
+        .fapi-ccw { animation: fapi-ccw 6s linear infinite; transform-origin: ${CX}px ${CY}px; }
+      `}</style>
+      <button onClick={onClick} aria-label="Open milestone menu"
+        className="relative select-none transition-transform duration-200 hover:scale-105 active:scale-95"
+        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, width: SIZE, height: SIZE }}
+      >
+        <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} style={{ position: 'absolute', inset: 0 }}>
+          <g className="fapi-cw">
+            {Array.from({ length: outerDots }, (_, i) => {
+              const a = (i / outerDots) * Math.PI * 2;
+              const FADE = 6; const dist = Math.min(i, outerDots - 1 - i);
+              const raw = dist >= FADE ? 1 : dist / FADE;
+              const env = Math.pow(raw, 0.5);
+              if (raw === 0) return null;
+              return <circle key={i} cx={CX + OUTER_R * Math.cos(a)} cy={CY + OUTER_R * Math.sin(a)} r={1.4 * env} fill={PURPLE} opacity={0.88 * env} />;
+            })}
+          </g>
+          <g className="fapi-ccw">
+            {Array.from({ length: innerDots }, (_, i) => {
+              const a = (i / innerDots) * Math.PI * 2;
+              const FADE = 5; const dist = Math.min(i, innerDots - 1 - i);
+              const raw = dist >= FADE ? 1 : dist / FADE;
+              const env = Math.pow(raw, 0.5);
+              if (raw === 0) return null;
+              return <circle key={i} cx={CX + INNER_R * Math.cos(a)} cy={CY + INNER_R * Math.sin(a)} r={1.2 * env} fill={ORANGE} opacity={0.88 * env} />;
+            })}
+          </g>
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ pointerEvents: 'none', gap: 2 }}>
+          {centerLabel ? (
+            <>
+              <span style={{ fontSize: 9, fontWeight: 800, color: '#111827', lineHeight: 1.2, textAlign: 'center', maxWidth: INNER_R * 2 - 8, display: 'block', wordBreak: 'break-word' }}>{centerLabel}</span>
+              <span style={{ fontSize: 6, color: '#9CA3AF', marginTop: 2 }}>active</span>
+            </>
+          ) : (
+            <>
+              <span style={{ fontSize: 9, fontWeight: 800, color: '#111827', lineHeight: 1.2, textAlign: 'center', maxWidth: INNER_R * 2 - 8, display: 'block' }}>FAPI</span>
+              <span style={{ fontSize: 6, color: '#9CA3AF', marginTop: 2 }}>{doneCount}/{total} done</span>
+            </>
+          )}
+        </div>
+      </button>
+    </>
+  );
+}
+
 export default function FapiWorksheet() {
   const [, navigate] = useLocation();
 
@@ -799,13 +870,14 @@ export default function FapiWorksheet() {
     <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
       {/* Top bar */}
       <div className="flex items-center gap-3 px-4 py-2.5 bg-white border-b border-gray-100 z-20 shrink-0">
-        {/* InScope logo */}
+        {/* InScope logo — matches AppShell wordmark */}
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-0.5 select-none hover:opacity-80 transition-opacity"
+          className="flex items-center gap-1.5 select-none hover:opacity-80 transition-opacity"
         >
-          <span className="text-sm font-700 tracking-tight" style={{ color: PURPLE }}>In</span>
-          <span className="text-sm font-700 tracking-tight" style={{ color: ORANGE }}>Scope</span>
+          <span className="text-sm font-700 tracking-tight text-gray-900">Sinaxe</span>
+          <span className="text-[10px] text-gray-300 font-400">™</span>
+          <span className="text-sm font-700 tracking-tight" style={{ color: PURPLE }}>InScope</span>
         </button>
 
         {/* Breadcrumb */}
@@ -865,15 +937,16 @@ export default function FapiWorksheet() {
             <>
               {/* Right panel header */}
               <div className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100 shrink-0">
-                <button
-                  onClick={() => { setRightPanelOpen(false); setActiveMilestone(null); }}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <ChevronRight size={16} />
-                </button>
-                <span className="text-xs text-gray-400 font-500">
+                <span className="text-xs font-600 text-gray-700 flex-1">
                   {activeMilestone ? MILESTONES.find((m) => m.id === activeMilestone)?.label : 'Panel'}
                 </span>
+                <button
+                  onClick={() => { setRightPanelOpen(false); setActiveMilestone(null); }}
+                  className="text-gray-400 hover:text-gray-700 transition-colors p-1 rounded hover:bg-gray-100"
+                  title="Close panel"
+                >
+                  <X size={14} />
+                </button>
               </div>
 
               {/* Right panel content */}
@@ -884,12 +957,27 @@ export default function FapiWorksheet() {
           )}
         </div>
 
-        {/* BOTTOM CENTER — Orbital milestone menu trigger */}
+        {/* ANIMATED INSCOPE LOGO — bottom-center when panel closed, anchored to panel divider when open */}
         <div
-          className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center"
-          style={{ marginLeft: rightPanelOpen ? '0' : '0' }}
+          className="absolute z-30 flex flex-col items-center"
+          style={{
+            ...(rightPanelOpen
+              ? {
+                  // Anchored to the divider between left (62%) and right (38%) panels
+                  right: '38%',
+                  bottom: '24px',
+                  transform: 'translateX(50%)',
+                }
+              : {
+                  // Bottom-center of the full content area
+                  left: '50%',
+                  bottom: '24px',
+                  transform: 'translateX(-50%)',
+                }),
+            transition: 'all 300ms cubic-bezier(0.23, 1, 0.32, 1)',
+          }}
         >
-          {/* Orbital menu nodes */}
+          {/* Orbital menu nodes fan out above */}
           <div className="relative">
             <OrbitalMilestoneMenu
               open={menuOpen}
@@ -898,48 +986,14 @@ export default function FapiWorksheet() {
               activeMilestone={activeMilestone}
             />
 
-            {/* Menu trigger button */}
-            <button
+            {/* Exact InScope animated logo — same as OrbitalStage level 0 */}
+            <InScopeLogoTrigger
+              open={menuOpen}
               onClick={() => setMenuOpen((v) => !v)}
-              aria-label="Open milestone menu"
-              className={cn(
-                'relative w-14 h-14 rounded-full bg-white border border-gray-200 shadow-lg',
-                'flex flex-col items-center justify-center',
-                'hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95',
-              )}
-              style={{ boxShadow: '0 4px 20px rgba(94,46,147,0.15), 0 1px 4px rgba(0,0,0,0.06)' }}
-            >
-              {/* Dot rings */}
-              <MiniDotRing
-                radius={28}
-                dotCount={20}
-                dotRadius={1.5}
-                color1={PURPLE}
-                color2={ORANGE}
-                animDir={1}
-                duration={20}
-              />
-              <MiniDotRing
-                radius={18}
-                dotCount={14}
-                dotRadius={1}
-                color1={ORANGE_DARK}
-                color2={ORANGE}
-                animDir={-1}
-                duration={14}
-              />
-
-              {/* InScope text */}
-              <div className="relative z-10 text-center leading-none select-none">
-                <div className="text-[8px] font-700 tracking-wider" style={{ color: PURPLE }}>In</div>
-                <div className="text-[8px] font-700 tracking-wider" style={{ color: ORANGE }}>Scope</div>
-              </div>
-            </button>
-          </div>
-
-          {/* MENU label */}
-          <div className="mt-1.5 text-[9px] font-600 text-gray-400 uppercase tracking-widest select-none">
-            Menu
+              activeMilestone={activeMilestone}
+              doneCount={doneCount}
+              total={MILESTONES.length}
+            />
           </div>
         </div>
       </div>

@@ -11,7 +11,7 @@ import {
   ChevronRight, ChevronDown,
   Plus, Download, Upload, X, Check, FileText,
   MapPin, ClipboardCheck, Eye,
-  PenLine, Package, Sparkles, Clock
+  PenLine, Package, Sparkles, Clock, Mail
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -26,6 +26,7 @@ type MilestoneId =
   | 'upload'
   | 'sources-mapping'
   | 'validate'
+  | 'irl'
   | 'review'
   | 'sign-off'
   | 'deliver';
@@ -43,6 +44,7 @@ const MILESTONES: Milestone[] = [
   { id: 'upload',          label: 'Upload',          icon: <Upload size={14} />,          done: true  },
   { id: 'sources-mapping', label: 'Sources Mapping', icon: <MapPin size={14} />,          done: true  },
   { id: 'validate',        label: 'Validate',        icon: <ClipboardCheck size={14} />,  done: false },
+  { id: 'irl',             label: 'IRL',             icon: <Mail size={14} />,            done: false },
   { id: 'review',          label: 'Review',          icon: <Eye size={14} />,             done: false },
   { id: 'sign-off',        label: 'Sign-off',        icon: <PenLine size={14} />,         done: false },
   { id: 'deliver',         label: 'Deliver',         icon: <Package size={14} />,         done: false },
@@ -216,7 +218,7 @@ function OrbitalMilestoneMenu({
   if (!open) return null;
 
   // Fan out in a semicircle above the trigger (upward arc)
-  const RADIUS = 110;
+  const RADIUS = 175;
   const count = MILESTONES.length;
 
   return (
@@ -495,6 +497,61 @@ function RightPanelContent({ milestone }: { milestone: MilestoneId | null }) {
               <div className="text-[11px] font-600 text-gray-800 mt-1">{row.value}</div>
             </div>
           ))}
+        </div>
+      </div>
+    );
+  }
+
+  // IRL — Additional client info requests
+  if (milestone === 'irl') {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="px-4 py-3 border-b border-gray-100">
+          <div className="flex items-center gap-2">
+            <Mail size={14} style={{ color: PURPLE }} />
+            <span className="text-xs font-600 text-gray-700">Information Request Letter</span>
+            <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-500">2 pending</span>
+          </div>
+          <p className="text-[10px] text-gray-400 mt-1">Additional client information needed to complete the FAPI calculation</p>
+        </div>
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          {[
+            { id: 1, question: 'Please confirm the annual average CAD/EUR exchange rate used for the fiscal year.', status: 'pending', due: 'Jun 15' },
+            { id: 2, question: 'Provide the breakdown of property income between rental and interest components.', status: 'pending', due: 'Jun 15' },
+            { id: 3, question: 'Confirm whether any income was recharacterized as active business income under ss.95(2).', status: 'received', due: 'Jun 10' },
+            { id: 4, question: 'Provide the opening and closing surplus balances for SAS Paris for the fiscal year.', status: 'received', due: 'Jun 10' },
+          ].map((item) => (
+            <div key={item.id} className="bg-gray-50 rounded-xl p-3 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-[11px] text-gray-700 leading-relaxed flex-1">{item.question}</p>
+                <span className={cn(
+                  'shrink-0 text-[9px] px-1.5 py-0.5 rounded-full font-600',
+                  item.status === 'received' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700',
+                )}>
+                  {item.status === 'received' ? '✓ Received' : '⏳ Pending'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[9px] text-gray-400">Due {item.due}</span>
+                {item.status === 'pending' && (
+                  <button className="text-[9px] font-600 px-2 py-0.5 rounded" style={{ background: PURPLE + '18', color: PURPLE }}>Send reminder</button>
+                )}
+              </div>
+            </div>
+          ))}
+          <button
+            className="w-full mt-2 flex items-center justify-center gap-1.5 text-[11px] font-600 py-2 rounded-xl border-2 border-dashed border-gray-200 text-gray-400 hover:border-gray-300 hover:text-gray-600 transition-colors"
+          >
+            <Plus size={12} /> Add request
+          </button>
+        </div>
+        <div className="px-4 py-3 border-t border-gray-100 shrink-0">
+          <button
+            className="w-full py-2 rounded-xl text-white text-xs font-600 flex items-center justify-center gap-2"
+            style={{ background: `linear-gradient(135deg, ${PURPLE}, ${ORANGE})` }}
+          >
+            <Mail size={12} /> Send IRL to client
+          </button>
         </div>
       </div>
     );
@@ -909,14 +966,15 @@ export default function FapiWorksheet() {
         </div>
       </div>
 
-      {/* Main content area */}
+            {/* Main content area */}
       <div className="flex flex-1 overflow-hidden relative">
-        {/* LEFT PANEL — Calculator */}
+        {/* LEFT PANEL — Calculator, shrinks when right panel opens */}
         <div
-          className={cn(
-            'flex flex-col overflow-hidden transition-all duration-300 border-r border-gray-100',
-            rightPanelOpen ? 'flex-[0_0_62%]' : 'flex-1',
-          )}
+          className="flex flex-col overflow-hidden border-r border-gray-100"
+          style={{
+            flex: rightPanelOpen ? '0 0 62%' : '1 1 0%',
+            transition: 'flex-basis 300ms cubic-bezier(0.23, 1, 0.32, 1)',
+          }}
         >
           <FapiCalculator
             affiliate={affiliate}
@@ -926,35 +984,33 @@ export default function FapiWorksheet() {
           />
         </div>
 
-        {/* RIGHT PANEL — Collapsible */}
+        {/* RIGHT PANEL — slides in from the right edge */}
         <div
-          className={cn(
-            'flex flex-col overflow-hidden bg-white transition-all duration-300',
-            rightPanelOpen ? 'flex-[0_0_38%]' : 'w-0',
-          )}
+          className="absolute top-0 right-0 bottom-0 flex flex-col bg-white border-l border-gray-100 shadow-[-4px_0_16px_rgba(0,0,0,0.06)]"
+          style={{
+            width: '38%',
+            transform: rightPanelOpen ? 'translateX(0)' : 'translateX(100%)',
+            transition: 'transform 300ms cubic-bezier(0.23, 1, 0.32, 1)',
+            pointerEvents: rightPanelOpen ? 'auto' : 'none',
+          }}
         >
-          {rightPanelOpen && (
-            <>
-              {/* Right panel header */}
-              <div className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100 shrink-0">
-                <span className="text-xs font-600 text-gray-700 flex-1">
-                  {activeMilestone ? MILESTONES.find((m) => m.id === activeMilestone)?.label : 'Panel'}
-                </span>
-                <button
-                  onClick={() => { setRightPanelOpen(false); setActiveMilestone(null); }}
-                  className="text-gray-400 hover:text-gray-700 transition-colors p-1 rounded hover:bg-gray-100"
-                  title="Close panel"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-
-              {/* Right panel content */}
-              <div className="flex-1 overflow-hidden">
-                <RightPanelContent milestone={activeMilestone} />
-              </div>
-            </>
-          )}
+          {/* Right panel header */}
+          <div className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100 shrink-0">
+            <span className="text-xs font-600 text-gray-700 flex-1">
+              {activeMilestone ? MILESTONES.find((m) => m.id === activeMilestone)?.label : 'Panel'}
+            </span>
+            <button
+              onClick={() => { setRightPanelOpen(false); setActiveMilestone(null); }}
+              className="text-gray-400 hover:text-gray-700 transition-colors p-1 rounded hover:bg-gray-100"
+              title="Close panel"
+            >
+              <X size={14} />
+            </button>
+          </div>
+          {/* Right panel content */}
+          <div className="flex-1 overflow-hidden">
+            <RightPanelContent milestone={activeMilestone} />
+          </div>
         </div>
 
         {/* ANIMATED INSCOPE LOGO — bottom-center when panel closed, anchored to panel divider when open */}

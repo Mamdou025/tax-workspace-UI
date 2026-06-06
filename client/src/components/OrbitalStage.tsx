@@ -107,7 +107,7 @@ const SUB_ACTIONS: Record<string, { id: string; label: string; subtitle: string;
     { id: 'fixed-assets',label: 'Fixed Assets',subtitle: 'Fixed assets continuity', overflow: true },
   ],
   comply: [
-    { id: 't1134-comply', label: 'T1134',    subtitle: 'Foreign affiliate filing' },
+    { id: 't1134-comply', label: 'T1134',    subtitle: 'Foreign affiliate filing', route: '/t1134' },
     { id: 't106',         label: 'T106',     subtitle: 'Related-party transactions' },
     { id: 'pillar2',      label: 'Pillar 2', subtitle: 'Global minimum tax' },
     { id: 'rollover',     label: 'Rollover', subtitle: 'Section 85 rollover',         overflow: true },
@@ -147,8 +147,8 @@ function InScopeLogo({ clientName, level, levelLabel, onClick }: {
       <style>{`
         @keyframes logo-cw  { from { transform: rotate(0deg);   } to { transform: rotate(360deg);  } }
         @keyframes logo-ccw { from { transform: rotate(0deg);   } to { transform: rotate(-360deg); } }
-        .logo-cw  { animation: logo-cw  22s linear infinite; transform-origin: ${CX}px ${CY}px; }
-        .logo-ccw { animation: logo-ccw 15s linear infinite; transform-origin: ${CX}px ${CY}px; }
+        .logo-cw  { animation: logo-cw  9s linear infinite; transform-origin: ${CX}px ${CY}px; }
+        .logo-ccw { animation: logo-ccw 6s linear infinite; transform-origin: ${CX}px ${CY}px; }
       `}</style>
       <button
         onClick={onClick}
@@ -445,9 +445,10 @@ function OrbitalNode({
       <div
         className="relative flex flex-col items-center"
         style={{
-          animation: exiting
-            ? `nodeExit 260ms ease-in both`
-            : `nodeEnter 460ms cubic-bezier(0.34,1.56,0.64,1) both`,
+          animationName: exiting ? 'nodeExit' : 'nodeEnter',
+          animationDuration: exiting ? '260ms' : '460ms',
+          animationTimingFunction: exiting ? 'ease-in' : 'cubic-bezier(0.34,1.56,0.64,1)',
+          animationFillMode: 'both' as const,
           animationDelay: `${staggerIndex * (exiting ? 22 : 48)}ms`,
         }}
       >
@@ -829,12 +830,37 @@ export default function OrbitalStage() {
 
         <DottedOrbitRing radius={RADIUS} />
 
-        <InScopeLogo
-          clientName={selectedClient}
-          level={level}
-          levelLabel={getCenterContextLabel()}
-          onClick={handleCenterClick}
-        />
+        <div className="relative flex flex-col items-center" style={{ zIndex: 10 }}>
+          <InScopeLogo
+            clientName={selectedClient}
+            level={level}
+            levelLabel={getCenterContextLabel()}
+            onClick={handleCenterClick}
+          />
+          {/* Client name outside the ring — visible at level 1+ */}
+          {level > 0 && (
+            <div
+              style={{
+                marginTop: 6,
+                animation: 'fadeIn 220ms ease-out both',
+                pointerEvents: 'none',
+                textAlign: 'center',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 13,
+                  fontWeight: 800,
+                  color: '#374151',
+                  lineHeight: 1.2,
+                  letterSpacing: '-0.01em',
+                }}
+              >
+                {selectedClient}
+              </span>
+            </div>
+          )}
+        </div>
 
         {/* Orbital nodes */}
         <div

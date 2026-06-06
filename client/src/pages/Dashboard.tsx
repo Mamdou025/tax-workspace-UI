@@ -273,7 +273,7 @@ export default function Dashboard() {
     <AppShell
       breadcrumbs={[
         { label: 'InScope', href: '/' },
-        { label: 'Practitioner Dashboard' }
+        { label: 'My Engagements' }
       ]}
       actions={
         <button
@@ -290,7 +290,7 @@ export default function Dashboard() {
         {/* ── Page header ──────────────────────────────────────────────────── */}
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-xl font-700 text-[#0F2044]">Practitioner Dashboard</h1>
+            <h1 className="text-xl font-700 text-[#0F2044]">My Engagements</h1>
             <p className="text-sm text-slate-400 mt-0.5">
               Margaret Chen, Partner · Fiscal Year 2024–2025 · As of May 18, 2025
             </p>

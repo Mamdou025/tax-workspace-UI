@@ -11,7 +11,16 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { Lock, Search, X, ChevronDown } from 'lucide-react';
+import {
+  Search, X, ChevronDown,
+  // Service line icons
+  Globe, Handshake, Receipt, Building, Scale, Lightbulb, Flag,
+  // Action icons
+  Send, Calculator, ClipboardCheck, FileText, Activity, BookOpen,
+  // Sub-action / fallback
+  Lock, Mail, Calendar, TrendingUp, FileSpreadsheet, Database,
+  Layers, Shield, PenLine, DollarSign, Package
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const PURPLE = '#6B21A8';
@@ -29,79 +38,85 @@ const CLIENTS = [
   'Redwood Industries',
 ];
 
-const SERVICE_LINES = [
-  { id: 'ict', label: 'ICT',               subtitle: 'International Corporate Tax' },
-  { id: 'ma',  label: 'M&A',               subtitle: 'Mergers & Acquisitions' },
-  { id: 'ind', label: 'Indirect Tax',       subtitle: 'GST/HST & Customs' },
-  { id: 'pe',  label: 'Private Enterprise', subtitle: 'Owner-managed business' },
-  { id: 'tp',  label: 'Transfer Pricing',   subtitle: 'OECD-aligned pricing' },
-  { id: 'ti',  label: 'Tax Incentives',     subtitle: 'SR&ED, Credits' },
-  { id: 'us',  label: 'US Tax',             subtitle: 'Cross-border US matters' },
+type IconComponent = React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>;
+
+const SERVICE_LINES: { id: string; label: string; subtitle: string; icon: IconComponent }[] = [
+  { id: 'ict', label: 'ICT',               subtitle: 'International Corporate Tax', icon: Globe },
+  { id: 'ma',  label: 'M&A',               subtitle: 'Mergers & Acquisitions',       icon: Handshake },
+  { id: 'ind', label: 'Indirect Tax',       subtitle: 'GST/HST & Customs',           icon: Receipt },
+  { id: 'pe',  label: 'Private Enterprise', subtitle: 'Owner-managed business',       icon: Building },
+  { id: 'tp',  label: 'Transfer Pricing',   subtitle: 'OECD-aligned pricing',         icon: Scale },
+  { id: 'ti',  label: 'Tax Incentives',     subtitle: 'SR&ED, Credits',               icon: Lightbulb },
+  { id: 'us',  label: 'US Tax',             subtitle: 'Cross-border US matters',      icon: Flag },
 ];
 
-const ACTIONS: Record<string, { id: string; label: string; subtitle: string }[]> = {
+const ACTIONS: Record<string, { id: string; label: string; subtitle: string; icon: IconComponent }[]> = {
   ict: [
-    { id: 'request',   label: 'Request',   subtitle: 'IRL, Engagement' },
-    { id: 'calculate', label: 'Calculate', subtitle: 'FAPI, T1134, EIFEL' },
-    { id: 'comply',    label: 'Comply',    subtitle: 'T1134, T106, Pillar 2' },
-    { id: 'advise',    label: 'Advise',    subtitle: 'Memos & decks' },
+    { id: 'request',   label: 'Request',   subtitle: 'IRL, Engagement',      icon: Send },
+    { id: 'calculate', label: 'Calculate', subtitle: 'FAPI, T1134, EIFEL',   icon: Calculator },
+    { id: 'comply',    label: 'Comply',    subtitle: 'T1134, T106, Pillar 2', icon: ClipboardCheck },
+    { id: 'advise',    label: 'Advise',    subtitle: 'Memos & decks',          icon: FileText },
+    { id: 'analyze',   label: 'Analyze',   subtitle: 'Dashboards',             icon: Activity },
+    { id: 'research',  label: 'Research',  subtitle: 'ITA, rulings, treaties', icon: BookOpen },
   ],
   ma:  [
-    { id: 'diligence', label: 'Diligence', subtitle: 'Tax due diligence' },
-    { id: 'structure', label: 'Structure', subtitle: 'Deal structuring' },
-    { id: 'model',     label: 'Model',     subtitle: 'Tax modelling' },
-    { id: 'memo',      label: 'Memo',      subtitle: 'Advisory memos' },
+    { id: 'diligence', label: 'Diligence', subtitle: 'Tax due diligence',  icon: Search },
+    { id: 'structure', label: 'Structure', subtitle: 'Deal structuring',   icon: Layers },
+    { id: 'model',     label: 'Model',     subtitle: 'Tax modelling',      icon: Calculator },
+    { id: 'memo',      label: 'Memo',      subtitle: 'Advisory memos',     icon: FileText },
   ],
   ind: [
-    { id: 'gst',      label: 'GST/HST',  subtitle: 'Compliance & planning' },
-    { id: 'customs',  label: 'Customs',  subtitle: 'Import/export duties' },
-    { id: 'excise',   label: 'Excise',   subtitle: 'Excise tax matters' },
-    { id: 'recovery', label: 'Recovery', subtitle: 'Input tax credits' },
+    { id: 'gst',      label: 'GST/HST',  subtitle: 'Compliance & planning', icon: ClipboardCheck },
+    { id: 'customs',  label: 'Customs',  subtitle: 'Import/export duties',  icon: Package },
+    { id: 'excise',   label: 'Excise',   subtitle: 'Excise tax matters',    icon: Receipt },
+    { id: 'recovery', label: 'Recovery', subtitle: 'Input tax credits',     icon: TrendingUp },
   ],
   pe:  [
-    { id: 'compliance', label: 'Compliance', subtitle: 'Corporate returns' },
-    { id: 'planning',   label: 'Planning',   subtitle: 'Owner remuneration' },
-    { id: 'estate',     label: 'Estate',     subtitle: 'Succession planning' },
-    { id: 'reorg',      label: 'Reorg',      subtitle: 'Corporate restructuring' },
+    { id: 'compliance', label: 'Compliance', subtitle: 'Corporate returns',      icon: ClipboardCheck },
+    { id: 'planning',   label: 'Planning',   subtitle: 'Owner remuneration',     icon: FileText },
+    { id: 'estate',     label: 'Estate',     subtitle: 'Succession planning',    icon: Building },
+    { id: 'reorg',      label: 'Reorg',      subtitle: 'Corporate restructuring', icon: Layers },
   ],
   tp:  [
-    { id: 'benchmark', label: 'Benchmark', subtitle: 'Comparables analysis' },
-    { id: 'document',  label: 'Document',  subtitle: 'TP documentation' },
-    { id: 'defend',    label: 'Defend',    subtitle: 'Audit defence' },
-    { id: 'plan',      label: 'Plan',      subtitle: 'TP planning' },
+    { id: 'benchmark', label: 'Benchmark', subtitle: 'Comparables analysis', icon: Scale },
+    { id: 'document',  label: 'Document',  subtitle: 'TP documentation',     icon: FileText },
+    { id: 'defend',    label: 'Defend',    subtitle: 'Audit defence',         icon: Shield },
+    { id: 'plan',      label: 'Plan',      subtitle: 'TP planning',           icon: Activity },
   ],
   ti:  [
-    { id: 'sred',    label: 'SR&ED',   subtitle: 'R&D tax credits' },
-    { id: 'credits', label: 'Credits', subtitle: 'Investment tax credits' },
-    { id: 'grants',  label: 'Grants',  subtitle: 'Government incentives' },
-    { id: 'review',  label: 'Review',  subtitle: 'Eligibility review' },
+    { id: 'sred',    label: 'SR&ED',   subtitle: 'R&D tax credits',          icon: Lightbulb },
+    { id: 'credits', label: 'Credits', subtitle: 'Investment tax credits',   icon: DollarSign },
+    { id: 'grants',  label: 'Grants',  subtitle: 'Government incentives',    icon: Globe },
+    { id: 'review',  label: 'Review',  subtitle: 'Eligibility review',       icon: ClipboardCheck },
   ],
   us:  [
-    { id: 'compliance',  label: 'Compliance',  subtitle: 'US tax returns' },
-    { id: 'planning',    label: 'Planning',    subtitle: 'Cross-border planning' },
-    { id: 'treaty',      label: 'Treaty',      subtitle: 'Treaty positions' },
-    { id: 'withholding', label: 'Withholding', subtitle: 'WHT compliance' },
+    { id: 'compliance',  label: 'Compliance',  subtitle: 'US tax returns',        icon: FileSpreadsheet },
+    { id: 'planning',    label: 'Planning',    subtitle: 'Cross-border planning', icon: Activity },
+    { id: 'treaty',      label: 'Treaty',      subtitle: 'Treaty positions',      icon: Scale },
+    { id: 'withholding', label: 'Withholding', subtitle: 'WHT compliance',        icon: PenLine },
   ],
 };
 
-const SUB_ACTIONS: Record<string, { id: string; label: string; subtitle: string; route?: string; overflow?: boolean }[]> = {
+const SUB_ACTIONS: Record<string, { id: string; label: string; subtitle: string; icon?: IconComponent; route?: string; overflow?: boolean }[]> = {
   request: [
-    { id: 'irl',        label: 'IRL',         subtitle: 'Info request letter' },
-    { id: 'engagement', label: 'Eng. Letter',  subtitle: 'Engagement letter' },
-    { id: 'mfe',        label: 'MFE',          subtitle: 'Multi-firm engagement' },
-    { id: 'billing',    label: 'Billing',      subtitle: 'Fee arrangements' },
-    { id: 'meeting',    label: 'Meeting',      subtitle: 'Client meetings' },
+    { id: 'irl',        label: 'IRL',         subtitle: 'Info request letter',  icon: Mail },
+    { id: 'engagement', label: 'Eng. Letter',  subtitle: 'Engagement letter',    icon: FileText },
+    { id: 'mfe',        label: 'MFE',          subtitle: 'Multi-firm engagement', icon: Handshake },
+    { id: 'billing',    label: 'Billing',      subtitle: 'Fee arrangements',     icon: DollarSign },
+    { id: 'meeting',    label: 'Meeting',      subtitle: 'Client meetings',      icon: Calendar },
   ],
   calculate: [
-    { id: 'fapi',        label: 'FAPI',        subtitle: 'FAPI calculator',     route: '/fapi' },
-    { id: 't1134',       label: 'T1134',        subtitle: 'Foreign affiliate' },
-    { id: 'eifel',       label: 'EIFEL',        subtitle: 'Interest limitation' },
-    { id: 'safe-income', label: 'Safe Income',  subtitle: 'Safe income calc',    overflow: true },
-    { id: 'surplus',     label: 'Surplus',      subtitle: 'Surplus accounts',    overflow: true },
-    { id: 'ep-analysis', label: 'EP Analysis',  subtitle: 'E&P analysis',        overflow: true },
+    { id: 'fapi',        label: 'FAPI',        subtitle: 'FAPI calculator',      route: '/fapi' },
+    { id: 'surplus',     label: 'Surplus',     subtitle: 'Surplus accounts' },
+    { id: 'eifel',       label: 'EIFEL',       subtitle: 'Interest limitation' },
+    { id: 'safe-income', label: 'Safe Income', subtitle: 'Safe income calc' },
+    { id: 'tcp',         label: 'TCP',         subtitle: 'Thin cap planning' },
+    { id: 'ep-analysis', label: 'EP Analysis', subtitle: 'E&P analysis',          overflow: true },
+    { id: 'ul-analysis', label: 'UL Analysis', subtitle: 'UL analysis',            overflow: true },
+    { id: 'fixed-assets',label: 'Fixed Assets',subtitle: 'Fixed assets continuity', overflow: true },
   ],
   comply: [
-    { id: 't1134-comply', label: 'T1134',    subtitle: 'Annual filing' },
+    { id: 't1134-comply', label: 'T1134',    subtitle: 'Foreign affiliate filing' },
     { id: 't106',         label: 'T106',     subtitle: 'Related-party transactions' },
     { id: 'pillar2',      label: 'Pillar 2', subtitle: 'Global minimum tax' },
     { id: 'rollover',     label: 'Rollover', subtitle: 'Section 85 rollover',         overflow: true },
@@ -113,6 +128,11 @@ const SUB_ACTIONS: Record<string, { id: string; label: string; subtitle: string;
     { id: 'shares-deck', label: 'Shares Deck', subtitle: 'Share sale analysis' },
     { id: 'hybrid-deck', label: 'Hybrid Deck', subtitle: 'Hybrid structure' },
     { id: 'memo-advise', label: 'Memo',         subtitle: 'Advisory memo' },
+  ],
+  analyze: [
+    { id: 'client-workspace', label: 'Client Workspace', subtitle: 'Active workflows & team', route: '/client/northstar' },
+    { id: 'my-engagements',   label: 'My Engagements',   subtitle: 'LOS overview & pipeline', route: '/dashboard' },
+    { id: 'tax-attributes',   label: 'Tax Attributes',   subtitle: 'Coming soon' },
   ],
 };
 
@@ -126,13 +146,13 @@ function InScopeLogo({ clientName, level, levelLabel, onClick }: {
   levelLabel: string;
   onClick: () => void;
 }) {
-  const SIZE = 130;
+  const SIZE = 170;  // larger to fit longer client names
   const CX = SIZE / 2;
   const CY = SIZE / 2;
-  const OUTER_R = 58;
-  const INNER_R = 38;
-  const outerDots = 40;
-  const innerDots = 26;
+  const OUTER_R = 74;  // larger outer ring
+  const INNER_R = 52;  // larger inner ring
+  const outerDots = 52;  // more dots for smoother arc on larger ring
+  const innerDots = 36;
 
   return (
     <>
@@ -148,29 +168,42 @@ function InScopeLogo({ clientName, level, levelLabel, onClick }: {
         style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, width: SIZE, height: SIZE }}
       >
         <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} style={{ position: 'absolute', inset: 0 }}>
-          {/* Purple outer ring — clockwise, comet tail baked into dot positions */}
+          {/* Purple outer ring — clockwise
+               Seamless symmetric fade: dots fade in from nothing at one end of the arc,
+               peak in the middle, then fade back to nothing at the other end.
+               This creates a continuous comet-like arc with no visible start or end point.
+               Envelope: sin(t * π) — peaks at t=0.5, zero at both t=0 and t=1.
+               The arc covers ~270° (leaving a ~90° invisible gap) so it reads as a comet.
+               Dot size is small (max 1.4px) matching the reference image.
+          */}
           <g className="logo-cw">
             {Array.from({ length: outerDots }, (_, i) => {
               const a = (i / outerDots) * Math.PI * 2;
-              // i=0 is the head dot; trailing dots fade and shrink
-              const t = i / (outerDots - 1); // 0 = head, 1 = tail
-              // Cubic ease-in: slow fade near head, accelerates toward tail
-              const ease = t * t * t;
-              const opacity = 1 - ease;
-              const r = Math.max(0.2, 2.2 * (1 - ease));
+              // Taper starts 8 dots from each end, easeOut curve (t^0.5)
+              // so size and opacity shrink gradually then accelerate to zero.
+              const FADE = 8;
+              const distFromEnd = Math.min(i, outerDots - 1 - i);
+              const raw = distFromEnd >= FADE ? 1 : distFromEnd / FADE;
+              const env = Math.pow(raw, 0.5); // easeOut: slow start, fast finish
+              const r = 1.4 * env;
+              const opacity = 0.88 * env;
+              if (raw === 0) return null;
               return (
                 <circle key={i} cx={CX + OUTER_R * Math.cos(a)} cy={CY + OUTER_R * Math.sin(a)} r={r} fill={PURPLE} opacity={opacity} />
               );
             })}
           </g>
-          {/* Orange inner ring — counter-clockwise, comet tail baked into dot positions */}
+          {/* Orange inner ring — counter-clockwise, same taper */}
           <g className="logo-ccw">
             {Array.from({ length: innerDots }, (_, i) => {
               const a = (i / innerDots) * Math.PI * 2;
-              const t = i / (innerDots - 1);
-              const ease = t * t * t;
-              const opacity = 1 - ease;
-              const r = Math.max(0.2, 2.0 * (1 - ease));
+              const FADE = 6;
+              const distFromEnd = Math.min(i, innerDots - 1 - i);
+              const raw = distFromEnd >= FADE ? 1 : distFromEnd / FADE;
+              const env = Math.pow(raw, 0.5);
+              const r = 1.2 * env;
+              const opacity = 0.88 * env;
+              if (raw === 0) return null;
               return (
                 <circle key={i} cx={CX + INNER_R * Math.cos(a)} cy={CY + INNER_R * Math.sin(a)} r={r} fill={ORANGE} opacity={opacity} />
               );
@@ -178,20 +211,52 @@ function InScopeLogo({ clientName, level, levelLabel, onClick }: {
           </g>
         </svg>
 
-        {/* Client name / level label — centered over the SVG */}
+        {/* Center label — context-aware:
+             level 0: client name + "tap to switch"
+             level 1+: context label (service/action) + "← back"
+             Client name at level 1+ is rendered OUTSIDE the ring by the parent.
+        */}
         <div
           className="absolute inset-0 flex flex-col items-center justify-center"
-          style={{ pointerEvents: 'none' }}
+          style={{ pointerEvents: 'none', gap: 2 }}
         >
-          {level === 0 ? (
+          {levelLabel ? (
+            // Level 1+: context label fills the orange ring, bold
             <>
-              <span className="text-[10px] font-700 text-gray-800 leading-tight text-center px-3">{clientName}</span>
-              <span className="text-[7.5px] text-gray-400 mt-0.5">tap to switch</span>
+              <span
+                style={{
+                  fontSize: 13,
+                  fontWeight: 800,
+                  color: '#111827',
+                  lineHeight: 1.15,
+                  textAlign: 'center',
+                  maxWidth: INNER_R * 2 - 10,
+                  display: 'block',
+                  wordBreak: 'break-word',
+                }}
+              >
+                {levelLabel}
+              </span>
+              <span style={{ fontSize: 7, color: '#9CA3AF', marginTop: 4 }}>← back</span>
             </>
           ) : (
+            // Level 0: client name fills the orange ring
             <>
-              <span className="text-[9px] font-600 text-gray-700 leading-tight text-center px-3">{levelLabel}</span>
-              <span className="text-[7.5px] text-gray-400 mt-0.5">← back</span>
+              <span
+                style={{
+                  fontSize: 13,
+                  fontWeight: 800,
+                  color: '#111827',
+                  lineHeight: 1.15,
+                  textAlign: 'center',
+                  maxWidth: INNER_R * 2 - 10,
+                  display: 'block',
+                  wordBreak: 'break-word',
+                }}
+              >
+                {clientName}
+              </span>
+              <span style={{ fontSize: 7, color: '#9CA3AF', marginTop: 4 }}>tap to switch</span>
             </>
           )}
         </div>
@@ -283,6 +348,7 @@ function OrbitalNode({
   hasOverflow,
   overflowItems,
   staggerIndex = 0,
+  icon: NodeIcon = undefined,
 }: {
   label: string;
   subtitle: string;
@@ -294,6 +360,7 @@ function OrbitalNode({
   hasOverflow?: boolean;
   overflowItems?: { id: string; label: string; subtitle: string }[];
   staggerIndex?: number;
+  icon?: IconComponent;
 }) {
   const [showOverflow, setShowOverflow] = useState(false);
   const x = Math.cos(angle) * radius;
@@ -337,8 +404,8 @@ function OrbitalNode({
               gap: 4,
             }}
           >
-            <Lock size={18} style={{ color: highlighted ? '#7C3AED' : '#9CA3AF', transition: 'color 200ms ease-out', flexShrink: 0 }} />
-            <span className="text-[11px] font-700 leading-tight text-center px-2" style={{ color: highlighted ? '#5B21B6' : '#374151', transition: 'color 200ms ease-out', maxWidth: 96 }}>
+            {NodeIcon && <NodeIcon size={18} style={{ color: highlighted ? '#7C3AED' : '#9CA3AF', transition: 'color 200ms ease-out', flexShrink: 0 }} />}
+            <span className="text-[11px] font-800 leading-tight text-center px-2" style={{ color: highlighted ? '#5B21B6' : '#111827', fontWeight: 800, transition: 'color 200ms ease-out', maxWidth: 96 }}>
               {label}
             </span>
             <span className="text-[9px] leading-tight text-center px-2" style={{ color: highlighted ? '#8B5CF6' : '#9CA3AF', transition: 'color 200ms ease-out', maxWidth: 96 }}>
@@ -510,11 +577,11 @@ export default function OrbitalStage() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  type SimpleNode = { id: string; label: string; subtitle: string; route?: string; overflow?: boolean };
+  type SimpleNode = { id: string; label: string; subtitle: string; icon?: IconComponent; route?: string; overflow?: boolean };
 
   const currentNodes: SimpleNode[] = (() => {
-    if (level === 0) return SERVICE_LINES.map((s) => ({ id: s.id, label: s.label, subtitle: s.subtitle }));
-    if (level === 1 && selectedService) return ACTIONS[selectedService] || [];
+    if (level === 0) return SERVICE_LINES.map((s) => ({ id: s.id, label: s.label, subtitle: s.subtitle, icon: s.icon }));
+    if (level === 1 && selectedService) return (ACTIONS[selectedService] || []).map(a => ({ ...a }));
     if (level === 2 && selectedAction) return (SUB_ACTIONS[selectedAction] || []).filter((s) => !s.overflow);
     return [];
   })();
@@ -558,7 +625,8 @@ export default function OrbitalStage() {
     }, 200);
   };
 
-  const getCenterLevelLabel = () => {
+  // Returns the current drill-down context label shown inside the scope at level 1+
+  const getCenterContextLabel = () => {
     if (level === 1) return SERVICE_LINES.find((s) => s.id === selectedService)?.label || '';
     if (level === 2) return (ACTIONS[selectedService!] || []).find((a) => a.id === selectedAction)?.label || '';
     return '';
@@ -653,13 +721,39 @@ export default function OrbitalStage() {
         {/* Dotted orbit ring */}
         <DottedOrbitRing radius={RADIUS} />
 
-        {/* Animated InScope logo with client name at center */}
-        <InScopeLogo
-          clientName={selectedClient}
-          level={level}
-          levelLabel={getCenterLevelLabel()}
-          onClick={handleCenterClick}
-        />
+        {/* Animated InScope logo */}
+        <div className="relative flex flex-col items-center" style={{ zIndex: 10 }}>
+          <InScopeLogo
+            clientName={selectedClient}
+            level={level}
+            levelLabel={getCenterContextLabel()}
+            onClick={handleCenterClick}
+          />
+          {/* Client name outside the ring — visible at level 1+ */}
+          {level > 0 && (
+            <div
+              className="flex flex-col items-center"
+              style={{
+                marginTop: 6,
+                animation: 'fadeIn 220ms ease-out both',
+                pointerEvents: 'none',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 13,
+                  fontWeight: 800,
+                  color: '#374151',
+                  lineHeight: 1.2,
+                  textAlign: 'center',
+                  letterSpacing: '-0.01em',
+                }}
+              >
+                {selectedClient}
+              </span>
+            </div>
+          )}
+        </div>
 
         {/* Orbital nodes — staggered entrance on level change, fade out during transition */}
         <div
@@ -684,6 +778,7 @@ export default function OrbitalStage() {
                 highlighted={hoveredNode === node.label}
                 onHover={setHoveredNode}
                 staggerIndex={i}
+                icon={node.icon}
               />
             );
           })}

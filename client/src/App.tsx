@@ -11,7 +11,8 @@ import ClientWorkspace from "./pages/ClientWorkspace";
 import WorkflowExecution from "./pages/WorkflowExecution";
 import WorkflowBuilder from "./pages/WorkflowBuilder";
 import FapiWorksheet from "@/pages/FapiWorksheet";
-import T1134Worksheet from "@/pages/T1134Worksheet";
+import T1134Worksheet from '@/pages/T1134Worksheet';
+import SurplusWorksheet from '@/pages/SurplusWorksheet';
 
 function Router() {
   return (
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/builder" component={WorkflowBuilder} />
       <Route path="/fapi" component={FapiWorksheet} />
       <Route path="/t1134" component={T1134Worksheet} />
+      <Route path="/surplus" component={SurplusWorksheet} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

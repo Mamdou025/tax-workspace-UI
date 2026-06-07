@@ -44,7 +44,7 @@ const SERVICE_LINES: { id: string; label: string; subtitle: string; icon: IconCo
 const ACTIONS: Record<string, { id: string; label: string; subtitle: string; icon: IconComponent }[]> = {
   ict: [
     { id: 'request',   label: 'Request',   subtitle: 'IRL, Engagement',      icon: Send },
-    { id: 'calculate', label: 'Calculate', subtitle: 'FAPI, T1134, EIFEL',   icon: Calculator },
+    { id: 'calculate', label: 'Calculate', subtitle: 'FAPI, Surplus, EIFEL', icon: Calculator },
     { id: 'comply',    label: 'Comply',    subtitle: 'T1134, T106, Pillar 2', icon: ClipboardCheck },
     { id: 'advise',    label: 'Advise',    subtitle: 'Memos & decks',          icon: FileText },
     { id: 'analyze',   label: 'Analyze',   subtitle: 'Dashboards',             icon: Activity },
@@ -98,7 +98,7 @@ const SUB_ACTIONS: Record<string, { id: string; label: string; subtitle: string;
   ],
   calculate: [
     { id: 'fapi',        label: 'FAPI',        subtitle: 'FAPI calculator',      route: '/fapi' },
-    { id: 'surplus',     label: 'Surplus',     subtitle: 'Surplus accounts' },
+    { id: 'surplus',     label: 'Surplus',     subtitle: 'Surplus accounts',    route: '/surplus' },
     { id: 'eifel',       label: 'EIFEL',       subtitle: 'Interest limitation' },
     { id: 'safe-income', label: 'Safe Income', subtitle: 'Safe income calc' },
     { id: 'tcp',         label: 'TCP',         subtitle: 'Thin cap planning' },

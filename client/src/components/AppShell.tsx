@@ -217,24 +217,22 @@ export default function AppShell({ children, breadcrumbs, actions, hideTopBar }:
             {!expanded && <TooltipContent side="right" className="text-xs">Expand</TooltipContent>}
           </Tooltip>
 
-          {/* Sophia — user avatar at bottom of sidebar */}
+          {/* User avatar at bottom of sidebar */}
           <div className={cn(
             'flex items-center mt-1 pt-2 border-t border-sidebar-border',
             expanded ? 'gap-2 px-2.5 py-1.5' : 'justify-center py-1.5'
           )}>
-            {/* Sophia avatar: small orange dot ring around initials */}
             <div className="relative shrink-0">
               <div className="w-7 h-7 rounded-full bg-[#0F2044] flex items-center justify-center text-[10px] font-700 text-white">
                 S
               </div>
-              {/* Small orange dot indicator */}
               <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-[#F97316] border border-white" />
             </div>
             {expanded && (
               <>
                 <div className="min-w-0 flex-1">
                   <div className="text-[11px] font-500 text-slate-700 truncate">Sophia</div>
-                  <div className="text-[10px] text-slate-400 truncate">AI Assistant</div>
+                  <div className="text-[10px] text-slate-400 truncate">Tax Manager</div>
                 </div>
                 <LogOut size={13} className="text-slate-400 shrink-0" />
               </>

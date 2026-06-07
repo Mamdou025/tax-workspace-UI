@@ -9,9 +9,10 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Link } from 'wouter';
 import {
   ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
-  Download, Upload, FileText, Mail, Eye, PenLine, Send,
-  MessageSquare, Users, ClipboardCheck, X, AlertTriangle,
+  Download, Upload, FileText, Mail, Eye, PenLine,
+  Users, ClipboardCheck, X,
   Link2, Info, Plus, Check, Building2, Globe,
+  Sparkles, MapPin, Package,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -19,21 +20,21 @@ import {
   type ForeignAffiliate, type YesNo,
 } from '@/lib/t1134Data';
 
-// ─── Brand colours ────────────────────────────────────────────────────────────
-const PURPLE = '#7C3AED';
-const ORANGE = '#F97316';
+// ─── Brand colours (matching FAPI/OrbitalStage exactly) ─────────────────────
+const PURPLE = '#6B21A8';
+const ORANGE = '#C2410C';
 
 // ─── Milestone definitions ────────────────────────────────────────────────────
-type MilestoneId = 'sophia' | 'client-context' | 'upload' | 'irl' | 'validate' | 'review' | 'signoff' | 'file';
-const MILESTONES: { id: MilestoneId; label: string; icon: React.ComponentType<{ size?: number; className?: string; color?: string }> }[] = [
-  { id: 'sophia',         label: 'Sophia',         icon: MessageSquare },
-  { id: 'client-context', label: 'Client',          icon: Users },
-  { id: 'upload',         label: 'Upload',          icon: Upload },
-  { id: 'irl',            label: 'IRL',             icon: Mail },
-  { id: 'validate',       label: 'Validate',        icon: ClipboardCheck },
-  { id: 'review',         label: 'Review',          icon: Eye },
-  { id: 'signoff',        label: 'Sign-off',        icon: PenLine },
-  { id: 'file',           label: 'File',            icon: Send },
+type MilestoneId = 'ai-assistant' | 'client-context' | 'upload' | 'irl' | 'validate' | 'review' | 'signoff' | 'file';
+const MILESTONES: { id: MilestoneId; label: string; icon: React.ReactElement; done: boolean }[] = [
+  { id: 'ai-assistant',    label: 'AI Assistant',         icon: <Sparkles size={14} />,       done: false },
+  { id: 'client-context', label: 'Client Context', icon: <FileText size={14} />,       done: true  },
+  { id: 'upload',         label: 'Upload',          icon: <Upload size={14} />,          done: true  },
+  { id: 'irl',            label: 'IRL',             icon: <Mail size={14} />,            done: false },
+  { id: 'validate',       label: 'Validate',        icon: <ClipboardCheck size={14} />,  done: false },
+  { id: 'review',         label: 'Review',          icon: <Eye size={14} />,             done: false },
+  { id: 'signoff',        label: 'Sign-off',        icon: <PenLine size={14} />,         done: false },
+  { id: 'file',           label: 'File',            icon: <Package size={14} />,         done: false },
 ];
 
 // ─── Animated InScope Logo ────────────────────────────────────────────────────
@@ -101,51 +102,61 @@ function MiniDotRing({ size = 120, onClick }: { size?: number; onClick?: () => v
 
 // ─── Orbital Milestone Menu ───────────────────────────────────────────────────
 function OrbitalMilestoneMenu({
-  active, onSelect, onClose,
+  open, active, onSelect, onClose,
 }: {
+  open: boolean;
   active: MilestoneId | null;
   onSelect: (id: MilestoneId) => void;
   onClose: () => void;
 }) {
+  if (!open) return null;
   const RADIUS = 175;
-  const N = MILESTONES.length;
+  const count = MILESTONES.length;
   return (
-    <div
-      style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: RADIUS * 2 + 80, height: RADIUS + 80, pointerEvents: 'none' }}
-    >
+    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-50" style={{ width: 1, height: 1 }}>
       {MILESTONES.map((m, i) => {
-        const angle = Math.PI + (i / (N - 1)) * Math.PI;
-        const x = RADIUS + Math.cos(angle) * RADIUS;
-        const y = RADIUS - Math.sin(angle) * RADIUS;
-        const Icon = m.icon;
+        // Spread from -160° to -20° (upward arc, left to right)
+        const startAngle = -160 * (Math.PI / 180);
+        const endAngle = -20 * (Math.PI / 180);
+        const angle = startAngle + (i / (count - 1)) * (endAngle - startAngle);
+        const x = Math.cos(angle) * RADIUS;
+        const y = Math.sin(angle) * RADIUS;
         const isActive = active === m.id;
         return (
           <button
             key={m.id}
-            onClick={() => { onSelect(m.id); }}
-            style={{
-              position: 'absolute',
-              left: x - 28,
-              top: y - 28,
-              width: 56,
-              height: 56,
-              pointerEvents: 'auto',
-              borderRadius: '50%',
-              border: isActive ? `2px solid ${PURPLE}` : '1.5px solid #e5e7eb',
-              background: isActive ? '#f5f3ff' : '#fff',
-              boxShadow: isActive ? `0 0 0 3px ${PURPLE}22` : '0 2px 8px rgba(0,0,0,0.08)',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              gap: 2, cursor: 'pointer',
-              transition: 'all 0.18s cubic-bezier(0.23,1,0.32,1)',
-            }}
+            onClick={() => { onSelect(m.id); onClose(); }}
+            className="absolute flex flex-col items-center gap-1 group transition-all duration-200 hover:scale-110"
+            style={{ left: x, top: y, transform: 'translate(-50%, -50%)' }}
           >
-            <Icon size={16} color={isActive ? PURPLE : '#6b7280'} />
-            <span style={{ fontSize: 9, fontWeight: 700, color: isActive ? PURPLE : '#9ca3af', letterSpacing: '0.04em' }}>
-              {m.label.toUpperCase()}
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-200 relative"
+              style={isActive
+                ? { background: `linear-gradient(135deg, ${PURPLE}, ${ORANGE})`, borderColor: 'transparent', color: '#fff', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }
+                : m.done
+                ? { background: '#fff', borderColor: '#4ade80', color: '#16a34a' }
+                : { background: '#fff', borderColor: '#d1d5db', color: '#6b7280' }
+              }
+            >
+              {m.icon}
+              {m.done && !isActive && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-green-500 flex items-center justify-center">
+                  <Check size={9} className="text-white" strokeWidth={3} />
+                </span>
+              )}
+            </div>
+            <span className="text-[9px] font-500 whitespace-nowrap" style={{ color: isActive ? '#1f2937' : '#6b7280' }}>
+              {m.label}
             </span>
           </button>
         );
       })}
+      <button
+        onClick={onClose}
+        className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-gray-400 hover:text-gray-600 text-xs flex items-center gap-1"
+      >
+        <X size={12} /> close
+      </button>
     </div>
   );
 }
@@ -202,16 +213,7 @@ function LinkedCell({ value, currency = '' }: { value: number; currency?: string
   );
 }
 
-// ─── Flag cell ────────────────────────────────────────────────────────────────
-function FlagCell({ flags }: { flags: string[] }) {
-  if (!flags.length) return null;
-  return (
-    <span title={flags.join('\n')} style={{ display: 'inline-flex', alignItems: 'center', gap: 2, color: '#f59e0b', fontSize: 11 }}>
-      <AlertTriangle size={11} />
-      {flags.length}
-    </span>
-  );
-}
+// FlagCell removed — no alert triangles shown in column headers
 
 // ─── Section accordion ───────────────────────────────────────────────────────
 function SectionAccordion({
@@ -288,7 +290,7 @@ function RightPanelContent({
 }) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const titles: Record<MilestoneId, string> = {
-    sophia: 'Sophia — AI Assistant',
+    'ai-assistant': 'AI Assistant',
     'client-context': 'Client Context',
     upload: 'Upload Documents',
     irl: 'Information Request Letter',
@@ -313,10 +315,10 @@ function RightPanelContent({
 
       {/* Panel body */}
       <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
-        {milestone === 'sophia' && (
+        {milestone === 'ai-assistant' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ background: '#f5f3ff', borderRadius: 8, padding: 12, fontSize: 12, color: '#4b5563', lineHeight: 1.6 }}>
-              <strong style={{ color: PURPLE }}>Sophia</strong> has analysed the 2023 T1134 and identified the following items requiring attention for the 2024 filing:
+              <strong style={{ color: PURPLE }}>AI</strong> has analysed the 2023 T1134 and identified the following items requiring attention for the 2024 filing:
             </div>
             {[
               { fa: 'GmbH Berlin', msg: 'ACB of common shares increased. Confirm nature of capital contribution and update Section 1B.' },
@@ -332,7 +334,7 @@ function RightPanelContent({
             ))}
             <div style={{ marginTop: 8 }}>
               <input
-                placeholder="Ask Sophia about this T1134…"
+                placeholder="Ask the AI assistant…"
                 style={{
                   width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #e5e7eb',
                   fontSize: 12, outline: 'none', boxSizing: 'border-box',
@@ -387,10 +389,10 @@ function RightPanelContent({
               { name: 'FS_SASParis_2024.xlsx', size: '890 KB', status: 'pending' },
             ].map((f, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: '#f9fafb', borderRadius: 8, fontSize: 12 }}>
-                <FileText size={14} color={f.status === 'done' ? '#10b981' : '#f59e0b'} />
+                <FileText size={14} color="#9ca3af" />
                 <span style={{ flex: 1, color: '#374151' }}>{f.name}</span>
                 <span style={{ color: '#9ca3af' }}>{f.size}</span>
-                {f.status === 'done' ? <Check size={12} color="#10b981" /> : <span style={{ fontSize: 10, color: '#f59e0b', fontWeight: 700 }}>PENDING</span>}
+                {f.status === 'done' ? <Check size={12} color="#9ca3af" /> : <span style={{ fontSize: 10, color: '#9ca3af', fontWeight: 700 }}>PENDING</span>}
               </div>
             ))}
           </div>
@@ -399,7 +401,7 @@ function RightPanelContent({
         {milestone === 'irl' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, color: '#6b7280', flex: 1 }}>Sophia generated {SOPHIA_IRL_QUESTIONS.flatMap(g => g.questions).length} questions</span>
+              <span style={{ fontSize: 12, color: '#6b7280', flex: 1 }}>AI generated {SOPHIA_IRL_QUESTIONS.flatMap(g => g.questions).length} questions</span>
               <span style={{ fontSize: 11, background: '#fef3c7', color: '#92400e', padding: '2px 8px', borderRadius: 9999, fontWeight: 700 }}>
                 {SOPHIA_IRL_QUESTIONS.flatMap(g => g.questions).filter(q => q.priority === 'high').length} high priority
               </span>
@@ -415,7 +417,7 @@ function RightPanelContent({
                     borderLeft: `3px solid ${q.priority === 'high' ? '#ef4444' : q.priority === 'medium' ? '#f59e0b' : '#d1d5db'}`,
                   }}>
                     {q.fa !== 'all' && (
-                      <div style={{ fontSize: 10, fontWeight: 700, color: PURPLE, marginBottom: 3 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: '#6b7280', marginBottom: 3 }}>
                         {FOREIGN_AFFILIATES.find(f => f.id === q.fa)?.shortName}
                       </div>
                     )}
@@ -450,12 +452,12 @@ function RightPanelContent({
             ].map((item, i) => (
               <div key={i} style={{
                 display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px',
-                background: item.status === 'fail' ? '#fef2f2' : item.status === 'warn' ? '#fffbeb' : '#f0fdf4',
+                background: '#f9fafb',
                 borderRadius: 8, fontSize: 12,
               }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: item.status === 'fail' ? '#ef4444' : item.status === 'warn' ? '#f59e0b' : '#10b981' }} />
+                <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: item.status === 'fail' ? '#fca5a5' : item.status === 'warn' ? '#fde68a' : '#a7f3d0' }} />
                 <span style={{ flex: 1, color: '#374151' }}>{item.label}</span>
-                {item.count && <span style={{ fontSize: 11, fontWeight: 700, color: item.status === 'fail' ? '#ef4444' : '#f59e0b' }}>{item.count}</span>}
+                {item.count && <span style={{ fontSize: 11, fontWeight: 700, color: '#6b7280' }}>{item.count}</span>}
               </div>
             ))}
           </div>
@@ -502,7 +504,7 @@ function RightPanelContent({
                     <div style={{ fontSize: 10, color: '#9ca3af' }}>{s.date}</div>
                   </div>
                 ) : (
-                  <button style={{ padding: '6px 12px', background: PURPLE, color: '#fff', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+                  <button style={{ padding: '6px 12px', background: '#374151', color: '#fff', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
                     Sign
                   </button>
                 )}
@@ -631,8 +633,8 @@ function PartIIGrid() {
             {/* Country banner */}
             <div style={{
               display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px',
-              background: '#f5f3ff', borderBottom: '1px solid #ede9fe', borderRight: '1px solid #e5e7eb',
-              fontSize: 11, fontWeight: 700, color: PURPLE, minWidth: group.ids.length * 140,
+              background: '#f9fafb', borderBottom: '1px solid #e5e7eb', borderRight: '1px solid #e5e7eb',
+              fontSize: 11, fontWeight: 600, color: '#6b7280', minWidth: group.ids.length * 140,
             }}>
               <span>{group.flag}</span> {group.country}
             </div>
@@ -650,15 +652,12 @@ function PartIIGrid() {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
                       <span style={{
-                        fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 9999,
-                        background: fa.tier === 'CFA' ? '#ede9fe' : '#f3f4f6',
-                        color: fa.tier === 'CFA' ? PURPLE : '#6b7280',
+                        fontSize: 9, fontWeight: 600, color: '#9ca3af',
                       }}>{fa.tier}</span>
-                      <FlagCell flags={fa.flags} />
                     </div>
-                    {/* Completion bar */}
-                    <div style={{ marginTop: 4, height: 3, background: '#f3f4f6', borderRadius: 9999, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${fa.completionPct}%`, background: fa.completionPct >= 90 ? '#10b981' : fa.completionPct >= 60 ? '#f59e0b' : '#ef4444', borderRadius: 9999 }} />
+                    {/* Completion bar — subtle */}
+                    <div style={{ marginTop: 4, height: 2, background: '#f0f0f0', borderRadius: 9999, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${fa.completionPct}%`, background: fa.completionPct >= 90 ? '#a7f3d0' : fa.completionPct >= 60 ? '#fde68a' : '#fca5a5', borderRadius: 9999 }} />
                     </div>
                   </div>
                 );
@@ -676,7 +675,7 @@ function PartIIGrid() {
         <GridRow label="NAICS Code(s)" fas={fas} render={fa => <span style={{ fontSize: 11 }}>{fa.naicsCodes.join(', ')}</span>} />
         <GridRow label="Functional Currency" fas={fas} render={fa => <span style={{ fontWeight: 700 }}>{fa.functionalCurrency}</span>} />
         <GridRow label="Tier (CFA / NCFA)" fas={fas} render={fa => (
-          <span style={{ fontWeight: 700, color: fa.tier === 'CFA' ? PURPLE : '#6b7280' }}>{fa.tier}</span>
+          <span style={{ fontWeight: 600, color: '#6b7280' }}>{fa.tier}</span>
         )} />
         <GridRow label="First-Time Filing?" fas={fas} render={fa => <YesNoToggle value={fa.firstTimeFiling} />} />
         <GridRow label="Multiple Tax Years?" fas={fas} render={fa => <YesNoToggle value={fa.multipleTaxYears} />} />
@@ -858,66 +857,95 @@ export default function T1134Worksheet() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#f9fafb', fontFamily: 'system-ui, sans-serif' }}>
-      {/* ── Top bar ────────────────────────────────────────────────────────── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 12, padding: '0 20px', height: 52,
-        background: '#0f172a', flexShrink: 0, zIndex: 20,
-      }}>
-        {/* Brand */}
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
-          <span style={{ fontSize: 13, fontWeight: 900, color: '#fff', letterSpacing: '-0.02em' }}>Sinaxe</span>
-          <span style={{ fontSize: 9, color: '#94a3b8', marginTop: -4 }}>™</span>
-          <span style={{ fontSize: 13, fontWeight: 700, color: PURPLE, marginLeft: 2 }}>InScope</span>
-        </Link>
-        <span style={{ color: '#334155', fontSize: 14 }}>/</span>
+    <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
+      {/* ── Row 1: logo · breadcrumb · milestones (matches FAPI exactly) ──── */}
+      <div className="flex items-center gap-3 px-4 py-2.5 bg-white border-b border-gray-100 z-20 shrink-0">
+        {/* InScope logo — same weight as FAPI */}
+        <button onClick={() => window.location.href = '/'} className="flex items-center gap-1.5 select-none hover:opacity-80 transition-opacity" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+          <span className="text-sm font-700 tracking-tight text-gray-900">Sinaxe</span>
+          <span className="text-[10px] text-gray-300 font-400">™</span>
+          <span className="text-sm font-700 tracking-tight" style={{ color: PURPLE }}>InScope</span>
+        </button>
         {/* Breadcrumb */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          {['Northstar Inc.', 'ICT', 'Comply', 'T1134'].map((crumb, i, arr) => (
-            <span key={crumb} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span style={{ fontSize: 12, color: i === arr.length - 1 ? '#e2e8f0' : '#64748b', fontWeight: i === arr.length - 1 ? 700 : 400 }}>
-                {crumb}
-              </span>
-              {i < arr.length - 1 && <ChevronRight size={12} color="#334155" />}
-            </span>
-          ))}
+        <div className="flex items-center gap-1 text-xs text-gray-400">
+          <span className="text-gray-300">·</span>
+          <button onClick={() => window.location.href = '/'} className="hover:text-gray-600 transition-colors" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 12, color: '#9ca3af' }}>Northstar Inc.</button>
+          <span className="text-gray-300">›</span>
+          <button onClick={() => window.location.href = '/'} className="hover:text-gray-600 transition-colors" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 12, color: '#9ca3af' }}>ICT</button>
+          <span className="text-gray-300">›</span>
+          <button onClick={() => window.location.href = '/'} className="hover:text-gray-600 transition-colors" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 12, color: '#9ca3af' }}>Comply</button>
+          <span className="text-gray-300">›</span>
+          <span className="text-xs font-500 text-gray-600">T1134</span>
         </div>
-        <div style={{ flex: 1 }} />
-        {/* Year selector */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#1e293b', borderRadius: 6, padding: '4px 10px' }}>
-          <span style={{ fontSize: 12, color: '#94a3b8' }}>FY</span>
-          <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>2024</span>
-          <ChevronDown size={12} color="#64748b" />
+        {/* Milestone progress — same as FAPI */}
+        <div className="ml-auto flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <div className="flex gap-0.5">
+              {MILESTONES.map((m) => (
+                <div key={m.id} className="w-4 h-1 rounded-full transition-all" style={{ background: m.done ? '#22c55e' : '#e5e7eb' }} />
+              ))}
+            </div>
+            <span className="text-[10px] text-gray-400 font-500">{MILESTONES.filter(m => m.done).length}/{MILESTONES.length} milestones</span>
+          </div>
         </div>
-        {/* iFirm CSV export */}
-        <button
-          onClick={() => handleMilestoneSelect('file')}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px',
-            background: PURPLE, color: '#fff', border: 'none', borderRadius: 6,
-            fontSize: 12, fontWeight: 700, cursor: 'pointer',
-          }}
-        >
-          <Download size={13} /> iFirm CSV
-        </button>
-        {/* Share with client */}
-        <button
-          onClick={() => setActiveTab('client')}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px',
-            background: '#1e293b', color: '#94a3b8', border: '1px solid #334155', borderRadius: 6,
-            fontSize: 12, fontWeight: 700, cursor: 'pointer',
-          }}
-        >
-          <Users size={13} /> Share with Client
-        </button>
       </div>
 
-      {/* ── Tab bar ────────────────────────────────────────────────────────── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 0, background: '#fff',
-        borderBottom: '1px solid #e5e7eb', padding: '0 20px', flexShrink: 0,
-      }}>
+      {/* ── Row 2: worksheet title ─────────────────────────────────────────── */}
+      <div className="px-4 pt-3 pb-1 bg-white">
+        <div className="text-[10px] font-700 text-gray-400 uppercase tracking-widest mb-0.5">T1134 WORKPAPER</div>
+        <div className="text-base font-600 text-gray-900 leading-tight">Information Return Relating to Controlled and Non-Controlled Foreign Affiliates</div>
+      </div>
+
+      {/* ── Row 3: company / year metadata + action buttons ───────────────── */}
+      <div className="flex items-center gap-3 px-4 py-2 bg-white border-b border-gray-100 flex-wrap">
+        <div className="flex items-center gap-1.5 text-[11px]">
+          <span className="text-gray-400 font-600 uppercase tracking-wider text-[9px]">Company</span>
+          <span className="font-500 text-gray-800 bg-gray-100 px-2 py-1 rounded text-[11px]">Northstar Inc.</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-[11px]">
+          <span className="text-gray-400 font-600 uppercase tracking-wider text-[9px]">Filing Year</span>
+          <span className="font-500 text-gray-800 bg-gray-100 px-2 py-1 rounded text-[11px]">2024</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-[11px]">
+          <span className="text-gray-400 font-600 uppercase tracking-wider text-[9px]">Tax Year End</span>
+          <span className="font-500 text-gray-800 bg-gray-100 px-2 py-1 rounded text-[11px]">Dec 31, 2024</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-[11px]">
+          <span className="text-gray-400 font-600 uppercase tracking-wider text-[9px]">Due</span>
+          <span className="font-500 text-gray-800 bg-gray-100 px-2 py-1 rounded text-[11px]">Oct 31, 2025</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-[11px]">
+          <span className="text-gray-400 font-600 uppercase tracking-wider text-[9px]">Affiliates</span>
+          <span className="font-500 text-gray-800 bg-gray-100 px-2 py-1 rounded text-[11px]">20</span>
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          {/* Completion dots */}
+          <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" /> 4 complete
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" /> 12 in progress
+            <span className="w-1.5 h-1.5 rounded-full bg-red-400 inline-block" /> 4 not started
+          </div>
+          {/* iFirm CSV — minimal */}
+          <button
+            onClick={() => handleMilestoneSelect('file')}
+            className="flex items-center gap-1 text-[11px] font-500 px-2.5 py-1 rounded border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition-all"
+            style={{ cursor: 'pointer', background: 'none' }}
+          >
+            <Download size={11} /> iFirm CSV
+          </button>
+          {/* Share with client — minimal */}
+          <button
+            onClick={() => setActiveTab('client')}
+            className="flex items-center gap-1 text-[11px] font-500 px-2.5 py-1 rounded border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition-all"
+            style={{ cursor: 'pointer', background: 'none' }}
+          >
+            <Users size={11} /> Share with Client
+          </button>
+        </div>
+      </div>
+
+      {/* ── Tab bar — minimal underline style ─────────────────────────────── */}
+      <div className="flex items-center gap-0 bg-white border-b border-gray-100 px-4 shrink-0">
         {([
           { id: 'part1', label: 'Part I — Summary' },
           { id: 'part2', label: 'Part II — Supplement (20 FAs)' },
@@ -926,24 +954,18 @@ export default function T1134Worksheet() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
+            className="px-4 py-2.5 text-xs border-none bg-none cursor-pointer transition-colors"
             style={{
-              padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer',
-              fontSize: 12, fontWeight: activeTab === tab.id ? 800 : 500,
-              color: activeTab === tab.id ? PURPLE : '#6b7280',
-              borderBottom: activeTab === tab.id ? `2px solid ${PURPLE}` : '2px solid transparent',
+              background: 'none',
+              fontWeight: activeTab === tab.id ? 600 : 400,
+              color: activeTab === tab.id ? '#374151' : '#9ca3af',
+              borderBottom: activeTab === tab.id ? '1.5px solid #374151' : '1.5px solid transparent',
               marginBottom: -1,
             }}
           >
             {tab.label}
           </button>
         ))}
-        <div style={{ flex: 1 }} />
-        {/* Completion summary */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, color: '#6b7280' }}>
-          <span style={{ color: '#10b981', fontWeight: 700 }}>●</span> 4 complete
-          <span style={{ color: '#f59e0b', fontWeight: 700 }}>●</span> 12 in progress
-          <span style={{ color: '#ef4444', fontWeight: 700 }}>●</span> 4 not started
-        </div>
       </div>
 
       {/* ── Main content area ─────────────────────────────────────────────── */}
@@ -1018,9 +1040,10 @@ export default function T1134Worksheet() {
           {menuOpen && (
             <div style={{ position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: 8 }}>
               <OrbitalMilestoneMenu
-                active={activePanel}
-                onSelect={handleMilestoneSelect}
-                onClose={() => setMenuOpen(false)}
+open={menuOpen}
+          active={activePanel}
+          onSelect={handleMilestoneSelect}
+          onClose={() => setMenuOpen(false)}
               />
             </div>
           )}

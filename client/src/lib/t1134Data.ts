@@ -951,7 +951,7 @@ export const PART_I_SUMMARY = {
   lowerTierNCFAs: [] as string[],
 };
 
-// ─── Sophia IRL Questions ─────────────────────────────────────────────────────
+// ─── AI IRL Questions ─────────────────────────────────────────────────────
 export const SOPHIA_IRL_QUESTIONS = [
   {
     category: 'Ownership & Structure',

@@ -7,6 +7,7 @@
 
 import { useState } from 'react';
 import { useLocation } from 'wouter';
+import { useAgentChat } from '@/contexts/AgentChatContext';
 import {
   ChevronRight, ChevronDown,
   Plus, Download, Upload, X, Check, FileText,
@@ -978,6 +979,7 @@ function InScopeLogoTrigger({
 // ─── Main SurplusWorksheet ────────────────────────────────────────────────────
 export default function SurplusWorksheet() {
   const [, navigate] = useLocation();
+  const { openChat } = useAgentChat();
   const [affiliate, setAffiliate] = useState(AFFILIATES[0]);
   const [year, setYear] = useState('2025');
   const [rightPanelOpen, setRightPanelOpen] = useState(false);
@@ -1017,11 +1019,19 @@ export default function SurplusWorksheet() {
                 <div key={m.id} className="w-4 h-1 rounded-full transition-all" style={{ background: m.done ? '#22c55e' : '#e5e7eb' }} />
               ))}
             </div>
-            <span className="text-[10px] text-gray-400 font-500">{doneCount}/{MILESTONES.length} milestones</span>
+                        <span className="text-[10px] text-gray-400 font-500">{doneCount}/{MILESTONES.length} milestones</span>
           </div>
+          <div className="w-px h-4 bg-gray-200" />
+          <button
+            onClick={() => { openChat(''); navigate('/chat'); }}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-all"
+            title="Open AI Assistant"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            AI
+          </button>
         </div>
       </div>
-
       {/* Main content */}
       <div className="flex flex-1 overflow-hidden relative">
         {/* LEFT PANEL */}

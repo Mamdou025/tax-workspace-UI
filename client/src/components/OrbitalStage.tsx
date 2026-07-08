@@ -13,6 +13,7 @@ import {
   Layers, Shield, PenLine, DollarSign, Package
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAgentChat } from '@/contexts/AgentChatContext';
 
 const PURPLE = '#6B21A8';
 const ORANGE = '#C2410C';
@@ -600,17 +601,22 @@ function AIChatBar({ clientName }: { clientName: string }) {
   const [active, setActive] = useState(false);
   const [value, setValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
-
+  const [, navigate] = useLocation();
+  const { openChat } = useAgentChat();
   const handlePillClick = () => {
     if (!active) {
       setActive(true);
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   };
-
   const handleBlur = () => { if (!value) setActive(false); };
-
-  const handleSend = () => { if (value.trim()) setValue(''); setActive(false); };
+  const handleSend = () => {
+    const prompt = value.trim();
+    setValue('');
+    setActive(false);
+    if (prompt) { openChat(prompt); }
+    navigate('/chat');
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') handleSend();

@@ -13,6 +13,8 @@ import WorkflowBuilder from "./pages/WorkflowBuilder";
 import FapiWorksheet from "@/pages/FapiWorksheet";
 import T1134Worksheet from '@/pages/T1134Worksheet';
 import SurplusWorksheet from '@/pages/SurplusWorksheet';
+import AgentChatPage from '@/pages/AgentChatPage';
+import { AgentChatProvider } from '@/contexts/AgentChatContext';
 
 function Router() {
   return (
@@ -28,6 +30,7 @@ function Router() {
       <Route path="/fapi" component={FapiWorksheet} />
       <Route path="/t1134" component={T1134Worksheet} />
       <Route path="/surplus" component={SurplusWorksheet} />
+      <Route path="/chat" component={AgentChatPage} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
@@ -51,7 +54,9 @@ function App() {
               },
             }}
           />
-          <Router />
+          <AgentChatProvider>
+            <Router />
+          </AgentChatProvider>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

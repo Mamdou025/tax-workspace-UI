@@ -1,6 +1,6 @@
 /**
  * AgentChatContext — persistent AI-first chat thread
- * Design: InScope minimal — greyscale, no colour except status indicators
+ * Design: InScope timeline — vertical line, colored dots, event cards, embedded surfaces
  * Persists thread in localStorage across page navigations
  */
 
@@ -15,15 +15,24 @@ import React, {
 
 // ─── Message Types ────────────────────────────────────────────────────────────
 
-export type MessageRole = 'user' | 'agent';
+export type MessageRole = 'user' | 'agent' | 'event';
+
+// Event types for the timeline (shown as compact event cards with colored dots)
+export type EventKind =
+  | 'surface_opened'   // green dot — worksheet opened inline
+  | 'task_run'         // green dot — agent ran a task
+  | 'warning'          // orange dot — review warning
+  | 'proposal'         // purple dot — draft proposal created
+  | 'irl_sent'         // blue dot — IRL sent via Outlook
+  | 'approved'         // green dot — item approved
+  | 'flagged';         // orange dot — item flagged
 
 export type ToolCardType =
   | 'context_check'
   | 'irl_draft'
   | 'mapping_progress'
-  | 'fapi_preview'
   | 'fapi_worksheet'
-  | 'approval_request';
+  | 'confirmation_gate';
 
 export interface ContextCheckItem {
   label: string;
@@ -48,17 +57,9 @@ export interface ToolCard {
   questions?: IRLQuestion[];
   // mapping_progress
   steps?: { label: string; done: boolean }[];
-  // fapi_preview
-  fapiData?: {
-    affiliate: string;
-    currency: string;
-    year: number;
-    rows: { label: string; value: number | null; linked?: boolean }[];
-    fapiAmount: number;
-  };
-  // approval_request
-  approvalText?: string;
-  approvalAction?: string;
+  // confirmation_gate
+  confirmText?: string;
+  confirmAction?: string;
 }
 
 export interface AgentMessage {
@@ -68,6 +69,10 @@ export interface AgentMessage {
   timestamp: number;
   toolCard?: ToolCard;
   isStreaming?: boolean;
+  // For event messages
+  eventKind?: EventKind;
+  eventTitle?: string;
+  eventDetail?: string;
 }
 
 export interface AgentChatState {
@@ -75,6 +80,7 @@ export interface AgentChatState {
   messages: AgentMessage[];
   isAgentTyping: boolean;
   client: string;
+  eventCount: number;
 }
 
 interface AgentChatContextValue {
@@ -87,7 +93,7 @@ interface AgentChatContextValue {
   clearThread: () => void;
 }
 
-const STORAGE_KEY = 'inscope_agent_thread_v1';
+const STORAGE_KEY = 'inscope_agent_thread_v2';
 
 const AgentChatContext = createContext<AgentChatContextValue | null>(null);
 
@@ -105,7 +111,6 @@ export function AgentChatProvider({ children }: { children: React.ReactNode }) {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved) as AgentChatState;
-        // Reset streaming flags on restore
         return {
           ...parsed,
           isOpen: false,
@@ -121,12 +126,12 @@ export function AgentChatProvider({ children }: { children: React.ReactNode }) {
       messages: [],
       isAgentTyping: false,
       client: 'Northstar Inc.',
+      eventCount: 0,
     };
   });
 
   const agentBusyRef = useRef(false);
 
-  // Persist to localStorage whenever messages change
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -136,7 +141,11 @@ export function AgentChatProvider({ children }: { children: React.ReactNode }) {
   }, [state]);
 
   const addMessage = useCallback((msg: AgentMessage) => {
-    setState((s) => ({ ...s, messages: [...s.messages, msg] }));
+    setState((s) => ({
+      ...s,
+      messages: [...s.messages, msg],
+      eventCount: msg.role === 'event' ? s.eventCount + 1 : s.eventCount,
+    }));
   }, []);
 
   const updateMessage = useCallback((id: string, patch: Partial<AgentMessage>) => {
@@ -150,30 +159,47 @@ export function AgentChatProvider({ children }: { children: React.ReactNode }) {
     setState((s) => ({ ...s, isAgentTyping: v }));
   }, []);
 
-  // ─── Agent Response Logic ───────────────────────────────────────────────────
+  // ─── Helper: add an event card to the timeline ──────────────────────────────
+
+  const addEvent = useCallback((
+    kind: EventKind,
+    title: string,
+    detail: string,
+  ) => {
+    addMessage({
+      id: `event_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      role: 'event',
+      text: '',
+      timestamp: Date.now(),
+      eventKind: kind,
+      eventTitle: title,
+      eventDetail: detail,
+    });
+  }, [addMessage]);
+
+  // ─── Phase 1: FAPI agent — context check + IRL ─────────────────────────────
 
   const runFapiAgent = useCallback(
     async (client: string) => {
       if (agentBusyRef.current) return;
       agentBusyRef.current = true;
 
-      // Step 1 — agent acknowledges
+      // Agent acknowledges
       setAgentTyping(true);
       await sleep(900);
       setAgentTyping(false);
-      const ack: AgentMessage = {
+      addMessage({
         id: `agent_${Date.now()}_ack`,
         role: 'agent',
-        text: `On it. Let me check what source documents are available for **${client}** before we start.`,
+        text: `On it. Let me check what source documents are available for **${client}** before we start the FAPI calculation.`,
         timestamp: Date.now(),
-      };
-      addMessage(ack);
+      });
 
       await sleep(600);
 
-      // Step 2 — context check card
+      // Context check card
       const ctxId = `agent_${Date.now()}_ctx`;
-      const ctxMsg: AgentMessage = {
+      addMessage({
         id: ctxId,
         role: 'agent',
         text: '',
@@ -188,66 +214,59 @@ export function AgentChatProvider({ children }: { children: React.ReactNode }) {
             { label: 'CRA FAPI rules (Reg. 5907)', status: 'checking' },
           ],
         },
-      };
-      addMessage(ctxMsg);
+      });
 
-      // Animate context check items
+      // Animate context check
       await sleep(700);
       updateMessage(ctxId, {
-        toolCard: {
-          type: 'context_check',
-          status: 'running',
-          items: [
-            { label: 'Prior year FAPI workpaper (2023)', status: 'found' },
-            { label: 'Trial balance 2024', status: 'checking' },
-            { label: 'Financial statements 2024', status: 'checking' },
-            { label: 'CRA FAPI rules (Reg. 5907)', status: 'checking' },
-          ],
-        },
+        toolCard: { type: 'context_check', status: 'running', items: [
+          { label: 'Prior year FAPI workpaper (2023)', status: 'found' },
+          { label: 'Trial balance 2024', status: 'checking' },
+          { label: 'Financial statements 2024', status: 'checking' },
+          { label: 'CRA FAPI rules (Reg. 5907)', status: 'checking' },
+        ]},
       });
       await sleep(600);
       updateMessage(ctxId, {
-        toolCard: {
-          type: 'context_check',
-          status: 'running',
-          items: [
-            { label: 'Prior year FAPI workpaper (2023)', status: 'found' },
-            { label: 'Trial balance 2024', status: 'missing' },
-            { label: 'Financial statements 2024', status: 'missing' },
-            { label: 'CRA FAPI rules (Reg. 5907)', status: 'found' },
-          ],
-        },
+        toolCard: { type: 'context_check', status: 'running', items: [
+          { label: 'Prior year FAPI workpaper (2023)', status: 'found' },
+          { label: 'Trial balance 2024', status: 'missing' },
+          { label: 'Financial statements 2024', status: 'missing' },
+          { label: 'CRA FAPI rules (Reg. 5907)', status: 'found' },
+        ]},
       });
       await sleep(400);
       updateMessage(ctxId, {
-        toolCard: {
-          type: 'context_check',
-          status: 'done',
-          items: [
-            { label: 'Prior year FAPI workpaper (2023)', status: 'found' },
-            { label: 'Trial balance 2024', status: 'missing' },
-            { label: 'Financial statements 2024', status: 'missing' },
-            { label: 'CRA FAPI rules (Reg. 5907)', status: 'found' },
-          ],
-        },
+        toolCard: { type: 'context_check', status: 'done', items: [
+          { label: 'Prior year FAPI workpaper (2023)', status: 'found' },
+          { label: 'Trial balance 2024', status: 'missing' },
+          { label: 'Financial statements 2024', status: 'missing' },
+          { label: 'CRA FAPI rules (Reg. 5907)', status: 'found' },
+        ]},
       });
 
-      await sleep(500);
+      await sleep(300);
+      addEvent('task_run', 'Context scan complete', '4 sources checked · 2 found · 2 missing');
 
-      // Step 3 — agent explains missing docs
+      await sleep(500);
+      addEvent('warning', 'Missing source documents', 'Trial balance 2024 and financial statements 2024 not found in document vault');
+
+      await sleep(400);
+
+      // Agent explains missing docs
       setAgentTyping(true);
       await sleep(1100);
       setAgentTyping(false);
       addMessage({
         id: `agent_${Date.now()}_missing`,
         role: 'agent',
-        text: `I found the prior year workpaper and the CRA rules, but I'm missing the **2024 trial balance** and **financial statements**. I've drafted an Information Request Letter for your approval — please review before I send it to Northstar.`,
+        text: `I found the prior year workpaper and the CRA rules, but I'm missing the **2024 trial balance** and **financial statements**. I've drafted an Information Request Letter — please review before I send it to Northstar.`,
         timestamp: Date.now(),
       });
 
       await sleep(500);
 
-      // Step 4 — IRL draft card
+      // IRL draft card
       const irlId = `agent_${Date.now()}_irl`;
       addMessage({
         id: irlId,
@@ -271,8 +290,10 @@ export function AgentChatProvider({ children }: { children: React.ReactNode }) {
 
       agentBusyRef.current = false;
     },
-    [addMessage, updateMessage, setAgentTyping]
+    [addMessage, updateMessage, setAgentTyping, addEvent]
   );
+
+  // ─── Phase 2: FAPI calculation — mapping + confirmation gate ───────────────
 
   const runFapiCalculation = useCallback(async () => {
     if (agentBusyRef.current) return;
@@ -318,24 +339,51 @@ export function AgentChatProvider({ children }: { children: React.ReactNode }) {
       });
     }
 
+    await sleep(300);
+    addEvent('task_run', 'Data mapping complete', '5 steps · EUR/CAD 1.4712 · 34 source refs · 0 errors');
+
     await sleep(500);
+
     setAgentTyping(true);
     await sleep(900);
     setAgentTyping(false);
+
+    // Confirmation gate — ask user to confirm before opening the worksheet
+    const gateId = `agent_${Date.now()}_gate`;
     addMessage({
-      id: `agent_${Date.now()}_calc_done`,
+      id: gateId,
       role: 'agent',
-      text: 'Calculation complete. Here\'s the FAPI worksheet for your review:',
+      text: 'Mapping complete. The FAPI worksheet is ready to open. I\'ve pre-populated all values from the trial balance and applied the Reg. 5907(2) adjustments. Shall I open the worksheet here in the thread?',
       timestamp: Date.now(),
+      toolCard: {
+        type: 'confirmation_gate',
+        status: 'waiting',
+        confirmText: 'Open FAPI Worksheet — SAS Paris · 2024',
+        confirmAction: 'open_fapi_worksheet',
+      },
     });
 
-    await sleep(300);
+    agentBusyRef.current = false;
+  }, [addMessage, updateMessage, setAgentTyping, addEvent]);
 
-    // FAPI interactive worksheet card (replaces static preview)
+  // ─── Phase 3: Open FAPI worksheet surface ──────────────────────────────────
+
+  const openFapiWorksheet = useCallback(async () => {
+    if (agentBusyRef.current) return;
+    agentBusyRef.current = true;
+
+    addEvent('surface_opened', 'FAPI Worksheet opened inside thread', 'SAS Paris · FY2024 · pre-populated from trial balance');
+
+    await sleep(400);
+
+    setAgentTyping(true);
+    await sleep(700);
+    setAgentTyping(false);
+
     addMessage({
-      id: `agent_${Date.now()}_fapi`,
+      id: `agent_${Date.now()}_worksheet`,
       role: 'agent',
-      text: '',
+      text: 'I\'ve opened the FAPI worksheet below. All values are pre-populated from the trial balance. Review the figures and use **Approve & Continue** when ready, or **Flag for Review** to mark items for the partner.',
       timestamp: Date.now(),
       toolCard: {
         type: 'fapi_worksheet',
@@ -344,18 +392,21 @@ export function AgentChatProvider({ children }: { children: React.ReactNode }) {
     });
 
     agentBusyRef.current = false;
-  }, [addMessage, updateMessage, setAgentTyping]);
+  }, [addMessage, addEvent, setAgentTyping]);
 
   // ─── Intent Parser ──────────────────────────────────────────────────────────
 
   const parseAndRespond = useCallback(
     async (text: string) => {
       const lower = text.toLowerCase();
+
       if (
         lower.includes('calculate fapi') ||
         lower.includes('fapi for') ||
         lower.includes('run fapi') ||
-        lower.includes('fapi calculation')
+        lower.includes('fapi calculation') ||
+        lower.includes('open fapi') ||
+        lower.includes('start fapi')
       ) {
         await runFapiAgent(state.client);
         return;
@@ -366,10 +417,37 @@ export function AgentChatProvider({ children }: { children: React.ReactNode }) {
         lower.includes('sent the documents') ||
         lower.includes('files are ready') ||
         lower.includes('run the calculation') ||
-        lower.includes('proceed with calculation')
+        lower.includes('proceed with calculation') ||
+        lower.includes('go ahead with')
       ) {
         await runFapiCalculation();
         return;
+      }
+
+      if (
+        lower.includes('go ahead') ||
+        lower.includes('open the worksheet') ||
+        lower.includes('yes') ||
+        lower.includes('open it') ||
+        lower.includes('show me')
+      ) {
+        // Check if there's a pending confirmation gate
+        const hasGate = state.messages.some(
+          (m) => m.toolCard?.type === 'confirmation_gate' && m.toolCard.status === 'waiting'
+        );
+        if (hasGate) {
+          // Mark gate as done
+          setState((s) => ({
+            ...s,
+            messages: s.messages.map((m) =>
+              m.toolCard?.type === 'confirmation_gate' && m.toolCard.status === 'waiting'
+                ? { ...m, toolCard: { ...m.toolCard!, status: 'done' } }
+                : m
+            ),
+          }));
+          await openFapiWorksheet();
+          return;
+        }
       }
 
       // Generic response
@@ -383,7 +461,7 @@ export function AgentChatProvider({ children }: { children: React.ReactNode }) {
         timestamp: Date.now(),
       });
     },
-    [state.client, runFapiAgent, runFapiCalculation, addMessage, setAgentTyping]
+    [state.client, state.messages, runFapiAgent, runFapiCalculation, openFapiWorksheet, addMessage, setAgentTyping]
   );
 
   // ─── Public API ─────────────────────────────────────────────────────────────
@@ -434,33 +512,45 @@ export function AgentChatProvider({ children }: { children: React.ReactNode }) {
             : m
         ),
       }));
-      // After IRL approval, simulate sending and trigger calculation
       const msg = state.messages.find((m) => m.id === messageId);
+
       if (msg?.toolCard?.type === 'irl_draft') {
         setTimeout(() => {
-          addMessage({
-            id: `agent_${Date.now()}_irl_sent`,
-            role: 'agent',
-            text: '✓ IRL sent to finance@northstar.com via Outlook. I\'ll notify you when documents are received. In the meantime, you can type **"Documents received"** to simulate the client response and proceed with the calculation.',
-            timestamp: Date.now(),
-          });
-        }, 400);
+          addEvent('irl_sent', 'IRL sent via Outlook', 'finance@northstar.com · 4 questions attached');
+          setTimeout(() => {
+            addMessage({
+              id: `agent_${Date.now()}_irl_sent`,
+              role: 'agent',
+              text: '✓ IRL sent to finance@northstar.com. I\'ll notify you when documents are received. Type **"Documents received"** to simulate the client response and proceed with the calculation.',
+              timestamp: Date.now(),
+            });
+          }, 400);
+        }, 300);
       }
-      if (msg?.toolCard?.type === 'fapi_preview' || msg?.toolCard?.type === 'fapi_worksheet') {
+
+      if (msg?.toolCard?.type === 'confirmation_gate') {
+        setTimeout(() => openFapiWorksheet(), 200);
+      }
+
+      if (msg?.toolCard?.type === 'fapi_worksheet') {
         setTimeout(() => {
-          addMessage({
-            id: `agent_${Date.now()}_fapi_approved`,
-            role: 'agent',
-            text: '✓ FAPI worksheet approved. The workpaper has been locked and is ready for the T1134 filing. The FAPI amount has been linked to the Surplus worksheet.',
-            timestamp: Date.now(),
-          });
-        }, 400);
+          addEvent('approved', 'FAPI worksheet approved', 'SAS Paris · FY2024 · locked for T1134 filing');
+          setTimeout(() => {
+            addMessage({
+              id: `agent_${Date.now()}_fapi_approved`,
+              role: 'agent',
+              text: '✓ FAPI worksheet approved and locked. The workpaper is ready for the T1134 filing. The FAPI amount has been linked to the Surplus worksheet.',
+              timestamp: Date.now(),
+            });
+          }, 400);
+        }, 300);
       }
     },
-    [state.messages, addMessage]
+    [state.messages, addMessage, addEvent, openFapiWorksheet]
   );
 
   const cancelCard = useCallback((messageId: string) => {
+    const msg = state.messages.find((m) => m.id === messageId);
     setState((s) => ({
       ...s,
       messages: s.messages.map((m) =>
@@ -469,10 +559,15 @@ export function AgentChatProvider({ children }: { children: React.ReactNode }) {
           : m
       ),
     }));
-  }, []);
+    if (msg?.toolCard?.type === 'fapi_worksheet') {
+      setTimeout(() => {
+        addEvent('flagged', 'FAPI worksheet flagged for review', 'SAS Paris · FY2024 · assigned to engagement partner');
+      }, 200);
+    }
+  }, [state.messages, addEvent]);
 
   const clearThread = useCallback(() => {
-    setState((s) => ({ ...s, messages: [], isAgentTyping: false }));
+    setState((s) => ({ ...s, messages: [], isAgentTyping: false, eventCount: 0 }));
     localStorage.removeItem(STORAGE_KEY);
   }, []);
 

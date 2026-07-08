@@ -1,10 +1,14 @@
 /**
  * AgentCards — Generative UI components rendered inside the agent chat thread
- * Design: InScope minimal — greyscale, status-only colour, no decorative colour
+ * Design: InScope timeline — greyscale, status-only colour, no decorative colour
  */
 
 import React, { useState } from 'react';
-import { Check, X, AlertCircle, FileText, Mail, Loader2, ChevronDown, ChevronUp, ExternalLink, Maximize2, Minimize2, Flag } from 'lucide-react';
+import {
+  Check, X, AlertCircle, FileText, Mail, Loader2,
+  ChevronDown, ChevronUp, Maximize2, Minimize2, Flag,
+  Zap, ArrowRight,
+} from 'lucide-react';
 import type { ToolCard } from '@/contexts/AgentChatContext';
 import { FapiCalculator } from '@/pages/FapiWorksheet';
 
@@ -13,8 +17,8 @@ import { FapiCalculator } from '@/pages/FapiWorksheet';
 function CardShell({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
     <div
-      className={`rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm ${className}`}
-      style={{ maxWidth: 520 }}
+      className={`rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm ${className}`}
+      style={{ maxWidth: 560 }}
     >
       {children}
     </div>
@@ -39,11 +43,7 @@ function StatusDot({ status }: { status: 'checking' | 'found' | 'missing' }) {
 
 // ─── ContextCheckCard ─────────────────────────────────────────────────────────
 
-export function ContextCheckCard({
-  card,
-}: {
-  card: ToolCard;
-}) {
+export function ContextCheckCard({ card }: { card: ToolCard }) {
   const items = card.items ?? [];
   const allDone = card.status === 'done';
   const missing = items.filter((i) => i.status === 'missing');
@@ -127,7 +127,6 @@ export function IRLDraftCard({
 
       {/* Fake Outlook compose window */}
       <div className="border-b border-gray-100" style={{ background: '#f8f9fa' }}>
-        {/* Outlook top bar */}
         <div
           className="flex items-center gap-2 px-3 py-2"
           style={{ background: '#0078d4', borderBottom: '1px solid #006cbe' }}
@@ -138,7 +137,6 @@ export function IRLDraftCard({
           </div>
           <span className="ml-auto text-white text-xs opacity-70">New Message</span>
         </div>
-        {/* Email fields */}
         <div className="px-3 py-2 flex flex-col gap-1.5" style={{ background: '#fff' }}>
           <div className="flex items-center gap-2 border-b border-gray-100 pb-1.5">
             <span className="text-xs text-gray-400 w-10">To</span>
@@ -163,9 +161,7 @@ export function IRLDraftCard({
             className="w-full flex items-center gap-2 px-4 py-2.5 text-xs text-gray-500 hover:bg-gray-50 transition-colors"
             onClick={() => setShowQuestions((v) => !v)}
           >
-            <span className="font-500">
-              {card.questions.length} questions attached
-            </span>
+            <span className="font-500">{card.questions.length} questions attached</span>
             {showQuestions ? <ChevronUp size={12} className="ml-auto" /> : <ChevronDown size={12} className="ml-auto" />}
           </button>
           {showQuestions && (
@@ -184,7 +180,6 @@ export function IRLDraftCard({
         </div>
       )}
 
-      {/* Actions */}
       {!isDone && !isCancelled && (
         <div className="flex items-center gap-2 px-4 py-3">
           <button
@@ -247,140 +242,84 @@ export function MappingProgressCard({ card }: { card: ToolCard }) {
   );
 }
 
-// ─── FapiPreviewCard ──────────────────────────────────────────────────────────
+// ─── ConfirmationGateCard ─────────────────────────────────────────────────────
+// Shown before opening the FAPI worksheet — user must confirm to proceed
 
-export function FapiPreviewCard({
+export function ConfirmationGateCard({
   card,
-  onApprove,
-  onFlag,
+  onConfirm,
+  onCancel,
 }: {
   card: ToolCard;
-  onApprove: () => void;
-  onFlag: () => void;
+  onConfirm: () => void;
+  onCancel: () => void;
 }) {
-  const data = card.fapiData;
   const isDone = card.status === 'done';
   const isCancelled = card.status === 'cancelled';
 
-  if (!data) return null;
-
-  const fmt = (v: number | null) => {
-    if (v === null) return '—';
-    return new Intl.NumberFormat('en-CA', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(v);
-  };
-
   return (
-    <CardShell>
-      <CardHeader
-        icon={<FileText size={13} />}
-        title={`FAPI Worksheet — ${data.affiliate}`}
-        badge={
-          isDone ? (
-            <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: '#d1fae5', color: '#065f46' }}>
-              Approved
-            </span>
-          ) : (
-            <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: '#fef3c7', color: '#92400e' }}>
-              Review required
-            </span>
-          )
-        }
-      />
-
-      {/* Metadata row */}
-      <div className="flex items-center gap-3 px-4 py-2 border-b border-gray-100 bg-gray-50">
-        <span className="text-xs text-gray-500">{data.affiliate}</span>
-        <span className="text-gray-300">·</span>
-        <span className="text-xs text-gray-500">{data.currency}</span>
-        <span className="text-gray-300">·</span>
-        <span className="text-xs text-gray-500">Year {data.year}</span>
-      </div>
-
-      {/* Calculation rows */}
-      <div className="px-4 py-3">
-        <table className="w-full">
-          <tbody>
-            {data.rows.map((row, i) => {
-              const isResult = row.linked;
-              const isNeg = row.value !== null && row.value < 0;
-              return (
-                <tr
-                  key={i}
-                  className={isResult ? 'border-t border-gray-200' : ''}
-                  style={isResult ? { background: '#f9fafb' } : {}}
-                >
-                  <td className="py-1 pr-4">
-                    <span className={`text-xs ${isResult ? 'font-700 text-gray-800' : 'text-gray-500'}`}>
-                      {row.label}
-                    </span>
-                    {row.linked && (
-                      <span
-                        className="ml-1.5 text-xs px-1 py-0.5 rounded"
-                        style={{ background: '#ede9fe', color: '#6d28d9', fontSize: 9 }}
-                      >
-                        LINKED
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-1 text-right">
-                    <span
-                      className={`text-xs font-mono ${isResult ? 'font-700 text-gray-800' : isNeg ? 'text-red-500' : 'text-gray-700'}`}
-                    >
-                      {row.value !== null && isNeg ? `(${fmt(Math.abs(row.value))})` : fmt(row.value)}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      {/* FAPI total highlight */}
-      <div
-        className="mx-4 mb-3 px-3 py-2 rounded flex items-center justify-between"
-        style={{ background: '#f3f4f6', border: '1px solid #e5e7eb' }}
-      >
-        <span className="text-xs font-700 text-gray-700">FAPI Amount (CAD)</span>
-        <span className="text-sm font-800 text-gray-900">{fmt(data.fapiAmount)}</span>
-      </div>
-
-      {/* Open full link */}
-      <div className="px-4 pb-2">
-        <a
-          href="/fapi"
-          className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          <ExternalLink size={10} />
-          Open full FAPI worksheet
-        </a>
-      </div>
-
-      {/* Actions */}
-      {!isDone && !isCancelled && (
-        <div className="flex items-center gap-2 px-4 py-3 border-t border-gray-100">
-          <button
-            onClick={onApprove}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-600 text-white transition-all active:scale-95"
-            style={{ background: '#111827' }}
+    <div
+      className="rounded-xl border overflow-hidden"
+      style={{
+        maxWidth: 480,
+        borderColor: '#ddd6fe',
+        background: '#fbf8ff',
+      }}
+    >
+      <div className="px-4 py-3.5">
+        <div className="flex items-start gap-3">
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+            style={{ background: '#ede9fe' }}
           >
-            <Check size={11} />
-            Approve
+            <Zap size={14} style={{ color: '#7c3aed' }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-xs font-700 text-gray-800 mb-1">{card.confirmText}</div>
+            <div className="text-xs text-gray-500 leading-relaxed">
+              The worksheet will open inline in this thread. All values are pre-populated from the trial balance. You can review and edit before approving.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {!isDone && !isCancelled && (
+        <div
+          className="flex items-center gap-2 px-4 py-2.5 border-t"
+          style={{ borderColor: '#ddd6fe', background: 'rgba(237,233,254,0.3)' }}
+        >
+          <button
+            onClick={onConfirm}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-600 text-white transition-all active:scale-95"
+            style={{ background: '#7c3aed' }}
+          >
+            <ArrowRight size={11} />
+            Go ahead — open worksheet
           </button>
           <button
-            onClick={onFlag}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-500 text-gray-500 border border-gray-200 hover:bg-gray-50 transition-all active:scale-95"
+            onClick={onCancel}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-500 border transition-all active:scale-95"
+            style={{ color: '#6b7280', borderColor: '#ddd6fe', background: 'transparent' }}
           >
-            <AlertCircle size={11} />
-            Flag for review
+            Not now
           </button>
         </div>
       )}
-    </CardShell>
+
+      {isDone && (
+        <div
+          className="flex items-center gap-2 px-4 py-2 border-t"
+          style={{ borderColor: '#ddd6fe', background: 'rgba(237,233,254,0.2)' }}
+        >
+          <Check size={11} style={{ color: '#7c3aed' }} />
+          <span className="text-xs" style={{ color: '#7c3aed' }}>Worksheet opened in thread</span>
+        </div>
+      )}
+    </div>
   );
 }
 
-// ─── FapiWorksheetCard ───────────────────────────────────────────────────────
+// ─── FapiWorksheetCard ────────────────────────────────────────────────────────
 // Renders the real interactive FapiCalculator inline in the chat thread.
 // Includes an expand-to-fullscreen overlay.
 
@@ -399,78 +338,72 @@ export function FapiWorksheetCard({
   const isDone = card.status === 'done';
   const isCancelled = card.status === 'cancelled';
 
-  const calculatorNode = (
-    <FapiCalculator
-      affiliate={affiliate}
-      year={year}
-      onAffiliateChange={setAffiliate}
-      onYearChange={setYear}
-      compact
-    />
-  );
-
   return (
     <>
-      {/* ── Inline card ── */}
+      {/* ── Inline surface card ── */}
       <div
-        className="rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm"
-        style={{ width: 680, maxWidth: '100%' }}
+        className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-md"
+        style={{ width: 700, maxWidth: '100%' }}
       >
-        {/* Card header */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 bg-gray-50">
-          <FileText size={13} className="text-gray-400" />
-          <span className="text-xs font-700 text-gray-700 tracking-wide uppercase">FAPI Worksheet — {affiliate}</span>
-          <span className="text-xs text-gray-400 ml-1">· {year}</span>
-          {isDone && (
-            <span className="ml-2 text-xs px-2 py-0.5 rounded-full" style={{ background: '#d1fae5', color: '#065f46' }}>Approved</span>
-          )}
-          {isCancelled && (
-            <span className="ml-2 text-xs px-2 py-0.5 rounded-full" style={{ background: '#f3f4f6', color: '#6b7280' }}>Flagged</span>
-          )}
-          {!isDone && !isCancelled && (
-            <span className="ml-2 text-xs px-2 py-0.5 rounded-full" style={{ background: '#fef3c7', color: '#92400e' }}>Review required</span>
-          )}
-          <button
-            onClick={() => setFullscreen(true)}
-            className="ml-auto p-1 text-gray-400 hover:text-gray-600 transition-colors rounded hover:bg-gray-100"
-            title="Expand to full screen"
+        {/* Surface top bar — matches mockup style */}
+        <div
+          className="flex items-center gap-3 px-4 py-3 border-b border-gray-100"
+          style={{ background: '#fbfdff' }}
+        >
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+            style={{ background: '#111827' }}
           >
-            <Maximize2 size={13} />
-          </button>
+            <FileText size={14} className="text-white" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-sm font-700 text-gray-800 leading-none">FAPI Worksheet</div>
+            <div className="text-xs text-gray-400 mt-0.5">
+              Opened by the agent · {affiliate} · {year}
+              {isDone && <span className="ml-2 text-emerald-600 font-600">· Approved</span>}
+              {isCancelled && <span className="ml-2 text-orange-600 font-600">· Flagged</span>}
+            </div>
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            {!isDone && !isCancelled && (
+              <>
+                <button
+                  onClick={onApprove}
+                  className="flex items-center gap-1.5 h-7 px-3 rounded-lg text-xs font-600 text-white transition-all active:scale-95"
+                  style={{ background: '#111827' }}
+                >
+                  <Check size={10} />
+                  Approve
+                </button>
+                <button
+                  onClick={onFlag}
+                  className="flex items-center gap-1.5 h-7 px-3 rounded-lg text-xs font-500 border border-gray-200 text-gray-500 hover:bg-gray-50 transition-all active:scale-95"
+                >
+                  <Flag size={10} />
+                  Flag
+                </button>
+              </>
+            )}
+            <button
+              onClick={() => setFullscreen(true)}
+              className="h-7 px-2.5 rounded-lg text-xs font-500 border border-gray-200 text-gray-500 hover:bg-gray-50 transition-all active:scale-95 flex items-center gap-1.5"
+            >
+              <Maximize2 size={11} />
+              Expand
+            </button>
+          </div>
         </div>
 
         {/* Inline calculator — fixed height, scrollable */}
-        <div style={{ height: '55vh', overflowY: 'auto', overflowX: 'hidden' }}>
-          {calculatorNode}
+        <div style={{ height: '58vh', overflowY: 'auto', overflowX: 'hidden' }}>
+          <FapiCalculator
+            affiliate={affiliate}
+            year={year}
+            onAffiliateChange={setAffiliate}
+            onYearChange={setYear}
+            compact
+          />
         </div>
-
-        {/* Footer actions */}
-        {!isDone && !isCancelled && (
-          <div className="flex items-center gap-2 px-4 py-3 border-t border-gray-100 bg-gray-50">
-            <button
-              onClick={onApprove}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-600 text-white transition-all active:scale-95"
-              style={{ background: '#111827' }}
-            >
-              <Check size={11} />
-              Approve &amp; Continue
-            </button>
-            <button
-              onClick={onFlag}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-500 text-gray-500 border border-gray-200 hover:bg-gray-50 transition-all active:scale-95"
-            >
-              <Flag size={11} />
-              Flag for Review
-            </button>
-            <button
-              onClick={() => setFullscreen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-500 text-gray-500 border border-gray-200 hover:bg-gray-50 transition-all active:scale-95 ml-auto"
-            >
-              <Maximize2 size={11} />
-              Open Full Screen
-            </button>
-          </div>
-        )}
       </div>
 
       {/* ── Fullscreen overlay ── */}
@@ -499,6 +432,25 @@ export function FapiWorksheetCard({
             >
               Embedded in chat thread
             </span>
+            {!isDone && !isCancelled && (
+              <div className="ml-auto flex items-center gap-2">
+                <button
+                  onClick={() => { onApprove(); setFullscreen(false); }}
+                  className="flex items-center gap-1.5 h-7 px-3 rounded-lg text-xs font-600 text-white transition-all active:scale-95"
+                  style={{ background: '#111827' }}
+                >
+                  <Check size={10} />
+                  Approve & Continue
+                </button>
+                <button
+                  onClick={() => { onFlag(); setFullscreen(false); }}
+                  className="flex items-center gap-1.5 h-7 px-3 rounded-lg text-xs font-500 border border-gray-200 text-gray-500 hover:bg-gray-50 transition-all active:scale-95"
+                >
+                  <Flag size={10} />
+                  Flag for Review
+                </button>
+              </div>
+            )}
           </div>
           {/* Full-height calculator */}
           <div className="flex-1 overflow-hidden">
@@ -541,12 +493,12 @@ export function AgentToolCard({
       );
     case 'mapping_progress':
       return <MappingProgressCard card={card} />;
-    case 'fapi_preview':
+    case 'confirmation_gate':
       return (
-        <FapiPreviewCard
+        <ConfirmationGateCard
           card={card}
-          onApprove={() => onApprove(messageId)}
-          onFlag={() => onCancel(messageId)}
+          onConfirm={() => onApprove(messageId)}
+          onCancel={() => onCancel(messageId)}
         />
       );
     case 'fapi_worksheet':

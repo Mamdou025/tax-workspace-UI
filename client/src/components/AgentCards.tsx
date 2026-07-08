@@ -4,8 +4,9 @@
  */
 
 import React, { useState } from 'react';
-import { Check, X, AlertCircle, FileText, Mail, Loader2, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
+import { Check, X, AlertCircle, FileText, Mail, Loader2, ChevronDown, ChevronUp, ExternalLink, Maximize2, Minimize2, Flag } from 'lucide-react';
 import type { ToolCard } from '@/contexts/AgentChatContext';
+import { FapiCalculator } from '@/pages/FapiWorksheet';
 
 // ─── Shared Primitives ────────────────────────────────────────────────────────
 
@@ -379,6 +380,141 @@ export function FapiPreviewCard({
   );
 }
 
+// ─── FapiWorksheetCard ───────────────────────────────────────────────────────
+// Renders the real interactive FapiCalculator inline in the chat thread.
+// Includes an expand-to-fullscreen overlay.
+
+export function FapiWorksheetCard({
+  card,
+  onApprove,
+  onFlag,
+}: {
+  card: ToolCard;
+  onApprove: () => void;
+  onFlag: () => void;
+}) {
+  const [affiliate, setAffiliate] = useState('SAS paris');
+  const [year, setYear] = useState('2024');
+  const [fullscreen, setFullscreen] = useState(false);
+  const isDone = card.status === 'done';
+  const isCancelled = card.status === 'cancelled';
+
+  const calculatorNode = (
+    <FapiCalculator
+      affiliate={affiliate}
+      year={year}
+      onAffiliateChange={setAffiliate}
+      onYearChange={setYear}
+      compact
+    />
+  );
+
+  return (
+    <>
+      {/* ── Inline card ── */}
+      <div
+        className="rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm"
+        style={{ width: 680, maxWidth: '100%' }}
+      >
+        {/* Card header */}
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 bg-gray-50">
+          <FileText size={13} className="text-gray-400" />
+          <span className="text-xs font-700 text-gray-700 tracking-wide uppercase">FAPI Worksheet — {affiliate}</span>
+          <span className="text-xs text-gray-400 ml-1">· {year}</span>
+          {isDone && (
+            <span className="ml-2 text-xs px-2 py-0.5 rounded-full" style={{ background: '#d1fae5', color: '#065f46' }}>Approved</span>
+          )}
+          {isCancelled && (
+            <span className="ml-2 text-xs px-2 py-0.5 rounded-full" style={{ background: '#f3f4f6', color: '#6b7280' }}>Flagged</span>
+          )}
+          {!isDone && !isCancelled && (
+            <span className="ml-2 text-xs px-2 py-0.5 rounded-full" style={{ background: '#fef3c7', color: '#92400e' }}>Review required</span>
+          )}
+          <button
+            onClick={() => setFullscreen(true)}
+            className="ml-auto p-1 text-gray-400 hover:text-gray-600 transition-colors rounded hover:bg-gray-100"
+            title="Expand to full screen"
+          >
+            <Maximize2 size={13} />
+          </button>
+        </div>
+
+        {/* Inline calculator — fixed height, scrollable */}
+        <div style={{ height: '55vh', overflowY: 'auto', overflowX: 'hidden' }}>
+          {calculatorNode}
+        </div>
+
+        {/* Footer actions */}
+        {!isDone && !isCancelled && (
+          <div className="flex items-center gap-2 px-4 py-3 border-t border-gray-100 bg-gray-50">
+            <button
+              onClick={onApprove}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-600 text-white transition-all active:scale-95"
+              style={{ background: '#111827' }}
+            >
+              <Check size={11} />
+              Approve &amp; Continue
+            </button>
+            <button
+              onClick={onFlag}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-500 text-gray-500 border border-gray-200 hover:bg-gray-50 transition-all active:scale-95"
+            >
+              <Flag size={11} />
+              Flag for Review
+            </button>
+            <button
+              onClick={() => setFullscreen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-500 text-gray-500 border border-gray-200 hover:bg-gray-50 transition-all active:scale-95 ml-auto"
+            >
+              <Maximize2 size={11} />
+              Open Full Screen
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* ── Fullscreen overlay ── */}
+      {fullscreen && (
+        <div
+          className="fixed inset-0 z-50 flex flex-col"
+          style={{ background: '#ffffff' }}
+        >
+          {/* Fullscreen top banner */}
+          <div
+            className="flex items-center gap-3 px-4 py-2.5 shrink-0"
+            style={{ borderBottom: '1px solid #e5e7eb', background: '#f9fafb' }}
+          >
+            <button
+              onClick={() => setFullscreen(false)}
+              className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 transition-colors"
+            >
+              <Minimize2 size={13} />
+              <span>Back to chat</span>
+            </button>
+            <div className="w-px h-4 bg-gray-200" />
+            <span className="text-xs font-600 text-gray-700">FAPI Worksheet — {affiliate} · {year}</span>
+            <span
+              className="ml-2 text-xs px-2 py-0.5 rounded-full"
+              style={{ background: '#fef3c7', color: '#92400e' }}
+            >
+              Embedded in chat thread
+            </span>
+          </div>
+          {/* Full-height calculator */}
+          <div className="flex-1 overflow-hidden">
+            <FapiCalculator
+              affiliate={affiliate}
+              year={year}
+              onAffiliateChange={setAffiliate}
+              onYearChange={setYear}
+            />
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 // ─── Dispatcher — renders the right card based on type ────────────────────────
 
 export function AgentToolCard({
@@ -408,6 +544,14 @@ export function AgentToolCard({
     case 'fapi_preview':
       return (
         <FapiPreviewCard
+          card={card}
+          onApprove={() => onApprove(messageId)}
+          onFlag={() => onCancel(messageId)}
+        />
+      );
+    case 'fapi_worksheet':
+      return (
+        <FapiWorksheetCard
           card={card}
           onApprove={() => onApprove(messageId)}
           onFlag={() => onCancel(messageId)}

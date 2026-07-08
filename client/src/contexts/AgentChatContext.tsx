@@ -22,6 +22,7 @@ export type ToolCardType =
   | 'irl_draft'
   | 'mapping_progress'
   | 'fapi_preview'
+  | 'fapi_worksheet'
   | 'approval_request';
 
 export interface ContextCheckItem {
@@ -330,32 +331,15 @@ export function AgentChatProvider({ children }: { children: React.ReactNode }) {
 
     await sleep(300);
 
-    // FAPI preview card
+    // FAPI interactive worksheet card (replaces static preview)
     addMessage({
       id: `agent_${Date.now()}_fapi`,
       role: 'agent',
       text: '',
       timestamp: Date.now(),
       toolCard: {
-        type: 'fapi_preview',
+        type: 'fapi_worksheet',
         status: 'waiting',
-        fapiData: {
-          affiliate: 'SAS Paris',
-          currency: 'EUR',
-          year: 2024,
-          rows: [
-            { label: 'Income per financial statements', value: 1240000 },
-            { label: 'Book-to-tax adjustments (active business)', value: -180000 },
-            { label: 'Book-to-tax adjustments (Canadian rules)', value: -42000 },
-            { label: 'Reg. 5907(2) adjustments', value: -28500 },
-            { label: 'Income taxes paid', value: -312000 },
-            { label: 'Dividends paid', value: -150000 },
-            { label: 'FAPI Amount (EUR)', value: 527500, linked: true },
-            { label: 'FX Rate (EUR/CAD)', value: 1.4712 },
-            { label: 'FAPI Amount (CAD)', value: 776070, linked: true },
-          ],
-          fapiAmount: 776070,
-        },
       },
     });
 
@@ -462,12 +446,12 @@ export function AgentChatProvider({ children }: { children: React.ReactNode }) {
           });
         }, 400);
       }
-      if (msg?.toolCard?.type === 'fapi_preview') {
+      if (msg?.toolCard?.type === 'fapi_preview' || msg?.toolCard?.type === 'fapi_worksheet') {
         setTimeout(() => {
           addMessage({
             id: `agent_${Date.now()}_fapi_approved`,
             role: 'agent',
-            text: '✓ FAPI calculation approved. The worksheet has been updated and is ready for the T1134 filing. The FAPI amount of **CAD 776,070** has been linked to the Surplus worksheet.',
+            text: '✓ FAPI worksheet approved. The workpaper has been locked and is ready for the T1134 filing. The FAPI amount has been linked to the Surplus worksheet.',
             timestamp: Date.now(),
           });
         }, 400);

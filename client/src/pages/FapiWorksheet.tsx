@@ -581,11 +581,13 @@ function FapiCalculator({
   year,
   onAffiliateChange,
   onYearChange,
+  compact = false,
 }: {
   affiliate: string;
   year: string;
   onAffiliateChange: (v: string) => void;
   onYearChange: (v: string) => void;
+  compact?: boolean;
 }) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set(['a']));
 
@@ -717,11 +719,13 @@ function FapiCalculator({
 
   return (
     <div className="flex flex-col h-full bg-white">
-      {/* Calculator header */}
-      <div className="px-4 py-3 border-b border-gray-100">
-        <div className="text-[10px] font-700 text-gray-400 uppercase tracking-widest mb-0.5">FAPI WORKSHEET</div>
-        <div className="text-lg font-600 text-gray-900">Foreign Accrual Property Income</div>
-      </div>
+      {/* Calculator header — hidden in compact/embedded mode */}
+      {!compact && (
+        <div className="px-4 py-3 border-b border-gray-100">
+          <div className="text-[10px] font-700 text-gray-400 uppercase tracking-widest mb-0.5">FAPI WORKSHEET</div>
+          <div className="text-lg font-600 text-gray-900">Foreign Accrual Property Income</div>
+        </div>
+      )}
 
       {/* Selectors bar */}
       <div className="flex items-center gap-3 px-4 py-2.5 border-b border-gray-100 flex-wrap">
@@ -905,6 +909,9 @@ function InScopeLogoTrigger({
     </>
   );
 }
+
+// Named export so AgentCards can import FapiCalculator directly
+export { FapiCalculator };
 
 export default function FapiWorksheet() {
   const { openChat } = useAgentChat();

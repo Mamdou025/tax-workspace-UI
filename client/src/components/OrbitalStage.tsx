@@ -723,6 +723,13 @@ export default function OrbitalStage() {
       if (sub?.route) navigate(sub.route);
       return;
     }
+    // ICT node at level 0 goes directly to the AI-first ICT workspace
+    if (level === 0 && nodeId === 'ict') {
+      setExiting(true);
+      setFlyingNode({ id: nodeId, x: nodeX, y: nodeY, label: nodeLabel });
+      setTimeout(() => { navigate('/ict'); }, 340);
+      return;
+    }
     setExiting(true);
     setFlyingNode({ id: nodeId, x: nodeX, y: nodeY, label: nodeLabel });
     setTimeout(() => {

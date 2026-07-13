@@ -30,6 +30,7 @@ import InScopeSidebar from '@/components/InScopeSidebar';
 
 // ─── Design tokens (local) ────────────────────────────────────────────────────
 const PURPLE = '#6B21A8';
+const ORANGE = '#C2410C';
 
 // ─── Time-aware greeting ──────────────────────────────────────────────────────
 function getGreeting(): string {
@@ -70,51 +71,68 @@ function inferScope(prompt: string): ScopeData {
 
 // ─── Scope button (animated dotted rings) ─────────────────────────────────────
 function ScopeButton({ onClick }: { onClick: () => void }) {
-  const SIZE = 72; const CX = SIZE / 2; const CY = SIZE / 2;
+  const SIZE = 80;
+  const CX = SIZE / 2;
+  const CY = SIZE / 2;
   return (
-    <button onClick={onClick} aria-label="Open Scope Map" style={{
-      width: SIZE, height: SIZE, borderRadius: '50%',
-      background: 'var(--is-surface)', boxShadow: 'var(--is-shadow-out)',
-      border: 'none', cursor: 'pointer', position: 'relative',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-      transition: 'box-shadow 180ms var(--is-ease-out)',
-    }}>
-      <svg width={SIZE} height={SIZE} style={{ position: 'absolute', inset: 0 }}>
-        {/* Outer ring — purple dots, counter-clockwise */}
-        {Array.from({ length: 16 }, (_, i) => {
-          const a = (i / 16) * Math.PI * 2;
-          return (
-            <circle key={`o${i}`}
-              cx={CX + 30 * Math.cos(a)} cy={CY + 30 * Math.sin(a)}
-              r={i % 4 === 0 ? 2.5 : 1.4}
-              fill={PURPLE} opacity={i % 4 === 0 ? 0.7 : 0.25}
-            >
-              <animateTransform attributeName="transform" type="rotate"
-                from={`0 ${CX} ${CY}`} to={`-360 ${CX} ${CY}`}
-                dur="18s" repeatCount="indefinite" />
-            </circle>
-          );
-        })}
-        {/* Inner ring — orange dots, clockwise */}
-        {Array.from({ length: 10 }, (_, i) => {
-          const a = (i / 10) * Math.PI * 2;
-          return (
-            <circle key={`i${i}`}
-              cx={CX + 20 * Math.cos(a)} cy={CY + 20 * Math.sin(a)}
-              r={i % 5 === 0 ? 2.2 : 1.2}
-              fill="#C2410C" opacity={i % 5 === 0 ? 0.6 : 0.2}
-            >
-              <animateTransform attributeName="transform" type="rotate"
-                from={`0 ${CX} ${CY}`} to={`360 ${CX} ${CY}`}
-                dur="12s" repeatCount="indefinite" />
-            </circle>
-          );
-        })}
+    <button
+      onClick={onClick}
+      aria-label="Open Scope Map"
+      title="Open Scope Map"
+      style={{
+        width: SIZE, height: SIZE, borderRadius: '50%',
+        background: 'var(--is-surface)',
+        boxShadow: 'var(--is-shadow-out)',
+        border: 'none', cursor: 'pointer', position: 'relative',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flexShrink: 0,
+        transition: 'box-shadow 180ms var(--is-ease-out)',
+      }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = `var(--is-shadow-out), 0 0 0 2px var(--is-accent-ring)`; }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--is-shadow-out)'; }}
+    >
+      <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+        <style>{`
+          @keyframes sb-cw  { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+          @keyframes sb-ccw { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
+          .sb-cw  { animation: sb-cw  14s linear infinite; transform-origin: ${CX}px ${CY}px; }
+          .sb-ccw { animation: sb-ccw 9s  linear infinite; transform-origin: ${CX}px ${CY}px; }
+          @media (prefers-reduced-motion: reduce) { .sb-cw, .sb-ccw { animation: none; } }
+        `}</style>
+        {/* Outer purple dots — breathing + rotating */}
+        <g className="sb-cw">
+          {Array.from({ length: 24 }, (_, i) => {
+            const a = (i / 24) * Math.PI * 2;
+            const dur = 22; const begin = -(i / 24) * dur;
+            const kt = "0;0.02;0.07;0.93;0.98;1";
+            const ks = "0 0 1 1;0.42 0 1 1;0 0 1 1;0 0 0.58 1;0 0 1 1";
+            return (
+              <circle key={i} cx={CX + 34 * Math.cos(a)} cy={CY + 34 * Math.sin(a)} r={0} fill={PURPLE}>
+                <animate attributeName="r" values="0;0;0.1;1.4;0;0" keyTimes={kt} dur={`${dur}s`} begin={`${begin}s`} repeatCount="indefinite" calcMode="spline" keySplines={ks} />
+                <animate attributeName="opacity" values="0;0;0.7;0.7;0;0" keyTimes={kt} dur={`${dur}s`} begin={`${begin}s`} repeatCount="indefinite" calcMode="spline" keySplines={ks} />
+              </circle>
+            );
+          })}
+        </g>
+        {/* Inner orange dots — breathing + counter-rotating */}
+        <g className="sb-ccw">
+          {Array.from({ length: 16 }, (_, i) => {
+            const a = (i / 16) * Math.PI * 2;
+            const dur = 15; const begin = -((16 - i) / 16) * dur;
+            const kt = "0;0.02;0.07;0.93;0.98;1";
+            const ks = "0 0 1 1;0.42 0 1 1;0 0 1 1;0 0 0.58 1;0 0 1 1";
+            return (
+              <circle key={i} cx={CX + 24 * Math.cos(a)} cy={CY + 24 * Math.sin(a)} r={0} fill={ORANGE}>
+                <animate attributeName="r" values="0;0;0.1;1.2;0;0" keyTimes={kt} dur={`${dur}s`} begin={`${begin}s`} repeatCount="indefinite" calcMode="spline" keySplines={ks} />
+                <animate attributeName="opacity" values="0;0;0.7;0.7;0;0" keyTimes={kt} dur={`${dur}s`} begin={`${begin}s`} repeatCount="indefinite" calcMode="spline" keySplines={ks} />
+              </circle>
+            );
+          })}
+        </g>
       </svg>
-      <span style={{
-        fontSize: 10, fontWeight: 700, color: PURPLE,
-        letterSpacing: '0.04em', textTransform: 'uppercase', zIndex: 1,
-      }}>Scope</span>
+      <span style={{ position: 'relative', zIndex: 1, fontSize: 11, fontWeight: 700, color: 'var(--is-text-primary)', letterSpacing: '0.02em' }}>
+        Scope
+      </span>
     </button>
   );
 }

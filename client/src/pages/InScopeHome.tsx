@@ -13,13 +13,22 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import {
-  Send, Clock, ChevronRight, User,
+  Send, Clock, ChevronRight,
   AlertCircle, Loader2, CheckCircle2, XCircle,
   ArrowUpRight,
 } from 'lucide-react';
+
 import { useAgentChat } from '@/contexts/AgentChatContext';
 import ScopeMapOverlay from '@/components/ScopeMapOverlay';
 import InScopeSidebar from '@/components/InScopeSidebar';
+
+// Time-aware greeting
+function getGreeting(): string {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+}
 
 const PURPLE = '#6B21A8';
 const ORANGE = '#C2410C';
@@ -172,16 +181,15 @@ function ScopeBar({
       <div style={{ width: 1, height: 26, background: 'var(--is-border)', margin: '0 18px', flexShrink: 0 }} />
 
       {empty || !scope ? (
-        /* ── Empty state: greeting ── */
+        /* ── Empty state: subtle placeholder ── */
         <span
           style={{
-            fontSize: 14, fontWeight: 400,
-            color: 'var(--is-text-secondary)',
-            fontStyle: 'italic',
+            fontSize: 13, fontWeight: 400,
+            color: 'var(--is-text-tertiary)',
             letterSpacing: '-0.01em',
           }}
         >
-          Hi Sophia, what is in scope today?
+          No scope defined — type a prompt below to get started
         </span>
       ) : (
         /* ── Active state: populated chips ── */
@@ -255,15 +263,6 @@ function ChatComposer({ onSubmit, empty }: { onSubmit: (text: string) => void; e
           transition: 'box-shadow 200ms var(--is-ease-out)',
         }}
       >
-        {/* Mini orbital icon */}
-        <svg width={18} height={18} viewBox="0 0 18 18" style={{ flexShrink: 0, opacity: 0.4 }}>
-          {Array.from({ length: 8 }, (_, i) => {
-            const a = (i / 8) * Math.PI * 2;
-            return <circle key={i} cx={9 + 6 * Math.cos(a)} cy={9 + 6 * Math.sin(a)} r={1.1} fill={PURPLE} />;
-          })}
-          <circle cx={9} cy={9} r={2.5} fill={PURPLE} opacity={0.7} />
-        </svg>
-
         <input
           ref={inputRef}
           type="text"
@@ -529,7 +528,6 @@ export default function InScopeHome() {
             alignItems: 'center',
             justifyContent: 'center',
             padding: '24px 32px 0',
-            position: 'relative',
             flexShrink: 0,
           }}
         >
@@ -538,21 +536,32 @@ export default function InScopeHome() {
             <span style={{ fontSize: 10, color: 'var(--is-text-tertiary)', verticalAlign: 'super' }}>™</span>
             <span style={{ fontSize: 20, fontWeight: 400, color: 'var(--is-text-secondary)', marginLeft: 4, letterSpacing: '-0.01em' }}>InScope</span>
           </div>
-          <button
-            aria-label="User profile"
-            style={{
-              position: 'absolute', right: 32,
-              width: 36, height: 36, borderRadius: '50%',
-              background: 'var(--is-surface)',
-              boxShadow: 'var(--is-shadow-sm)',
-              border: '1px solid var(--is-border)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', color: 'var(--is-text-secondary)',
-            }}
-          >
-            <User size={14} />
-          </button>
         </div>
+
+        {/* ── Greeting — large, left-aligned, below top bar ── */}
+        {!scope && (
+          <div style={{ padding: '32px 48px 0', flexShrink: 0 }}>
+            <h1 style={{
+              margin: 0,
+              fontSize: 'clamp(28px, 3.5vw, 42px)',
+              fontWeight: 700,
+              color: 'var(--is-text-primary)',
+              letterSpacing: '-0.03em',
+              lineHeight: 1.15,
+            }}>
+              {getGreeting()}, Sophia
+            </h1>
+            <p style={{
+              margin: '6px 0 0',
+              fontSize: 'clamp(13px, 1.4vw, 16px)',
+              color: 'var(--is-text-secondary)',
+              fontWeight: 400,
+              letterSpacing: '-0.01em',
+            }}>
+              How can I help you drive impact today?
+            </p>
+          </div>
+        )}
 
         {/* ── Scope bar — pinned near top ── */}
         <div style={{ display: 'flex', justifyContent: 'center', padding: '28px 40px 0', flexShrink: 0 }}>

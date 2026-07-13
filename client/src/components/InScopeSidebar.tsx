@@ -20,7 +20,7 @@ import {
   Home, GitFork, FolderOpen, Settings,
   ChevronRight, ChevronLeft, ChevronDown,
   Users, GitBranch, MessageSquare, FileText,
-  Pin,
+  Pin, User,
 } from 'lucide-react';
 
 const PURPLE = '#6B21A8';
@@ -439,6 +439,43 @@ export default function InScopeSidebar({ onNewScope }: { onNewScope?: () => void
 
         {/* ── Spacer ── */}
         <div style={{ flex: 1 }} />
+
+        {/* ── User avatar (bottom) ── */}
+        <div style={{ marginBottom: 4 }}>
+          <button
+            aria-label="User profile"
+            title={collapsed ? 'Sophia Laurent' : undefined}
+            style={{
+              width: '100%',
+              display: 'flex', alignItems: 'center',
+              gap: collapsed ? 0 : 10,
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              padding: collapsed ? '9px 0' : '9px 12px',
+              borderRadius: 12, border: 'none',
+              cursor: 'pointer', fontFamily: 'inherit',
+              background: 'transparent',
+              transition: 'background 140ms ease-out',
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = SURFACE2; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+          >
+            {/* Avatar circle */}
+            <div style={{
+              width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+              background: `linear-gradient(135deg, ${PURPLE} 0%, #9333EA 100%)`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#fff', fontSize: 11, fontWeight: 700,
+            }}>
+              SL
+            </div>
+            {!collapsed && (
+              <div style={{ textAlign: 'left', minWidth: 0 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: TEXT_PRIMARY, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Sophia Laurent</div>
+                <div style={{ fontSize: 10, color: TEXT_TERTIARY, whiteSpace: 'nowrap' }}>Tax Manager</div>
+              </div>
+            )}
+          </button>
+        </div>
 
         {/* ── Settings (bottom) ── */}
         <NavItem

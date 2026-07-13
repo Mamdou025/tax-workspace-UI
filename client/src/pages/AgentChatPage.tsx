@@ -14,7 +14,7 @@ import {
 import { useAgentChat } from '@/contexts/AgentChatContext';
 import type { AgentMessage, EventKind } from '@/contexts/AgentChatContext';
 import { AgentToolCard } from '@/components/AgentCards';
-import LeftNavRail from '@/components/LeftNavRail';
+import InScopeSidebar from '@/components/InScopeSidebar';
 
 // ─── Typing Indicator ─────────────────────────────────────────────────────────
 
@@ -182,10 +182,13 @@ export default function AgentChatPage() {
 
   return (
     <div
-      className="flex flex-col"
-      style={{ height: '100vh', background: '#ffffff', fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif" }}
+      style={{ height: '100vh', display: 'flex', background: 'var(--is-bg)', fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif" }}
     >
-      <LeftNavRail />
+      <InScopeSidebar />
+
+      {/* ── Chat panel ── */}
+      <div className="flex flex-col" style={{ flex: 1, minWidth: 0, height: '100vh', background: '#ffffff' }}>
+
       {/* ── Top bar ── */}
       <div
         className="flex items-center gap-3 px-5 shrink-0"
@@ -592,6 +595,7 @@ export default function AgentChatPage() {
           30% { transform: translateY(-5px); }
         }
       `}</style>
+      </div> {/* end chat panel */}
     </div>
   );
 }

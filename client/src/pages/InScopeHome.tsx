@@ -2,12 +2,14 @@
  * InScopeHome — calm chat-first home page
  *
  * Layout:
- *  - Top: Sinaxe · InScope logo centred, user avatar top-right
- *  - Scope bar: floating neumorphic pill with animated Scope button
- *  - Chat composer: large centred neumorphic input
- *  - Two-column cards: Recent Activity (left) + Attention Summary (right)
+ *  - Left: InScopeSidebar (collapsible, 64–240px)
+ *  - Right: full-height content area
+ *    - Top: Sinaxe · InScope logo centred, user avatar top-right
+ *    - Scope bar: floating neumorphic pill with animated Scope button
+ *    - Chat composer: large centred neumorphic input
+ *    - Two-column cards: Recent Activity (left) + Attention Summary (right)
  *
- * Design: soft cool-grey neumorphic, muted lilac accent, no bright colours
+ * Scaling: content fills the full remaining viewport width, no hard max-width cap
  */
 
 import { useState, useRef, useCallback } from 'react';
@@ -19,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useAgentChat } from '@/contexts/AgentChatContext';
 import ScopeMapOverlay from '@/components/ScopeMapOverlay';
+import InScopeSidebar from '@/components/InScopeSidebar';
 
 const PURPLE = '#6B21A8';
 const ORANGE = '#C2410C';
@@ -55,7 +58,6 @@ function ScopeButton({ onClick }: { onClick: () => void }) {
           .sb-ccw { animation: sb-ccw 9s  linear infinite; transform-origin: ${CX}px ${CY}px; }
           @media (prefers-reduced-motion: reduce) { .sb-cw, .sb-ccw { animation: none; } }
         `}</style>
-        {/* Outer purple dots */}
         <g className="sb-cw">
           {Array.from({ length: 24 }, (_, i) => {
             const a = (i / 24) * Math.PI * 2;
@@ -70,7 +72,6 @@ function ScopeButton({ onClick }: { onClick: () => void }) {
             );
           })}
         </g>
-        {/* Inner orange dots */}
         <g className="sb-ccw">
           {Array.from({ length: 16 }, (_, i) => {
             const a = (i / 16) * Math.PI * 2;
@@ -112,19 +113,19 @@ function ScopeBar({ onScopeClick }: { onScopeClick: () => void }) {
         borderRadius: 'var(--is-radius-pill)',
         boxShadow: 'var(--is-shadow-out)',
         border: '1px solid var(--is-border)',
-        padding: '10px 18px 10px 10px',
-        maxWidth: 680, width: '100%',
+        padding: '10px 24px 10px 10px',
+        width: '100%', maxWidth: 760,
       }}
     >
       <ScopeButton onClick={onScopeClick} />
 
-      <div style={{ width: 1, height: 28, background: 'var(--is-border)', margin: '0 14px', flexShrink: 0 }} />
+      <div style={{ width: 1, height: 28, background: 'var(--is-border)', margin: '0 18px', flexShrink: 0 }} />
 
       {SCOPE_DIMS.map((dim, i) => (
         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
-          {i > 0 && <span style={{ color: 'var(--is-border)', margin: '0 10px', fontSize: 14 }}>·</span>}
+          {i > 0 && <span style={{ color: 'rgba(0,0,0,0.15)', margin: '0 12px', fontSize: 16 }}>·</span>}
           <button
-            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '3px 6px', borderRadius: 8, fontSize: 12, fontWeight: 500, color: 'var(--is-text-secondary)', transition: 'color 140ms ease-out' }}
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 8px', borderRadius: 8, fontSize: 13, fontWeight: 500, color: 'var(--is-text-secondary)', transition: 'color 140ms ease-out' }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--is-text-primary)'; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--is-text-secondary)'; }}
           >
@@ -157,21 +158,20 @@ function ChatComposer({ onSubmit }: { onSubmit: (text: string) => void }) {
     <div
       onClick={() => inputRef.current?.focus()}
       style={{
-        display: 'flex', alignItems: 'center', gap: 12,
+        display: 'flex', alignItems: 'center', gap: 14,
         background: 'var(--is-surface)',
         borderRadius: 'var(--is-radius-pill)',
         boxShadow: focused
           ? 'var(--is-shadow-in), 0 0 0 2px var(--is-accent-ring)'
           : 'var(--is-shadow-out)',
         border: '1px solid var(--is-border)',
-        padding: '14px 14px 14px 22px',
-        maxWidth: 680, width: '100%',
+        padding: '16px 16px 16px 26px',
+        width: '100%', maxWidth: 760,
         cursor: 'text',
         transition: 'box-shadow 200ms var(--is-ease-out)',
       }}
     >
-      {/* Mini scope icon */}
-      <svg width={18} height={18} viewBox="0 0 18 18" style={{ flexShrink: 0, opacity: 0.5 }}>
+      <svg width={18} height={18} viewBox="0 0 18 18" style={{ flexShrink: 0, opacity: 0.45 }}>
         {Array.from({ length: 8 }, (_, i) => {
           const a = (i / 8) * Math.PI * 2;
           return <circle key={i} cx={9 + 6 * Math.cos(a)} cy={9 + 6 * Math.sin(a)} r={1.1} fill={PURPLE} />;
@@ -190,7 +190,7 @@ function ChatComposer({ onSubmit }: { onSubmit: (text: string) => void }) {
         placeholder="Ask, find, open or run anything in your tax workspace…"
         style={{
           flex: 1, background: 'transparent', border: 'none', outline: 'none',
-          fontSize: 14, color: 'var(--is-text-primary)', fontFamily: 'inherit',
+          fontSize: 15, color: 'var(--is-text-primary)', fontFamily: 'inherit',
           fontWeight: 400,
         }}
       />
@@ -199,7 +199,7 @@ function ChatComposer({ onSubmit }: { onSubmit: (text: string) => void }) {
         onMouseDown={(e) => { e.preventDefault(); handleSend(); }}
         aria-label="Submit"
         style={{
-          width: 36, height: 36, borderRadius: 14, flexShrink: 0,
+          width: 40, height: 40, borderRadius: 16, flexShrink: 0,
           background: value.trim() ? 'var(--is-text-primary)' : 'var(--is-surface-2)',
           boxShadow: value.trim() ? '0 4px 12px rgba(32,39,53,0.18)' : 'var(--is-shadow-in)',
           border: 'none', cursor: value.trim() ? 'pointer' : 'default',
@@ -208,7 +208,7 @@ function ChatComposer({ onSubmit }: { onSubmit: (text: string) => void }) {
           color: value.trim() ? '#fff' : 'var(--is-text-tertiary)',
         }}
       >
-        <Send size={13} />
+        <Send size={14} />
       </button>
     </div>
   );
@@ -234,21 +234,20 @@ function RecentActivityCard() {
         borderRadius: 'var(--is-radius-lg)',
         boxShadow: 'var(--is-shadow-card)',
         border: '1px solid var(--is-border)',
-        padding: '20px 22px',
+        padding: '22px 24px',
         flex: 1, minWidth: 0,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Clock size={14} style={{ color: 'var(--is-text-secondary)' }} />
-          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--is-text-primary)' }}>Recent Activity</span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+          <Clock size={15} style={{ color: 'var(--is-text-secondary)' }} />
+          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--is-text-primary)' }}>Recent Activity</span>
         </div>
         <button
           onClick={() => navigate('/library')}
-          style={{ fontSize: 11, color: 'var(--is-text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}
+          style={{ fontSize: 12, color: 'var(--is-text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
         >
-          View all
-          <ArrowUpRight size={10} />
+          View all <ArrowUpRight size={11} />
         </button>
       </div>
 
@@ -259,7 +258,7 @@ function RecentActivityCard() {
             onClick={() => navigate(item.route)}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '9px 10px', borderRadius: 12, background: 'transparent',
+              padding: '10px 12px', borderRadius: 12, background: 'transparent',
               border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%',
               transition: 'background 140ms ease-out',
             }}
@@ -267,14 +266,14 @@ function RecentActivityCard() {
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
           >
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--is-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--is-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {item.title}
               </div>
-              <div style={{ fontSize: 11, color: 'var(--is-text-secondary)', marginTop: 1 }}>{item.context}</div>
+              <div style={{ fontSize: 12, color: 'var(--is-text-secondary)', marginTop: 2 }}>{item.context}</div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 12 }}>
-              <span style={{ fontSize: 10, color: 'var(--is-text-tertiary)', whiteSpace: 'nowrap' }}>{item.time}</span>
-              <ChevronRight size={11} style={{ color: 'var(--is-text-tertiary)' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 16 }}>
+              <span style={{ fontSize: 11, color: 'var(--is-text-tertiary)', whiteSpace: 'nowrap' }}>{item.time}</span>
+              <ChevronRight size={12} style={{ color: 'var(--is-text-tertiary)' }} />
             </div>
           </button>
         ))}
@@ -302,18 +301,17 @@ function AttentionSummaryCard() {
         borderRadius: 'var(--is-radius-lg)',
         boxShadow: 'var(--is-shadow-card)',
         border: '1px solid var(--is-border)',
-        padding: '20px 22px',
-        width: 280, flexShrink: 0,
+        padding: '22px 24px',
+        width: 300, flexShrink: 0,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--is-text-primary)' }}>Attention</span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+        <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--is-text-primary)' }}>Attention</span>
         <button
           onClick={() => navigate('/dashboard')}
-          style={{ fontSize: 11, color: 'var(--is-text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}
+          style={{ fontSize: 12, color: 'var(--is-text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
         >
-          View all
-          <ArrowUpRight size={10} />
+          View all <ArrowUpRight size={11} />
         </button>
       </div>
 
@@ -326,7 +324,7 @@ function AttentionSummaryCard() {
               onClick={() => navigate(row.route)}
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '10px 10px', borderRadius: 12,
+                padding: '11px 12px', borderRadius: 12,
                 background: row.tint ? 'var(--is-accent-soft)' : 'transparent',
                 border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%',
                 transition: 'background 140ms ease-out',
@@ -334,17 +332,17 @@ function AttentionSummaryCard() {
               onMouseEnter={(e) => { if (!row.tint) (e.currentTarget as HTMLElement).style.background = 'var(--is-surface-2)'; }}
               onMouseLeave={(e) => { if (!row.tint) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <Icon size={14} style={{ color: row.tint ? 'var(--is-accent)' : 'var(--is-text-secondary)', flexShrink: 0 }} />
-                <span style={{ fontSize: 12, fontWeight: row.tint ? 600 : 500, color: row.tint ? 'var(--is-accent)' : 'var(--is-text-primary)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+                <Icon size={15} style={{ color: row.tint ? 'var(--is-accent)' : 'var(--is-text-secondary)', flexShrink: 0 }} />
+                <span style={{ fontSize: 13, fontWeight: row.tint ? 600 : 500, color: row.tint ? 'var(--is-accent)' : 'var(--is-text-primary)' }}>
                   {row.label}
                 </span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: row.tint ? 'var(--is-accent)' : 'var(--is-text-primary)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: row.tint ? 'var(--is-accent)' : 'var(--is-text-primary)' }}>
                   {row.count}
                 </span>
-                <ChevronRight size={11} style={{ color: 'var(--is-text-tertiary)' }} />
+                <ChevronRight size={12} style={{ color: 'var(--is-text-tertiary)' }} />
               </div>
             </button>
           );
@@ -371,61 +369,71 @@ export default function InScopeHome() {
       style={{
         minHeight: '100vh',
         background: 'var(--is-bg)',
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
-        paddingLeft: 88, // offset for the left nav rail (60px + 16px gap + 12px breathing room)
+        display: 'flex',
         fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif",
       }}
     >
-      {/* ── Top bar ── */}
+      {/* ── Sidebar ── */}
+      <InScopeSidebar />
+
+      {/* ── Main content — fills all remaining width ── */}
       <div
         style={{
-          width: '100%', maxWidth: 760,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          paddingTop: 28, paddingBottom: 0, position: 'relative',
+          flex: 1, minWidth: 0,
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          paddingTop: 0,
         }}
       >
-        {/* Logo centred */}
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, userSelect: 'none' }}>
-          <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--is-text-primary)', letterSpacing: '-0.01em' }}>Sinaxe</span>
-          <span style={{ fontSize: 10, color: 'var(--is-text-tertiary)', verticalAlign: 'super' }}>™</span>
-          <span style={{ fontSize: 20, fontWeight: 400, color: 'var(--is-text-secondary)', marginLeft: 3, letterSpacing: '-0.01em' }}>InScope</span>
-        </div>
-
-        {/* User avatar — top right */}
-        <button
-          aria-label="User profile"
+        {/* Top bar */}
+        <div
           style={{
-            position: 'absolute', right: 0,
-            width: 34, height: 34, borderRadius: '50%',
-            background: 'var(--is-surface)',
-            boxShadow: 'var(--is-shadow-sm)',
-            border: '1px solid var(--is-border)',
+            width: '100%',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', color: 'var(--is-text-secondary)',
+            paddingTop: 32, paddingBottom: 0, paddingLeft: 24, paddingRight: 24,
+            position: 'relative',
           }}
         >
-          <User size={14} />
-        </button>
-      </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, userSelect: 'none' }}>
+            <span style={{ fontSize: 22, fontWeight: 700, color: 'var(--is-text-primary)', letterSpacing: '-0.01em' }}>Sinaxe</span>
+            <span style={{ fontSize: 11, color: 'var(--is-text-tertiary)', verticalAlign: 'super' }}>™</span>
+            <span style={{ fontSize: 22, fontWeight: 400, color: 'var(--is-text-secondary)', marginLeft: 4, letterSpacing: '-0.01em' }}>InScope</span>
+          </div>
+          <button
+            aria-label="User profile"
+            style={{
+              position: 'absolute', right: 24,
+              width: 38, height: 38, borderRadius: '50%',
+              background: 'var(--is-surface)',
+              boxShadow: 'var(--is-shadow-sm)',
+              border: '1px solid var(--is-border)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', color: 'var(--is-text-secondary)',
+            }}
+          >
+            <User size={15} />
+          </button>
+        </div>
 
-      {/* ── Main content ── */}
-      <div
-        style={{
-          width: '100%', maxWidth: 760,
-          display: 'flex', flexDirection: 'column', alignItems: 'center',
-          gap: 28, paddingTop: 48, paddingBottom: 60,
-        }}
-      >
-        {/* Scope bar */}
-        <ScopeBar onScopeClick={() => setScopeMapOpen(true)} />
+        {/* Centred content column — max-width 860 so it breathes on large screens */}
+        <div
+          style={{
+            width: '100%', maxWidth: 860,
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            gap: 32, paddingTop: 56, paddingBottom: 80,
+            paddingLeft: 24, paddingRight: 24,
+          }}
+        >
+          {/* Scope bar */}
+          <ScopeBar onScopeClick={() => setScopeMapOpen(true)} />
 
-        {/* Chat composer */}
-        <ChatComposer onSubmit={handleChatSubmit} />
+          {/* Chat composer */}
+          <ChatComposer onSubmit={handleChatSubmit} />
 
-        {/* Two-column cards */}
-        <div style={{ display: 'flex', gap: 16, width: '100%', alignItems: 'flex-start' }}>
-          <RecentActivityCard />
-          <AttentionSummaryCard />
+          {/* Two-column cards */}
+          <div style={{ display: 'flex', gap: 20, width: '100%', alignItems: 'flex-start' }}>
+            <RecentActivityCard />
+            <AttentionSummaryCard />
+          </div>
         </div>
       </div>
 

@@ -468,42 +468,49 @@ export default function InScopeHome() {
           </button>
         </div>
 
-        {/* ── Centred zone: scope bar + chat (takes all remaining space above cards) ── */}
+        {/* ── Scope bar — pinned near top ── */}
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '32px 40px 0', flexShrink: 0 }}>
+          <div style={{ width: '100%', maxWidth: 760 }}>
+            <ScopeBar onScopeClick={() => setScopeMapOpen(true)} />
+          </div>
+        </div>
+
+        {/* ── Centred zone: chat composer takes all remaining space ── */}
         <div
           style={{
             flex: 1,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',   /* ← vertically centres this block */
+            justifyContent: 'center',
             padding: '0 40px',
-            gap: 24,
+            gap: 16,
             minHeight: 0,
           }}
         >
-          {/* Scope bar — fluid width, max 760 */}
-          <div style={{ width: '100%', maxWidth: 760 }}>
-            <ScopeBar onScopeClick={() => setScopeMapOpen(true)} />
-          </div>
-
-          {/* Chat composer — fluid width, max 760 */}
           <div style={{ width: '100%', maxWidth: 760 }}>
             <ChatComposer onSubmit={handleChatSubmit} />
           </div>
         </div>
 
-        {/* ── Bottom zone: compact cards ── */}
+        {/* ── Bottom zone: medium-sized cards, centred, not full-width ── */}
         <div
           style={{
             display: 'flex',
+            justifyContent: 'center',
             gap: 16,
-            padding: '0 40px 28px',
+            padding: '0 40px 32px',
             flexShrink: 0,
-            alignItems: 'flex-start',
           }}
         >
-          <RecentActivityCard />
-          <AttentionCard />
+          {/* Recent Activity — fixed medium width */}
+          <div style={{ width: 380 }}>
+            <RecentActivityCard />
+          </div>
+          {/* Attention — fixed medium width */}
+          <div style={{ width: 260 }}>
+            <AttentionCard />
+          </div>
         </div>
       </div>
 

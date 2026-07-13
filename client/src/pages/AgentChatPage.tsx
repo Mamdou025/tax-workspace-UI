@@ -14,6 +14,7 @@ import {
 import { useAgentChat } from '@/contexts/AgentChatContext';
 import type { AgentMessage, EventKind } from '@/contexts/AgentChatContext';
 import { AgentToolCard } from '@/components/AgentCards';
+import LeftNavRail from '@/components/LeftNavRail';
 
 // ─── Typing Indicator ─────────────────────────────────────────────────────────
 
@@ -184,6 +185,7 @@ export default function AgentChatPage() {
       className="flex flex-col"
       style={{ height: '100vh', background: '#ffffff', fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif" }}
     >
+      <LeftNavRail />
       {/* ── Top bar ── */}
       <div
         className="flex items-center gap-3 px-5 shrink-0"

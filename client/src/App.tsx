@@ -4,6 +4,13 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { AgentChatProvider } from '@/contexts/AgentChatContext';
+
+// ── New InScope shell ──────────────────────────────────────────────────────────
+import InScopeHome from '@/pages/InScopeHome';
+import Library from '@/pages/Library';
+
+// ── Preserved pages (shell wrapper added where needed) ────────────────────────
 import OrbitalStage from "./components/OrbitalStage";
 import ExecutiveOverview from "./pages/ExecutiveOverview";
 import Dashboard from "./pages/Dashboard";
@@ -15,24 +22,38 @@ import T1134Worksheet from '@/pages/T1134Worksheet';
 import SurplusWorksheet from '@/pages/SurplusWorksheet';
 import AgentChatPage from '@/pages/AgentChatPage';
 import ICTWorkspace from '@/pages/ICTWorkspace';
-import { AgentChatProvider } from '@/contexts/AgentChatContext';
 
 function Router() {
   return (
     <Switch>
-      {/* InScope V2 — OrbitalStage is the root */}
-      <Route path="/" component={OrbitalStage} />
-      {/* V1 pages accessible via direct URL */}
-      <Route path="/bu-overview" component={ExecutiveOverview} />
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/client/:id" component={ClientWorkspace} />
-      <Route path="/workflow/:id" component={WorkflowExecution} />
-      <Route path="/builder" component={WorkflowBuilder} />
+      {/* ── New InScope home ── */}
+      <Route path="/" component={InScopeHome} />
+
+      {/* ── Library ── */}
+      <Route path="/library" component={Library} />
+
+      {/* ── Chat / agent thread ── */}
+      <Route path="/chat" component={AgentChatPage} />
+
+      {/* ── ICT AI-first workspace ── */}
+      <Route path="/ict" component={ICTWorkspace} />
+
+      {/* ── Workpapers (preserved, untouched) ── */}
       <Route path="/fapi" component={FapiWorksheet} />
       <Route path="/t1134" component={T1134Worksheet} />
       <Route path="/surplus" component={SurplusWorksheet} />
-      <Route path="/chat" component={AgentChatPage} />
-      <Route path="/ict" component={ICTWorkspace} />
+
+      {/* ── Dashboard & builder ── */}
+      <Route path="/dashboard" component={Dashboard} />
+      <Route path="/builder" component={WorkflowBuilder} />
+
+      {/* ── Legacy / deep links preserved ── */}
+      <Route path="/orbital" component={OrbitalStage} />
+      <Route path="/bu-overview" component={ExecutiveOverview} />
+      <Route path="/client/:id" component={ClientWorkspace} />
+      <Route path="/workflow/:id" component={WorkflowExecution} />
+
+      {/* ── 404 ── */}
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
@@ -48,11 +69,11 @@ function App() {
             position="bottom-right"
             toastOptions={{
               style: {
-                background: 'oklch(1 0 0)',
-                border: '1px solid oklch(0.87 0.008 240)',
-                color: 'oklch(0.18 0.018 255)',
+                background: '#F8F9FB',
+                border: '1px solid rgba(0,0,0,0.07)',
+                color: '#202735',
                 fontSize: '12px',
-                boxShadow: '0 4px 12px oklch(0 0 0 / 10%)',
+                boxShadow: '0 4px 12px rgba(32,39,53,0.08)',
               },
             }}
           />

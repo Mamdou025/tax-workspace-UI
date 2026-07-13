@@ -48,6 +48,29 @@
 }
 
 :root {
+  /* ── InScope neumorphic shell tokens ── */
+  --is-bg:          #F4F5F8;
+  --is-surface:     #F8F9FB;
+  --is-surface-2:   #EDEEF2;
+  --is-text-primary:   #202735;
+  --is-text-secondary: #7C8493;
+  --is-text-tertiary:  #A8AEBA;
+  --is-border:      rgba(0,0,0,0.07);
+  --is-border-soft: rgba(0,0,0,0.04);
+  --is-accent:      #7C6EAE;
+  --is-accent-soft: rgba(124, 110, 174, 0.12);
+  --is-accent-ring: rgba(124, 110, 174, 0.28);
+  --is-shadow-out:  8px 8px 18px rgba(158,158,178,0.36), -8px -8px 18px rgba(255,255,255,0.82);
+  --is-shadow-in:   inset 5px 5px 12px rgba(158,158,178,0.32), inset -5px -5px 12px rgba(255,255,255,0.80);
+  --is-shadow-sm:   4px 4px 10px rgba(158,158,178,0.28), -4px -4px 10px rgba(255,255,255,0.76);
+  --is-shadow-card: 0 2px 12px rgba(32,39,53,0.06), 0 1px 3px rgba(32,39,53,0.04);
+  --is-radius-sm:   12px;
+  --is-radius:      18px;
+  --is-radius-lg:   24px;
+  --is-radius-pill: 999px;
+  --is-ease-out:    cubic-bezier(0.23, 1, 0.32, 1);
+  --is-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
   /* Light mode — professional enterprise tool */
   --radius: 0.375rem;
 

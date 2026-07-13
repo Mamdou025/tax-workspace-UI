@@ -251,7 +251,7 @@ function NavItem({
 
 // ─── InScopeSidebar ───────────────────────────────────────────────────────────
 
-export default function InScopeSidebar() {
+export default function InScopeSidebar({ onNewScope }: { onNewScope?: () => void } = {}) {
   const [location, navigate] = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [scopesOpen, setScopesOpen] = useState(true);
@@ -331,6 +331,40 @@ export default function InScopeSidebar() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <NavItem icon={Home}    label="Home"             active={isActive('/')}        onClick={() => navigate('/')}        collapsed={collapsed} />
           <NavItem icon={GitFork} label="Workflow Builder" active={isActive('/builder')} onClick={() => navigate('/builder')} collapsed={collapsed} />
+        </div>
+
+        {/* ── New Scope button ── */}
+        <div style={{ marginTop: 12, padding: collapsed ? '0 2px' : '0 2px' }}>
+          <button
+            onClick={() => { if (onNewScope) onNewScope(); }}
+            aria-label="New Scope"
+            title={collapsed ? 'New Scope' : undefined}
+            style={{
+              width: '100%',
+              display: 'flex', alignItems: 'center',
+              gap: collapsed ? 0 : 9,
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              padding: collapsed ? '9px 0' : '9px 12px',
+              borderRadius: 12, border: `1px dashed rgba(107,33,168,0.30)`,
+              cursor: 'pointer', fontFamily: 'inherit',
+              background: 'transparent',
+              color: PURPLE,
+              transition: 'all 180ms ease-out',
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.background = 'rgba(107,33,168,0.06)';
+              (e.currentTarget as HTMLElement).style.borderColor = 'rgba(107,33,168,0.55)';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.background = 'transparent';
+              (e.currentTarget as HTMLElement).style.borderColor = 'rgba(107,33,168,0.30)';
+            }}
+          >
+            <span style={{ fontSize: 16, fontWeight: 300, lineHeight: 1, flexShrink: 0 }}>+</span>
+            {!collapsed && (
+              <span style={{ fontSize: 12, fontWeight: 600, color: PURPLE, whiteSpace: 'nowrap' }}>New Scope</span>
+            )}
+          </button>
         </div>
 
         {/* ── Scopes section ── */}

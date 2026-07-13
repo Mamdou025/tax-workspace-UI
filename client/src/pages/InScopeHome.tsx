@@ -1,26 +1,16 @@
 /**
  * InScopeHome — calm chat-first home page
  *
- * Layout (full-height, responsive):
- *  ┌─ sidebar ─┬──────────────────────────────────────────────────────┐
- *  │           │  [top bar: logo centred, avatar right]               │
- *  │           │                                                       │
- *  │           │  ← vertical flex, space-between →                    │
- *  │           │                                                       │
- *  │           │  [centred zone]                                       │
- *  │           │    Scope bar                                          │
- *  │           │    Chat composer   ← vertically centred in page      │
- *  │           │                                                       │
- *  │           │  [bottom zone]                                        │
- *  │           │    Recent Activity card  |  Attention card            │
- *  └───────────┴──────────────────────────────────────────────────────┘
+ * Two states:
+ *  1. EMPTY SCOPE  — scope bar shows greeting "Hi Sophia, what is in scope today?"
+ *                    chat composer is centred; suggestion chips shown
+ *  2. ACTIVE SCOPE — scope bar populated from the first prompt (client, year, workstream)
+ *                    thread opens in AgentChatPage
  *
- * No hard max-width on the outer container — everything scales with the
- * viewport. The centred content column uses a fluid max-width of 800px
- * but the bottom cards stretch to fill the full available width.
+ * "New Scope" button in sidebar calls onNewScope → resets to empty state.
  */
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import {
   Send, Clock, ChevronRight, User,
@@ -33,6 +23,51 @@ import InScopeSidebar from '@/components/InScopeSidebar';
 
 const PURPLE = '#6B21A8';
 const ORANGE = '#C2410C';
+
+// ─── Scope inference from prompt ─────────────────────────────────────────────
+// Very lightweight — extracts year, client name, workstream from free text.
+
+interface ScopeData {
+  client: string;
+  year: string;
+  workstream: string;
+  extra: string;
+}
+
+function inferScope(prompt: string): ScopeData {
+  const lower = prompt.toLowerCase();
+
+  // Year: 4-digit number
+  const yearMatch = prompt.match(/\b(20\d{2})\b/);
+  const year = yearMatch ? yearMatch[1] : 'FY 2025';
+
+  // Workstream keywords
+  let workstream = 'FAPI';
+  if (lower.includes('t1134') || lower.includes('t 1134')) workstream = 'T1134';
+  else if (lower.includes('surplus')) workstream = 'Surplus';
+  else if (lower.includes('provision') || lower.includes('q2') || lower.includes('q1') || lower.includes('q3') || lower.includes('q4')) workstream = 'Provision';
+  else if (lower.includes('transfer pricing') || lower.includes('tp benchmark')) workstream = 'Transfer Pricing';
+  else if (lower.includes('fapi') || lower.includes('foreign accrual')) workstream = 'FAPI';
+
+  // Client: word(s) after "for", "of", or at the end — capitalised
+  let client = '';
+  const forMatch = prompt.match(/\bfor\s+([A-Za-z][A-Za-z0-9\s&'-]{1,30}?)(?:\s+\d{4}|\s*$|,)/i);
+  if (forMatch) {
+    client = forMatch[1].trim();
+  } else {
+    // Fallback: last capitalised word sequence
+    const caps = prompt.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/g);
+    if (caps && caps.length > 0) client = caps[caps.length - 1];
+  }
+  if (!client) client = '1 client';
+
+  // Extra: exceptions / all / specific
+  let extra = 'All affiliates';
+  if (lower.includes('exception')) extra = 'Exceptions only';
+  if (lower.includes('all')) extra = 'All affiliates';
+
+  return { client, year, workstream, extra };
+}
 
 // ─── Scope button (animated dotted rings) ─────────────────────────────────────
 
@@ -111,9 +146,15 @@ function ScopeButton({ onClick }: { onClick: () => void }) {
 
 // ─── Scope bar ────────────────────────────────────────────────────────────────
 
-function ScopeBar({ onScopeClick }: { onScopeClick: () => void }) {
-  const DIMS = ['18 clients', '47 affiliates', 'FY 2025', 'FAPI · T1134', 'Exceptions only'];
-
+function ScopeBar({
+  onScopeClick,
+  scope,
+  empty,
+}: {
+  onScopeClick: () => void;
+  scope: ScopeData | null;
+  empty: boolean;
+}) {
   return (
     <div
       style={{
@@ -124,36 +165,53 @@ function ScopeBar({ onScopeClick }: { onScopeClick: () => void }) {
         border: '1px solid var(--is-border)',
         padding: '8px 24px 8px 8px',
         width: '100%',
+        transition: 'all 300ms ease-out',
       }}
     >
       <ScopeButton onClick={onScopeClick} />
       <div style={{ width: 1, height: 26, background: 'var(--is-border)', margin: '0 18px', flexShrink: 0 }} />
-      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0 4px' }}>
-        {DIMS.map((dim, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center' }}>
-            {i > 0 && <span style={{ color: 'rgba(0,0,0,0.18)', margin: '0 8px', fontSize: 14 }}>·</span>}
-            <button
-              style={{
-                background: 'transparent', border: 'none', cursor: 'pointer',
-                padding: '4px 6px', borderRadius: 8,
-                fontSize: 13, fontWeight: 500, color: 'var(--is-text-secondary)',
-                transition: 'color 140ms ease-out', whiteSpace: 'nowrap',
-              }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--is-text-primary)'; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--is-text-secondary)'; }}
-            >
-              {dim}
-            </button>
-          </div>
-        ))}
-      </div>
+
+      {empty || !scope ? (
+        /* ── Empty state: greeting ── */
+        <span
+          style={{
+            fontSize: 14, fontWeight: 400,
+            color: 'var(--is-text-secondary)',
+            fontStyle: 'italic',
+            letterSpacing: '-0.01em',
+          }}
+        >
+          Hi Sophia, what is in scope today?
+        </span>
+      ) : (
+        /* ── Active state: populated chips ── */
+        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0 4px' }}>
+          {[scope.client, scope.year, scope.workstream, scope.extra].map((dim, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center' }}>
+              {i > 0 && <span style={{ color: 'rgba(0,0,0,0.18)', margin: '0 8px', fontSize: 14 }}>·</span>}
+              <button
+                style={{
+                  background: 'transparent', border: 'none', cursor: 'pointer',
+                  padding: '4px 6px', borderRadius: 8,
+                  fontSize: 13, fontWeight: 500, color: 'var(--is-text-secondary)',
+                  transition: 'color 140ms ease-out', whiteSpace: 'nowrap',
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--is-text-primary)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--is-text-secondary)'; }}
+              >
+                {dim}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 // ─── Chat composer ────────────────────────────────────────────────────────────
 
-function ChatComposer({ onSubmit }: { onSubmit: (text: string) => void }) {
+function ChatComposer({ onSubmit, empty }: { onSubmit: (text: string) => void; empty: boolean }) {
   const [value, setValue] = useState('');
   const [focused, setFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -167,6 +225,17 @@ function ChatComposer({ onSubmit }: { onSubmit: (text: string) => void }) {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') handleSend();
   };
+
+  // Auto-focus when in empty scope state
+  useEffect(() => {
+    if (empty) {
+      setTimeout(() => inputRef.current?.focus(), 80);
+    }
+  }, [empty]);
+
+  const SUGGESTIONS = empty
+    ? ['Calculate 2025 FAPI for Northstar', 'Open T1134 for Cascade', 'Review FAPI exceptions']
+    : ['Add another client', 'Change year', 'Open worksheet'];
 
   return (
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -203,7 +272,11 @@ function ChatComposer({ onSubmit }: { onSubmit: (text: string) => void }) {
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask, find, open or run anything in your tax workspace…"
+          placeholder={
+            empty
+              ? 'e.g. Calculate 2025 FAPI for Northstar Inc…'
+              : 'Ask, find, open or run anything in your tax workspace…'
+          }
           style={{
             flex: 1, background: 'transparent', border: 'none', outline: 'none',
             fontSize: 16, color: 'var(--is-text-primary)', fontFamily: 'inherit',
@@ -230,11 +303,7 @@ function ChatComposer({ onSubmit }: { onSubmit: (text: string) => void }) {
 
       {/* Quick suggestions */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
-        {[
-          'Calculate FAPI for Northstar',
-          'Open T1134 for Cascade',
-          'Review exceptions',
-        ].map((s) => (
+        {SUGGESTIONS.map((s) => (
           <button
             key={s}
             onClick={() => onSubmit(s)}
@@ -283,7 +352,6 @@ function RecentActivityCard() {
         boxShadow: 'var(--is-shadow-card)',
         border: '1px solid var(--is-border)',
         padding: '16px 20px',
-        flex: 1, minWidth: 0,
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
@@ -350,7 +418,6 @@ function AttentionCard() {
         boxShadow: 'var(--is-shadow-card)',
         border: '1px solid var(--is-border)',
         padding: '16px 20px',
-        width: 260, flexShrink: 0,
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
@@ -402,15 +469,34 @@ function AttentionCard() {
 
 // ─── InScopeHome ──────────────────────────────────────────────────────────────
 
+// Persist scope across navigations (back from chat → home still shows scope)
+let _persistedScope: ScopeData | null = null;
+
 export default function InScopeHome() {
   const [, navigate] = useLocation();
   const { openChat } = useAgentChat();
   const [scopeMapOpen, setScopeMapOpen] = useState(false);
 
-  const handleChatSubmit = (text: string) => {
-    openChat(text);
-    navigate('/chat');
-  };
+  // null = empty scope (greeting), non-null = active scope
+  const [scope, setScope] = useState<ScopeData | null>(_persistedScope);
+
+  const handleNewScope = useCallback(() => {
+    _persistedScope = null;
+    setScope(null);
+  }, []);
+
+  const handleChatSubmit = useCallback((text: string) => {
+    // Infer scope from the first prompt and populate the bar
+    const inferred = inferScope(text);
+    _persistedScope = inferred;
+    setScope(inferred);
+
+    // Brief visual delay so the user sees the scope bar populate, then open thread
+    setTimeout(() => {
+      openChat(text);
+      navigate('/chat');
+    }, 420);
+  }, [openChat, navigate]);
 
   return (
     <div
@@ -423,7 +509,7 @@ export default function InScopeHome() {
       }}
     >
       {/* ── Sidebar ── */}
-      <InScopeSidebar />
+      <InScopeSidebar onNewScope={handleNewScope} />
 
       {/* ── Main content — fills all remaining width ── */}
       <div
@@ -469,13 +555,17 @@ export default function InScopeHome() {
         </div>
 
         {/* ── Scope bar — pinned near top ── */}
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '32px 40px 0', flexShrink: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '28px 40px 0', flexShrink: 0 }}>
           <div style={{ width: '100%', maxWidth: 760 }}>
-            <ScopeBar onScopeClick={() => setScopeMapOpen(true)} />
+            <ScopeBar
+              onScopeClick={() => setScopeMapOpen(true)}
+              scope={scope}
+              empty={!scope}
+            />
           </div>
         </div>
 
-        {/* ── Centred zone: chat composer takes all remaining space ── */}
+        {/* ── Centred zone: chat composer ── */}
         <div
           style={{
             flex: 1,
@@ -489,11 +579,11 @@ export default function InScopeHome() {
           }}
         >
           <div style={{ width: '100%', maxWidth: 760 }}>
-            <ChatComposer onSubmit={handleChatSubmit} />
+            <ChatComposer onSubmit={handleChatSubmit} empty={!scope} />
           </div>
         </div>
 
-        {/* ── Bottom zone: medium-sized cards, centred, not full-width ── */}
+        {/* ── Bottom zone: medium-sized cards, centred ── */}
         <div
           style={{
             display: 'flex',
@@ -503,11 +593,9 @@ export default function InScopeHome() {
             flexShrink: 0,
           }}
         >
-          {/* Recent Activity — fixed medium width */}
           <div style={{ width: 380 }}>
             <RecentActivityCard />
           </div>
-          {/* Attention — fixed medium width */}
           <div style={{ width: 260 }}>
             <AttentionCard />
           </div>

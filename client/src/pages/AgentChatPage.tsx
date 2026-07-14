@@ -367,7 +367,7 @@ export default function AgentChatPage() {
                       marginBottom: 7,
                     }}
                   >
-                    <span style={{ color: '#111827', fontWeight: 700 }}>Workflow Copilot</span>
+                    <span style={{ color: '#111827', fontWeight: 700 }}>Sofi</span>
                     <span
                       style={{ width: 4, height: 4, background: '#cbd5e1', borderRadius: '50%', display: 'inline-block' }}
                     />

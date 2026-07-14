@@ -169,27 +169,7 @@ function ScopeBar({ onScopeClick, scope, empty }: {
   );
 }
 
-// ─── Thread helpers (same visual language as AgentChatPage) ───────────────────
-
-function TypingIndicator() {
-  return (
-    <div className="thread-item" style={{ marginBottom: 14 }}>
-      <div className="node-dot node-dot--assistant" />
-      <div style={{ paddingTop: 6 }}>
-        <div style={{
-          background: '#ffffff', border: '1px solid #e1e7ef',
-          display: 'inline-flex', alignItems: 'center', gap: 4,
-          padding: '10px 14px', borderRadius: 22,
-          boxShadow: '0 2px 8px rgba(15,23,42,.04)',
-        }}>
-          <span className="typing-dot" style={{ animationDelay: '0ms' }} />
-          <span className="typing-dot" style={{ animationDelay: '200ms' }} />
-          <span className="typing-dot" style={{ animationDelay: '400ms' }} />
-        </div>
-      </div>
-    </div>
-  );
-}
+// ─── Thread helpers — Aside AI style ─────────────────────────────────────────
 
 function SimpleMarkdown({ text }: { text: string }) {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
@@ -204,43 +184,69 @@ function SimpleMarkdown({ text }: { text: string }) {
   );
 }
 
-const EVENT_CONFIG: Record<EventKind, {
-  icon: React.ReactNode; dotClass: string; iconStyle: React.CSSProperties;
-}> = {
-  surface_opened: { icon: <LayoutGrid size={13} />, dotClass: 'node-dot--event', iconStyle: { background: '#e8f0ff', color: '#2563eb' } },
-  task_run:       { icon: <Play size={13} />,       dotClass: 'node-dot--event', iconStyle: { background: '#e9fbf4', color: '#059669' } },
-  warning:        { icon: <AlertTriangle size={13} />, dotClass: 'node-dot--warning', iconStyle: { background: '#fff7e6', color: '#b45309' } },
-  proposal:       { icon: <Zap size={13} />,        dotClass: 'node-dot--event', iconStyle: { background: '#f2eaff', color: '#7c3aed' } },
-  irl_sent:       { icon: <Mail size={13} />,       dotClass: 'node-dot--event', iconStyle: { background: '#e9fbf4', color: '#059669' } },
-  approved:       { icon: <CheckCircle2 size={13} />, dotClass: 'node-dot--event', iconStyle: { background: '#e9fbf4', color: '#059669' } },
-  flagged:        { icon: <Flag size={13} />,       dotClass: 'node-dot--warning', iconStyle: { background: '#fff7e6', color: '#b45309' } },
+// Icon map for event kinds
+const EVENT_ICON_MAP: Record<EventKind, React.ReactNode> = {
+  surface_opened: <LayoutGrid size={18} />,
+  task_run:       <Play size={18} />,
+  warning:        <AlertTriangle size={18} />,
+  proposal:       <Zap size={18} />,
+  irl_sent:       <Mail size={18} />,
+  approved:       <CheckCircle2 size={18} />,
+  flagged:        <Flag size={18} />,
 };
 
-function EventCard({ msg }: { msg: AgentMessage }) {
+// Aside-style step item: icon + large title + optional detail + optional time
+function StepItem({ icon, title, detail, time, isActive, children }: {
+  icon: React.ReactNode;
+  title: string;
+  detail?: string;
+  time?: string;
+  isActive?: boolean;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="aside-step" style={{ marginBottom: 48 }}>
+      {/* Spine dot */}
+      <div className={`aside-dot${isActive ? ' aside-dot--active' : ''}`} />
+      {/* Content */}
+      <div style={{ paddingLeft: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: detail || children ? 12 : 0 }}>
+          <span style={{ color: '#9ca3af', flexShrink: 0, display: 'flex', alignItems: 'center' }}>{icon}</span>
+          <span style={{ fontSize: 22, fontWeight: 500, color: '#111827', letterSpacing: '-0.025em', lineHeight: 1.3, flex: 1 }}>{title}</span>
+          {time && <span style={{ fontSize: 13, color: '#9ca3af', whiteSpace: 'nowrap', marginLeft: 8 }}>{time}</span>}
+        </div>
+        {detail && (
+          <p style={{ margin: '0 0 0 32px', fontSize: 16, color: '#374151', lineHeight: 1.6, maxWidth: 640 }}>{detail}</p>
+        )}
+        {children && (
+          <div style={{ marginLeft: 32, marginTop: 12 }}>{children}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function EventCard({ msg, isActive }: { msg: AgentMessage; isActive?: boolean }) {
   const kind = msg.eventKind ?? 'task_run';
-  const cfg = EVENT_CONFIG[kind];
+  const icon = EVENT_ICON_MAP[kind];
   const time = new Date(msg.timestamp).toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' });
   return (
-    <div className="thread-item" style={{ marginBottom: 10 }}>
-      <div className={`node-dot ${cfg.dotClass}`} />
-      <div style={{
-        border: '1px solid #dce6ef', background: 'rgba(255,255,255,0.85)',
-        borderRadius: 16, padding: '9px 12px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-        boxShadow: '0 3px 10px rgba(15,23,42,.035)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-          <div style={{ ...cfg.iconStyle, width: 28, height: 28, borderRadius: 10, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-            {cfg.icon}
-          </div>
-          <div style={{ minWidth: 0 }}>
-            <strong style={{ fontSize: 13, display: 'block', color: '#273142' }}>{msg.eventTitle}</strong>
-            <span style={{ fontSize: 12, color: '#7a8492', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 600 }}>
-              {msg.eventDetail}
-            </span>
-          </div>
+    <StepItem icon={icon} title={msg.eventTitle ?? ''} detail={msg.eventDetail} time={time} isActive={isActive} />
+  );
+}
+
+// Typing indicator — Aside style: animated dots inline below a step title
+function TypingIndicator() {
+  return (
+    <div className="aside-step" style={{ marginBottom: 48 }}>
+      <div className="aside-dot aside-dot--active" />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <span style={{ color: '#9ca3af', flexShrink: 0, display: 'flex', alignItems: 'center' }}><Loader2 size={18} className="sofi-spin" /></span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, paddingTop: 2 }}>
+          <span className="typing-dot" style={{ animationDelay: '0ms' }} />
+          <span className="typing-dot" style={{ animationDelay: '180ms' }} />
+          <span className="typing-dot" style={{ animationDelay: '360ms' }} />
         </div>
-        <div style={{ fontSize: 12, color: '#98a2b3', whiteSpace: 'nowrap', marginLeft: 12 }}>{time}</div>
       </div>
     </div>
   );
@@ -526,76 +532,85 @@ export default function InScopeHome() {
           </div>
         )}
 
-        {/* ── THREAD VIEW: expands in place from the chat bar ── */}
+        {/* ── THREAD VIEW: Aside AI style — slides up from chat bar ── */}
         {threadOpen && (
           <div style={{
             flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0,
-            animation: 'threadExpand 340ms cubic-bezier(0.23,1,0.32,1) both',
+            animation: 'threadSlideUp 420ms cubic-bezier(0.23,1,0.32,1) both',
           }}>
 
-            {/* Thread scroll area with timeline line */}
+            {/* Spine + messages */}
             <div className="chat-scroll" style={{
               flex: 1, overflowY: 'auto',
-              background: 'var(--is-bg)',
-              padding: '24px 40px 8px 40px',
+              background: '#ffffff',
+              padding: '40px 0 8px 0',
             }}>
-              <div style={{ maxWidth: 820, margin: '0 auto' }}>
+              {/* Spine line container — fixed left column */}
+              <div style={{ maxWidth: 820, margin: '0 auto', padding: '0 40px', position: 'relative' }}>
+                {/* Vertical spine line */}
+                <div style={{
+                  position: 'absolute', left: 40 + 14, top: 0, bottom: 0,
+                  width: 1, background: '#e5e7eb', zIndex: 0,
+                }} />
 
-                {/* Empty thread state — minimal, no separate identity */}
+                {/* Empty state */}
                 {state.messages.length === 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', paddingTop: 24, paddingLeft: 46 }}>
-                    <p style={{ fontSize: 13, color: 'var(--is-text-tertiary)', margin: 0, fontStyle: 'italic' }}>
-                      Starting {scope?.workstream} workflow for {scope?.client}…
-                    </p>
+                  <div className="aside-step" style={{ marginBottom: 48 }}>
+                    <div className="aside-dot aside-dot--active" />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                      <span style={{ color: '#9ca3af' }}><Loader2 size={18} className="sofi-spin" /></span>
+                      <span style={{ fontSize: 16, color: '#9ca3af', fontStyle: 'italic' }}>
+                        Starting {scope?.workstream} workflow for {scope?.client}…
+                      </span>
+                    </div>
                   </div>
                 )}
 
                 {/* Messages */}
-                {state.messages.map((msg) => {
-                  if (msg.role === 'event') return <EventCard key={msg.id} msg={msg} />;
+                {state.messages.map((msg, idx) => {
+                  const isLast = idx === state.messages.length - 1 && !state.isAgentTyping;
 
-                  const isUser = msg.role === 'user';
-                  if (isUser) {
+                  if (msg.role === 'event') {
+                    return <EventCard key={msg.id} msg={msg} isActive={isLast} />;
+                  }
+
+                  if (msg.role === 'user') {
                     return (
-                      <div key={msg.id} className="thread-item" style={{ marginBottom: 14 }}>
-                        <div className="node-dot node-dot--user" />
-                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                          <div style={{
-                            background: '#111827', color: '#fff', border: '1px solid #111827',
-                            borderRadius: 22, borderBottomRightRadius: 6,
-                            padding: '10px 14px', maxWidth: '70%', width: 'max-content',
-                            boxShadow: '0 4px 14px rgba(17,24,39,.18)',
-                          }}>
-                            <p style={{ margin: 0, color: '#fff', fontSize: 14, lineHeight: 1.5 }}>{msg.text}</p>
-                          </div>
+                      <div key={msg.id} className="aside-step" style={{ marginBottom: 48 }}>
+                        <div className="aside-dot" />
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 14 }}>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: '#9ca3af', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap', paddingTop: 4 }}>You</span>
+                          <span style={{ fontSize: 20, fontWeight: 500, color: '#111827', letterSpacing: '-0.02em', lineHeight: 1.4 }}>{msg.text}</span>
                         </div>
                       </div>
                     );
                   }
 
+                  // Assistant message — Aside style: step title + body paragraph
+                  const firstLine = msg.text?.split('\n')[0] ?? '';
+                  const rest = msg.text?.split('\n').slice(1).join('\n').trim() ?? '';
                   return (
-                    <div key={msg.id} className="thread-item" style={{ marginBottom: 16 }}>
-                      <div className="node-dot node-dot--assistant" />
-                      <div style={{ paddingTop: 4 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#8b95a4', fontSize: 12, fontWeight: 650, marginBottom: 7 }}>
-                          <span style={{ color: '#111827', fontWeight: 700 }}>Workflow Copilot</span>
-                          <span style={{ width: 4, height: 4, background: '#cbd5e1', borderRadius: '50%', display: 'inline-block' }} />
-                          <span>{formatTime(msg.timestamp)}</span>
+                    <div key={msg.id} className="aside-step" style={{ marginBottom: 48 }}>
+                      <div className={`aside-dot${isLast ? ' aside-dot--active' : ''}`} />
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: (rest || msg.toolCard) ? 14 : 0 }}>
+                          <span style={{ color: '#9ca3af', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+                            <Play size={18} />
+                          </span>
+                          <span style={{ fontSize: 22, fontWeight: 500, color: '#111827', letterSpacing: '-0.025em', lineHeight: 1.3, flex: 1 }}>
+                            <SimpleMarkdown text={firstLine} />
+                          </span>
+                          <span style={{ fontSize: 13, color: '#9ca3af', whiteSpace: 'nowrap' }}>{formatTime(msg.timestamp)}</span>
                         </div>
-                        {msg.text && (
-                          <div style={{
-                            border: '1px solid #e1e7ef', borderRadius: 22, borderTopLeftRadius: 6,
-                            background: '#ffffff', padding: '12px 16px',
-                            boxShadow: '0 4px 16px rgba(15,23,42,.05)',
-                            marginBottom: msg.toolCard ? 10 : 0, maxWidth: 600,
-                          }}>
-                            <p style={{ margin: 0, color: '#374151', fontSize: 14, lineHeight: 1.55 }}>
-                              <SimpleMarkdown text={msg.text} />
-                            </p>
-                          </div>
+                        {rest && (
+                          <p style={{ margin: '0 0 12px 32px', fontSize: 16, color: '#374151', lineHeight: 1.65, maxWidth: 640 }}>
+                            <SimpleMarkdown text={rest} />
+                          </p>
                         )}
                         {msg.toolCard && (
-                          <AgentToolCard card={msg.toolCard} messageId={msg.id} onApprove={approveCard} onCancel={cancelCard} />
+                          <div style={{ marginLeft: 32, marginTop: 4 }}>
+                            <AgentToolCard card={msg.toolCard} messageId={msg.id} onApprove={approveCard} onCancel={cancelCard} />
+                          </div>
                         )}
                       </div>
                     </div>
@@ -660,41 +675,66 @@ export default function InScopeHome() {
       {scopeMapOpen && <ScopeMapOverlay onClose={() => setScopeMapOpen(false)} />}
 
       <style>{`
-        @keyframes threadExpand {
-          from { opacity: 0; transform: translateY(18px) scale(0.985); }
-          to   { opacity: 1; transform: translateY(0)    scale(1);     }
+        /* ─ Slide-up transition ─────────────────────────────────────────── */
+        @keyframes threadSlideUp {
+          from { opacity: 0; transform: translateY(32px); }
+          to   { opacity: 1; transform: translateY(0); }
         }
-        .thread-item {
+
+        /* ─ Aside AI step layout ─────────────────────────────────────── */
+        .aside-step {
           display: grid;
-          grid-template-columns: 32px 1fr;
-          gap: 13px;
+          grid-template-columns: 28px 1fr;
+          gap: 16px;
           position: relative;
+          animation: stepFadeIn 320ms cubic-bezier(0.23,1,0.32,1) both;
         }
-        .node-dot {
-          width: 18px; height: 18px; border-radius: 50%;
-          margin-left: 24px; margin-top: 10px; transform: translateX(-50%);
-          background: #fff; border: 2px solid #cbd5e1;
-          display: grid; place-items: center; z-index: 1; flex-shrink: 0;
+        @keyframes stepFadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to   { opacity: 1; transform: translateY(0); }
         }
-        .node-dot::after {
-          content: ""; width: 7px; height: 7px; border-radius: 50%;
-          background: #94a3b8; display: block;
+
+        /* ─ Spine dot ───────────────────────────────────────────────────── */
+        .aside-dot {
+          width: 10px; height: 10px; border-radius: 50%;
+          background: #d1d5db;
+          margin-top: 8px;
+          justify-self: center;
+          position: relative;
+          z-index: 1;
+          flex-shrink: 0;
+          transition: background 300ms ease;
         }
-        .node-dot--user::after      { background: #111827; }
-        .node-dot--assistant::after { background: #6B21A8; }
-        .node-dot--event::after     { background: #10b981; }
-        .node-dot--warning::after   { background: #f59e0b; }
-        .chat-scroll::-webkit-scrollbar { width: 8px; }
-        .chat-scroll::-webkit-scrollbar-thumb { background: #d8e1eb; border: 2px solid #fbfdff; border-radius: 999px; }
-        .chat-scroll::-webkit-scrollbar-track { background: #fbfdff; }
+        /* Active dot: solid blue + pulsing halo */
+        .aside-dot--active {
+          background: #2563eb;
+          box-shadow: 0 0 0 0 rgba(37,99,235,0.5);
+          animation: dotPulse 1.8s ease-out infinite;
+        }
+        @keyframes dotPulse {
+          0%   { box-shadow: 0 0 0 0   rgba(37,99,235,0.45); }
+          70%  { box-shadow: 0 0 0 10px rgba(37,99,235,0);   }
+          100% { box-shadow: 0 0 0 0   rgba(37,99,235,0);    }
+        }
+
+        /* ─ Scrollbar ────────────────────────────────────────────────── */
+        .chat-scroll::-webkit-scrollbar { width: 6px; }
+        .chat-scroll::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 999px; }
+        .chat-scroll::-webkit-scrollbar-track { background: transparent; }
+
+        /* ─ Typing dots ───────────────────────────────────────────────── */
         .typing-dot {
-          width: 6px; height: 6px; border-radius: 50%; background: #94a3b8;
+          width: 7px; height: 7px; border-radius: 50%; background: #9ca3af;
           animation: typingBounce 1.2s infinite; display: inline-block;
         }
         @keyframes typingBounce {
           0%, 60%, 100% { transform: translateY(0); }
           30%           { transform: translateY(-5px); }
         }
+
+        /* ─ Sofi spinner ──────────────────────────────────────────────── */
+        .sofi-spin { animation: spin 1.2s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
     </div>
   );

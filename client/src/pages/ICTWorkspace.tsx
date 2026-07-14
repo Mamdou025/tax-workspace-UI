@@ -480,7 +480,7 @@ function ThreadPanel({
                   ) : (
                     <>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#8b95a4', fontSize: 12, fontWeight: 650, marginBottom: 7 }}>
-                        <span style={{ color: '#111827', fontWeight: 700 }}>Workflow Copilot</span>
+                        <span style={{ color: '#111827', fontWeight: 700 }}>Sofi</span>
                         <span style={{ width: 4, height: 4, background: '#cbd5e1', borderRadius: '50%', display: 'inline-block' }} />
                         <span>{formatTime(msg.timestamp)}</span>
                       </div>

@@ -19,7 +19,7 @@ import {
   Send, Clock, ChevronRight,
   AlertCircle, Loader2, CheckCircle2, XCircle,
   ArrowUpRight, LayoutGrid, Play, AlertTriangle,
-  Zap, Mail, Flag, Sparkles, Trash2,
+  Zap, Mail, Flag, Trash2,
 } from 'lucide-react';
 
 import { useAgentChat } from '@/contexts/AgentChatContext';
@@ -526,64 +526,26 @@ export default function InScopeHome() {
           </div>
         )}
 
-        {/* ── THREAD VIEW: expands in place ── */}
+        {/* ── THREAD VIEW: expands in place from the chat bar ── */}
         {threadOpen && (
           <div style={{
             flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0,
             animation: 'threadExpand 340ms cubic-bezier(0.23,1,0.32,1) both',
           }}>
-            {/* Thread header bar */}
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 12,
-              padding: '14px 40px', borderBottom: '1px solid #edf1f5',
-              background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(12px)',
-              flexShrink: 0,
-            }}>
-              <div style={{
-                width: 34, height: 34, borderRadius: 14, flexShrink: 0,
-                background: 'linear-gradient(135deg, #111827, #4f46e5)',
-                display: 'grid', placeItems: 'center',
-              }}>
-                <Sparkles size={14} style={{ color: '#fff' }} />
-              </div>
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#111827', letterSpacing: '-0.02em', lineHeight: 1 }}>
-                  Workflow Copilot
-                </div>
-                <div style={{ fontSize: 11, color: '#7a8492', marginTop: 2 }}>
-                  {scope?.client} · {scope?.workstream} · {scope?.year}
-                </div>
-              </div>
-              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
-                {state.messages.length > 0 && (
-                  <button onClick={() => { clearThread(); setThreadOpen(false); setScope(null); _persistedScope = null; }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#9ca3af', background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 8px', borderRadius: 8 }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#6b7280'; (e.currentTarget as HTMLElement).style.background = '#f9fafb'; }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#9ca3af'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
-                  >
-                    <Trash2 size={11} /> New scope
-                  </button>
-                )}
-              </div>
-            </div>
 
             {/* Thread scroll area with timeline line */}
             <div className="chat-scroll" style={{
               flex: 1, overflowY: 'auto',
-              background: `linear-gradient(90deg, transparent 0 33px, #e2e8f0 33px 34px, transparent 34px 100%), #fbfdff`,
-              padding: '24px 40px 24px 18px',
+              background: 'var(--is-bg)',
+              padding: '24px 40px 8px 40px',
             }}>
               <div style={{ maxWidth: 820, margin: '0 auto' }}>
 
-                {/* Empty thread state */}
+                {/* Empty thread state — minimal, no separate identity */}
                 {state.messages.length === 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 60 }}>
-                    <div style={{ width: 48, height: 48, borderRadius: 16, background: 'linear-gradient(135deg,#111827,#4f46e5)', display: 'grid', placeItems: 'center', marginBottom: 16, boxShadow: '0 8px 24px rgba(79,70,229,0.22)' }}>
-                      <Sparkles size={20} style={{ color: '#fff' }} />
-                    </div>
-                    <p style={{ fontSize: 14, fontWeight: 600, color: '#111827', margin: '0 0 6px', letterSpacing: '-0.02em' }}>Starting workflow…</p>
-                    <p style={{ fontSize: 12, color: '#7a8492', textAlign: 'center', maxWidth: 320, lineHeight: 1.5, margin: 0 }}>
-                      The agent is preparing your {scope?.workstream} workflow for {scope?.client}.
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', paddingTop: 24, paddingLeft: 46 }}>
+                    <p style={{ fontSize: 13, color: 'var(--is-text-tertiary)', margin: 0, fontStyle: 'italic' }}>
+                      Starting {scope?.workstream} workflow for {scope?.client}…
                     </p>
                   </div>
                 )}
@@ -645,48 +607,49 @@ export default function InScopeHome() {
               </div>
             </div>
 
-            {/* Thread composer */}
+            {/* Thread composer — same pill style as home chat bar */}
             <div style={{
-              flexShrink: 0, borderTop: '1px solid #edf1f5',
-              background: 'linear-gradient(180deg, rgba(251,253,255,0.72), #fff 28%)',
-              padding: '14px 40px 18px 63px',
+              flexShrink: 0,
+              background: 'var(--is-bg)',
+              padding: '12px 40px 24px',
             }}>
-              <div style={{
-                height: 52, border: '1px solid #d7e2ec', background: '#fff',
-                borderRadius: 18, display: 'grid',
-                gridTemplateColumns: '1fr auto auto', alignItems: 'center',
-                gap: 10, padding: '0 10px 0 16px',
-                boxShadow: '0 8px 28px rgba(15,23,42,.07)',
-              }}>
-                <textarea
-                  ref={threadInputRef}
-                  value={threadInput}
-                  onChange={(e) => setThreadInput(e.target.value)}
-                  onKeyDown={handleThreadKeyDown}
-                  placeholder="Ask about this workflow, open a surface, run a task…"
-                  rows={1}
-                  style={{
-                    resize: 'none', fontSize: 14, color: '#374151',
-                    background: 'transparent', outline: 'none', border: 'none',
-                    lineHeight: 1.5, maxHeight: 72, overflowY: 'auto', fontFamily: 'inherit',
-                  }}
-                />
-                <button style={{
-                  height: 28, borderRadius: 9, border: '1px solid #dce6ef', background: '#fff',
-                  padding: '0 10px', color: '#596274', fontWeight: 650, fontSize: 11, cursor: 'pointer', whiteSpace: 'nowrap',
+              <div style={{ width: '100%', maxWidth: 820, margin: '0 auto' }}>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 14,
+                  background: 'var(--is-surface)', borderRadius: 'var(--is-radius-pill)',
+                  boxShadow: 'var(--is-shadow-out)', border: '1px solid var(--is-border)',
+                  padding: '14px 14px 14px 28px', width: '100%', cursor: 'text',
+                  transition: 'box-shadow 200ms var(--is-ease-out)',
                 }}>
-                  Act mode
-                </button>
-                <button onClick={handleThreadSend} disabled={!threadInput.trim() || state.isAgentTyping} style={{
-                  width: 36, height: 36, borderRadius: 13,
-                  background: threadInput.trim() && !state.isAgentTyping ? '#111827' : '#e5e7eb',
-                  color: threadInput.trim() && !state.isAgentTyping ? '#fff' : '#9ca3af',
-                  display: 'grid', placeItems: 'center', border: 'none',
-                  cursor: threadInput.trim() && !state.isAgentTyping ? 'pointer' : 'default',
-                  transition: 'all 0.15s ease',
-                }}>
-                  <Send size={13} />
-                </button>
+                  <textarea
+                    ref={threadInputRef}
+                    value={threadInput}
+                    onChange={(e) => setThreadInput(e.target.value)}
+                    onKeyDown={handleThreadKeyDown}
+                    placeholder="Ask about this workflow, open a surface, run a task…"
+                    rows={1}
+                    style={{
+                      flex: 1, resize: 'none', fontSize: 15, color: 'var(--is-text-primary)',
+                      background: 'transparent', outline: 'none', border: 'none',
+                      lineHeight: 1.5, maxHeight: 72, overflowY: 'auto', fontFamily: 'inherit', fontWeight: 400,
+                    }}
+                  />
+                  <button onClick={handleThreadSend} disabled={!threadInput.trim() || state.isAgentTyping}
+                    aria-label="Send"
+                    style={{
+                      width: 44, height: 44, borderRadius: 18, flexShrink: 0,
+                      background: threadInput.trim() && !state.isAgentTyping ? 'var(--is-text-primary)' : 'var(--is-surface-2)',
+                      boxShadow: threadInput.trim() && !state.isAgentTyping ? '0 4px 14px rgba(32,39,53,0.22)' : 'var(--is-shadow-in)',
+                      border: 'none',
+                      cursor: threadInput.trim() && !state.isAgentTyping ? 'pointer' : 'default',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      transition: 'all 160ms var(--is-ease-out)',
+                      color: threadInput.trim() && !state.isAgentTyping ? '#fff' : 'var(--is-text-tertiary)',
+                    }}
+                  >
+                    <Send size={15} />
+                  </button>
+                </div>
               </div>
             </div>
           </div>

@@ -327,10 +327,7 @@ export default function InScopeSidebar({ onNewScope }: { onNewScope?: () => void
           </button>
         </div>
 
-        {/* ── Main nav items ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <NavItem icon={Home}    label="Home"             active={isActive('/')}        onClick={() => navigate('/')}        collapsed={collapsed} />
-        </div>
+        {/* Main nav items removed — page navigation moved to TopNavBar */}
 
         {/* ── New Scope button ── */}
         <div style={{ marginTop: 12, padding: collapsed ? '0 2px' : '0 2px' }}>

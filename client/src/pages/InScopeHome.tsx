@@ -27,6 +27,7 @@ import { useAgentChat } from '@/contexts/AgentChatContext';
 import type { AgentMessage, EventKind } from '@/contexts/AgentChatContext';
 import { AgentToolCard } from '@/components/AgentCards';
 import InScopeSidebar from '@/components/InScopeSidebar';
+import TopNavBar from '@/components/TopNavBar';
 
 // ─── Design tokens (local) ────────────────────────────────────────────────────
 const PURPLE = '#6B21A8';
@@ -69,12 +70,13 @@ function inferScope(prompt: string): ScopeData {
   return { client, year, workstream, extra };
 }
 
-// ─── Scope popover menu ──────────────────────────────────────────────────────
-function ScopePopover({ onClose }: { onClose: () => void }) {
-  const [, navigate] = useLocation();
+// ─── Scope popover menu (chat-utility actions) ───────────────────────────────
+function ScopePopover({ onClose, onAction }: { onClose: () => void; onAction: (label: string) => void }) {
   const items = [
-    { icon: GitFork,    label: 'Workflow Builder', sub: 'Design & manage workflows',  route: '/builder' },
-    { icon: BarChart2,  label: 'Dashboards',        sub: 'Analytics & KPI overview',   route: '/dashboard' },
+    { icon: FileText,    label: 'Upload document',  sub: 'Add a file to this scope',      action: 'upload' },
+    { icon: Flag,        label: 'Add note',          sub: 'Annotate this workflow',         action: 'note' },
+    { icon: ExternalLink,label: 'Attach link',       sub: 'Reference an external resource', action: 'link' },
+    { icon: AlertCircle, label: 'Flag for review',   sub: 'Mark scope for partner sign-off',action: 'flag' },
   ];
   return (
     <>
@@ -94,17 +96,17 @@ function ScopePopover({ onClose }: { onClose: () => void }) {
         animation: 'popoverIn 180ms cubic-bezier(0.23,1,0.32,1) both',
       }}>
         <div style={{ padding: '6px 16px 10px', borderBottom: '1px solid var(--is-border)', marginBottom: 4 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--is-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Quick Access</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--is-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Chat Actions</span>
         </div>
-        {items.map(({ icon: Icon, label, sub, route }) => (
+        {items.map(({ icon: Icon, label, sub, action }) => (
           <button
-            key={route}
-            onClick={() => { onClose(); navigate(route); }}
+            key={action}
+            onClick={() => { onClose(); onAction(label); }}
             style={{
               width: '100%', display: 'flex', alignItems: 'center', gap: 12,
               padding: '10px 16px', background: 'transparent', border: 'none',
               cursor: 'pointer', textAlign: 'left', borderRadius: 0,
-              transition: 'background 120ms ease-out',
+              transition: 'background 120ms ease-out', fontFamily: 'inherit',
             }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--is-surface-2)'; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
@@ -630,13 +632,16 @@ export default function InScopeHome() {
       {/* ── Main content ── */}
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
 
-        {/* ── Top bar (logo only) ── */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 32px 0', flexShrink: 0 }}>
+        {/* ── Top bar: logo + horizontal page nav ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 32px 0', flexShrink: 0, gap: 0 }}>
+          {/* Logo */}
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, userSelect: 'none' }}>
             <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--is-text-primary)', letterSpacing: '-0.01em' }}>Sinaxe</span>
             <span style={{ fontSize: 10, color: 'var(--is-text-tertiary)', verticalAlign: 'super' }}>™</span>
             <span style={{ fontSize: 20, fontWeight: 400, color: 'var(--is-text-secondary)', marginLeft: 4, letterSpacing: '-0.01em' }}>InScope</span>
           </div>
+          {/* Horizontal page nav */}
+          <TopNavBar />
         </div>
 
         {/* ── HOME VIEW: greeting above bar, cards below ── */}
@@ -664,7 +669,7 @@ export default function InScopeHome() {
 
                 {/* Unified bar */}
                 <div style={{ position: 'relative' }}>
-                  {scopePopoverOpen && <ScopePopover onClose={() => setScopePopoverOpen(false)} />}
+                  {scopePopoverOpen && <ScopePopover onClose={() => setScopePopoverOpen(false)} onAction={(label) => { setScopePopoverOpen(false); setHomeInput(label + ': '); }} />}
                   <UnifiedBar
                     onScopeClick={() => setScopePopoverOpen(v => !v)}
                     scope={scope}
@@ -843,7 +848,7 @@ export default function InScopeHome() {
             {/* Thread composer — unified bar with scope logo */}
             <div style={{ flexShrink: 0, background: '#ffffff', padding: '12px 40px 24px' }}>
               <div style={{ width: '100%', maxWidth: 860, margin: '0 auto', position: 'relative' }}>
-                {scopePopoverOpen && <ScopePopover onClose={() => setScopePopoverOpen(false)} />}
+                {scopePopoverOpen && <ScopePopover onClose={() => setScopePopoverOpen(false)} onAction={(label) => { setScopePopoverOpen(false); sendMessage(label); }} />}
                 <UnifiedBar
                   onScopeClick={() => setScopePopoverOpen(v => !v)}
                   scope={scope}

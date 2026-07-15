@@ -805,16 +805,8 @@ export default function InScopeHome() {
                   {/* Builder main area */}
                   <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
 
-                    {/* Left palette — filtered by active tab */}
+                    {/* Left palette — filtered by sidebar section nav */}
                     <div style={{ width: 180, flexShrink: 0, borderRight: '1px solid var(--is-border)', background: 'var(--is-surface)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                      <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--is-border)' }}>
-                        <input
-                          value={builderSearch}
-                          onChange={e => setBuilderSearch(e.target.value)}
-                          placeholder="Search blocks…"
-                          style={{ width: '100%', background: 'var(--is-surface-2)', border: '1px solid var(--is-border)', borderRadius: 8, padding: '6px 10px', fontSize: 11, color: 'var(--is-text-primary)', outline: 'none', fontFamily: 'inherit' }}
-                        />
-                      </div>
                       <div style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>
                         {Object.entries(
                           filteredPalette.reduce((acc, item) => {

@@ -639,28 +639,30 @@ export default function InScopeHome() {
           </div>
         </div>
 
-        {/* ── Greeting (empty scope only) ── */}
-        <div style={{
-          padding: '32px 48px 0', flexShrink: 0,
-          overflow: 'hidden',
-          maxHeight: !scope ? 120 : 0,
-          opacity: !scope ? 1 : 0,
-          transition: 'max-height 380ms cubic-bezier(0.23,1,0.32,1), opacity 280ms ease-out',
-        }}>
-          <h1 style={{ margin: 0, fontSize: 'clamp(28px, 3.5vw, 42px)', fontWeight: 700, color: 'var(--is-text-primary)', letterSpacing: '-0.03em', lineHeight: 1.15 }}>
-            {getGreeting()}, Sophia
-          </h1>
-          <p style={{ margin: '6px 0 0', fontSize: 'clamp(13px, 1.4vw, 16px)', color: 'var(--is-text-secondary)', fontWeight: 400, letterSpacing: '-0.01em' }}>
-            How can I help you drive impact today?
-          </p>
-        </div>
-
-        {/* ── HOME VIEW: unified bar centred + bottom cards ── */}
+        {/* ── HOME VIEW: greeting above bar, cards below ── */}
         {!threadOpen && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-            {/* Centred unified bar */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 40px', gap: 16, minHeight: 0 }}>
+            {/* Centred composer group */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 40px', gap: 0, minHeight: 0 }}>
               <div style={{ width: '100%', maxWidth: 860 }}>
+
+                {/* Greeting — directly above bar, fades out when scope active */}
+                <div style={{
+                  overflow: 'hidden',
+                  maxHeight: !scope ? 100 : 0,
+                  opacity: !scope ? 1 : 0,
+                  marginBottom: !scope ? 20 : 0,
+                  transition: 'max-height 380ms cubic-bezier(0.23,1,0.32,1), opacity 280ms ease-out, margin-bottom 380ms ease-out',
+                }}>
+                  <h1 style={{ margin: 0, fontSize: 'clamp(24px, 2.8vw, 36px)', fontWeight: 700, color: 'var(--is-text-primary)', letterSpacing: '-0.03em', lineHeight: 1.15 }}>
+                    {getGreeting()}, Sophia
+                  </h1>
+                  <p style={{ margin: '5px 0 0', fontSize: 'clamp(13px, 1.2vw, 15px)', color: 'var(--is-text-secondary)', fontWeight: 400, letterSpacing: '-0.01em' }}>
+                    How can I help you drive impact today?
+                  </p>
+                </div>
+
+                {/* Unified bar */}
                 <div style={{ position: 'relative' }}>
                   {scopePopoverOpen && <ScopePopover onClose={() => setScopePopoverOpen(false)} />}
                   <UnifiedBar
@@ -673,6 +675,7 @@ export default function InScopeHome() {
                     inputRef={homeInputRef as React.Ref<HTMLInputElement & HTMLTextAreaElement>}
                   />
                 </div>
+
                 {/* Suggestion chips */}
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', marginTop: 12 }}>
                   {SUGGESTIONS.map((s) => (
@@ -687,13 +690,14 @@ export default function InScopeHome() {
                     >{s}</button>
                   ))}
                 </div>
-              </div>
-            </div>
 
-            {/* Bottom cards */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 16, padding: '0 40px 32px', flexShrink: 0 }}>
-              <div style={{ width: 380 }}><RecentActivityCard /></div>
-              <div style={{ width: 260 }}><AttentionCard /></div>
+                {/* Cards — same width, directly below chips */}
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 28 }}>
+                  <div style={{ flex: '0 0 380px' }}><RecentActivityCard /></div>
+                  <div style={{ flex: '0 0 380px' }}><AttentionCard /></div>
+                </div>
+
+              </div>
             </div>
           </div>
         )}

@@ -330,7 +330,6 @@ export default function InScopeSidebar({ onNewScope }: { onNewScope?: () => void
         {/* ── Main nav items ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <NavItem icon={Home}    label="Home"             active={isActive('/')}        onClick={() => navigate('/')}        collapsed={collapsed} />
-          <NavItem icon={GitFork} label="Workflow Builder" active={isActive('/builder')} onClick={() => navigate('/builder')} collapsed={collapsed} />
         </div>
 
         {/* ── New Scope button ── */}

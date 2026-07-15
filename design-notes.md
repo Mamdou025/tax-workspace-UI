@@ -54,3 +54,24 @@
 - Font: DM Sans / system-ui
 - Assistant dot: use purple instead of blue
 - Keep greyscale for most UI, colors only for status
+
+## Scope Button Popover (IMPLEMENTED)
+- Scope map overlay REMOVED
+- Scope button click → compact popover above the bar
+- Items: Workflow Builder (/builder), Dashboards (/dashboard)
+- Workflow Builder removed from sidebar nav
+
+## Contextual Workflow Actions (IMPLEMENTED)
+- Appear below last assistant message in thread (not in bar)
+- FAPI: Open Worksheet, Send IRL, Review Exceptions, Export PDF
+- T1134: Open T1134 Form, Review Part II, Send to Partner
+- Surplus: Open Surplus Calc, Review Adjustments
+- Provision: Open Provision Model, Review Estimates
+- Default: View Documents, Add Note, Export
+
+## SCOPE LOGO — NEVER CHANGE
+- 80px neumorphic circle, var(--is-surface) bg, var(--is-shadow-out) shadow
+- 24 outer purple (#6B21A8) breathing dots rotating CW 14s, r=34
+- 16 inner orange (#C2410C) breathing dots rotating CCW 9s, r=24
+- Label: 'Scope' 11px bold centered
+- Keyframes: sb-cw (CW 14s), sb-ccw (CCW 9s)

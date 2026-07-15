@@ -20,12 +20,12 @@ import {
   AlertCircle, Loader2, CheckCircle2, XCircle,
   ArrowUpRight, LayoutGrid, Play, AlertTriangle,
   Zap, Mail, Flag, Trash2,
+  GitFork, BarChart2, FileText, ExternalLink, X,
 } from 'lucide-react';
 
 import { useAgentChat } from '@/contexts/AgentChatContext';
 import type { AgentMessage, EventKind } from '@/contexts/AgentChatContext';
 import { AgentToolCard } from '@/components/AgentCards';
-import ScopeMapOverlay from '@/components/ScopeMapOverlay';
 import InScopeSidebar from '@/components/InScopeSidebar';
 
 // ─── Design tokens (local) ────────────────────────────────────────────────────
@@ -67,6 +67,133 @@ function inferScope(prompt: string): ScopeData {
   if (lower.includes('exception')) extra = 'Exceptions only';
 
   return { client, year, workstream, extra };
+}
+
+// ─── Scope popover menu ──────────────────────────────────────────────────────
+function ScopePopover({ onClose }: { onClose: () => void }) {
+  const [, navigate] = useLocation();
+  const items = [
+    { icon: GitFork,    label: 'Workflow Builder', sub: 'Design & manage workflows',  route: '/builder' },
+    { icon: BarChart2,  label: 'Dashboards',        sub: 'Analytics & KPI overview',   route: '/dashboard' },
+  ];
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        style={{ position: 'fixed', inset: 0, zIndex: 49 }}
+      />
+      {/* Popover panel */}
+      <div style={{
+        position: 'absolute', bottom: 'calc(100% + 12px)', left: 0,
+        zIndex: 50, width: 260,
+        background: 'var(--is-surface)', borderRadius: 18,
+        boxShadow: '0 8px 32px rgba(0,0,0,0.13), 0 2px 8px rgba(0,0,0,0.07)',
+        border: '1px solid var(--is-border)',
+        padding: '8px 0',
+        animation: 'popoverIn 180ms cubic-bezier(0.23,1,0.32,1) both',
+      }}>
+        <div style={{ padding: '6px 16px 10px', borderBottom: '1px solid var(--is-border)', marginBottom: 4 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--is-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Quick Access</span>
+        </div>
+        {items.map(({ icon: Icon, label, sub, route }) => (
+          <button
+            key={route}
+            onClick={() => { onClose(); navigate(route); }}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+              padding: '10px 16px', background: 'transparent', border: 'none',
+              cursor: 'pointer', textAlign: 'left', borderRadius: 0,
+              transition: 'background 120ms ease-out',
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--is-surface-2)'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+          >
+            <div style={{
+              width: 34, height: 34, borderRadius: 10, flexShrink: 0,
+              background: 'var(--is-surface-2)', boxShadow: 'var(--is-shadow-in)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'var(--is-text-secondary)',
+            }}>
+              <Icon size={16} />
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--is-text-primary)' }}>{label}</div>
+              <div style={{ fontSize: 11, color: 'var(--is-text-tertiary)', marginTop: 1 }}>{sub}</div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </>
+  );
+}
+
+// ─── Contextual workflow action chips ────────────────────────────────────────
+function WorkflowActions({ workstream, onAction }: { workstream: string; onAction: (label: string) => void }) {
+  const actions: Record<string, { label: string; icon: typeof FileText }[]> = {
+    FAPI:     [
+      { label: 'Open Worksheet',    icon: FileText },
+      { label: 'Send IRL',          icon: Mail },
+      { label: 'Review Exceptions', icon: AlertTriangle },
+      { label: 'Export PDF',        icon: ExternalLink },
+    ],
+    T1134:    [
+      { label: 'Open T1134 Form',   icon: FileText },
+      { label: 'Review Part II',    icon: AlertCircle },
+      { label: 'Send to Partner',   icon: Mail },
+    ],
+    Surplus:  [
+      { label: 'Open Surplus Calc', icon: FileText },
+      { label: 'Review Adjustments', icon: AlertTriangle },
+    ],
+    Provision: [
+      { label: 'Open Provision Model', icon: FileText },
+      { label: 'Review Estimates',     icon: AlertCircle },
+    ],
+  };
+  const items = actions[workstream] ?? [
+    { label: 'View Documents', icon: FileText },
+    { label: 'Add Note',       icon: Flag },
+    { label: 'Export',         icon: ExternalLink },
+  ];
+  return (
+    <div style={{
+      display: 'flex', flexWrap: 'wrap', gap: 8,
+      marginLeft: 32, marginTop: 16, marginBottom: 8,
+      animation: 'stepFadeIn 280ms cubic-bezier(0.23,1,0.32,1) both',
+    }}>
+      {items.map(({ label, icon: Icon }) => (
+        <button
+          key={label}
+          onClick={() => onAction(label)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            padding: '7px 14px', borderRadius: 20,
+            background: 'var(--is-surface)', border: '1px solid var(--is-border)',
+            boxShadow: 'var(--is-shadow-sm)', cursor: 'pointer',
+            fontSize: 12, fontWeight: 500, color: 'var(--is-text-secondary)',
+            fontFamily: 'inherit',
+            transition: 'all 140ms ease-out',
+          }}
+          onMouseEnter={(e) => {
+            const el = e.currentTarget as HTMLElement;
+            el.style.color = 'var(--is-text-primary)';
+            el.style.boxShadow = 'var(--is-shadow-out)';
+            el.style.borderColor = 'rgba(107,33,168,0.25)';
+          }}
+          onMouseLeave={(e) => {
+            const el = e.currentTarget as HTMLElement;
+            el.style.color = 'var(--is-text-secondary)';
+            el.style.boxShadow = 'var(--is-shadow-sm)';
+            el.style.borderColor = 'var(--is-border)';
+          }}
+        >
+          <Icon size={12} />
+          {label}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 // ─── Scope button (animated dotted rings) ─────────────────────────────────────
@@ -419,7 +546,7 @@ let _persistedScope: ScopeData | null = null;
 // ─── InScopeHome ─────────────────────────────────────────────────────────────
 export default function InScopeHome() {
   const { state, sendMessage, approveCard, cancelCard, clearThread, openChat } = useAgentChat();
-  const [scopeMapOpen, setScopeMapOpen] = useState(false);
+  const [scopePopoverOpen, setScopePopoverOpen] = useState(false);
   const [scope, setScope] = useState<ScopeData | null>(_persistedScope);
   // threadOpen: false = home view, true = thread expanded in place
   const [threadOpen, setThreadOpen] = useState(false);
@@ -534,15 +661,18 @@ export default function InScopeHome() {
             {/* Centred unified bar */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 40px', gap: 16, minHeight: 0 }}>
               <div style={{ width: '100%', maxWidth: 860 }}>
-                <UnifiedBar
-                  onScopeClick={() => setScopeMapOpen(true)}
-                  scope={scope}
-                  input={homeInput}
-                  onInputChange={setHomeInput}
-                  onKeyDown={handleHomeKeyDown as React.KeyboardEventHandler}
-                  onSubmit={() => handleHomeSubmit(homeInput)}
-                  inputRef={homeInputRef as React.Ref<HTMLInputElement & HTMLTextAreaElement>}
-                />
+                <div style={{ position: 'relative' }}>
+                  {scopePopoverOpen && <ScopePopover onClose={() => setScopePopoverOpen(false)} />}
+                  <UnifiedBar
+                    onScopeClick={() => setScopePopoverOpen(v => !v)}
+                    scope={scope}
+                    input={homeInput}
+                    onInputChange={setHomeInput}
+                    onKeyDown={handleHomeKeyDown as React.KeyboardEventHandler}
+                    onSubmit={() => handleHomeSubmit(homeInput)}
+                    inputRef={homeInputRef as React.Ref<HTMLInputElement & HTMLTextAreaElement>}
+                  />
+                </div>
                 {/* Suggestion chips */}
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', marginTop: 12 }}>
                   {SUGGESTIONS.map((s) => (
@@ -654,15 +784,33 @@ export default function InScopeHome() {
                 })}
 
                 {state.isAgentTyping && <TypingIndicator />}
+
+                {/* Contextual workflow actions — shown after last agent message when not typing */}
+                {!state.isAgentTyping && state.messages.length > 0 && scope && (() => {
+                  const lastMsg = state.messages[state.messages.length - 1];
+                  if (lastMsg.role === 'agent') {
+                    return (
+                      <WorkflowActions
+                        workstream={scope.workstream}
+                        onAction={(label) => {
+                          sendMessage(label);
+                        }}
+                      />
+                    );
+                  }
+                  return null;
+                })()}
+
                 <div ref={messagesEndRef} />
               </div>
             </div>
 
             {/* Thread composer — unified bar with scope logo */}
             <div style={{ flexShrink: 0, background: '#ffffff', padding: '12px 40px 24px' }}>
-              <div style={{ width: '100%', maxWidth: 860, margin: '0 auto' }}>
+              <div style={{ width: '100%', maxWidth: 860, margin: '0 auto', position: 'relative' }}>
+                {scopePopoverOpen && <ScopePopover onClose={() => setScopePopoverOpen(false)} />}
                 <UnifiedBar
-                  onScopeClick={() => setScopeMapOpen(true)}
+                  onScopeClick={() => setScopePopoverOpen(v => !v)}
                   scope={scope}
                   input={threadInput}
                   onInputChange={setThreadInput}
@@ -678,11 +826,14 @@ export default function InScopeHome() {
         )}
       </div>
 
-      {/* Scope map overlay */}
-      {scopeMapOpen && <ScopeMapOverlay onClose={() => setScopeMapOpen(false)} />}
+      {/* Scope map overlay removed — scope button now opens popover menu */}
 
       <style>{`
         /* ─ Slide-up transition ─────────────────────────────────────────── */
+        @keyframes popoverIn {
+          from { opacity: 0; transform: translateY(8px) scale(0.97); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
         @keyframes threadSlideUp {
           from { opacity: 0; transform: translateY(32px); }
           to   { opacity: 1; transform: translateY(0); }

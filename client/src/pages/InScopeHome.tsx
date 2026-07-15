@@ -707,7 +707,38 @@ export default function InScopeHome() {
           <div style={{
             flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0,
             animation: 'threadSlideUp 420ms cubic-bezier(0.23,1,0.32,1) both',
+            position: 'relative',
           }}>
+
+            {/* Close button — top right */}
+            <button
+              onClick={handleNewScope}
+              aria-label="Close thread and return to home"
+              title="Close thread"
+              style={{
+                position: 'absolute', top: 16, right: 20, zIndex: 10,
+                width: 36, height: 36, borderRadius: 12,
+                background: 'var(--is-surface)', border: '1px solid var(--is-border)',
+                boxShadow: 'var(--is-shadow-sm)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', color: 'var(--is-text-tertiary)',
+                transition: 'all 150ms ease-out',
+              }}
+              onMouseEnter={(e) => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.color = 'var(--is-text-primary)';
+                el.style.boxShadow = 'var(--is-shadow-out)';
+                el.style.background = 'var(--is-surface-2)';
+              }}
+              onMouseLeave={(e) => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.color = 'var(--is-text-tertiary)';
+                el.style.boxShadow = 'var(--is-shadow-sm)';
+                el.style.background = 'var(--is-surface)';
+              }}
+            >
+              <X size={15} />
+            </button>
 
             {/* Spine + messages */}
             <div className="chat-scroll" style={{

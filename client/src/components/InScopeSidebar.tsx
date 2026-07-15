@@ -20,7 +20,7 @@ import {
   Home, GitFork, FolderOpen, Settings,
   ChevronRight, ChevronLeft, ChevronDown,
   Users, GitBranch, MessageSquare, FileText,
-  Pin, User,
+  Pin, User, BarChart2,
 } from 'lucide-react';
 
 const PURPLE = '#6B21A8';
@@ -251,7 +251,13 @@ function NavItem({
 
 // ─── InScopeSidebar ───────────────────────────────────────────────────────────
 
-export default function InScopeSidebar({ onNewScope }: { onNewScope?: () => void } = {}) {
+interface InScopeSidebarProps {
+  onNewScope?: () => void;
+  onNavClick?: (id: string) => void;
+  activeNav?: string;
+}
+
+export default function InScopeSidebar({ onNewScope, onNavClick, activeNav = 'home' }: InScopeSidebarProps = {}) {
   const [location, navigate] = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [scopesOpen, setScopesOpen] = useState(true);
@@ -327,7 +333,45 @@ export default function InScopeSidebar({ onNewScope }: { onNewScope?: () => void
           </button>
         </div>
 
-        {/* Main nav items removed — page navigation moved to TopNavBar */}
+        {/* ── Permanent nav items ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 8 }}>
+          {[
+            { icon: Home,      label: 'Home',            id: 'home' },
+            { icon: GitFork,   label: 'Workflow Builder', id: 'builder' },
+            { icon: BarChart2, label: 'Dashboard',        id: 'dashboard' },
+          ].map(({ icon: Icon, label, id }) => (
+            <button
+              key={id}
+              onClick={() => onNavClick?.(id)}
+              title={collapsed ? label : undefined}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center',
+                gap: collapsed ? 0 : 10,
+                justifyContent: collapsed ? 'center' : 'flex-start',
+                padding: collapsed ? '9px 0' : '9px 12px',
+                borderRadius: 10, border: 'none',
+                background: activeNav === id ? 'rgba(107,33,168,0.08)' : 'transparent',
+                color: activeNav === id ? PURPLE : TEXT_SECONDARY,
+                fontWeight: activeNav === id ? 600 : 400,
+                fontSize: 13, fontFamily: 'inherit',
+                cursor: 'pointer', transition: 'all 150ms ease-out',
+                letterSpacing: '-0.01em',
+              }}
+              onMouseEnter={(e) => {
+                if (activeNav !== id) (e.currentTarget as HTMLElement).style.background = 'rgba(0,0,0,0.04)';
+              }}
+              onMouseLeave={(e) => {
+                if (activeNav !== id) (e.currentTarget as HTMLElement).style.background = 'transparent';
+              }}
+            >
+              <Icon size={15} strokeWidth={activeNav === id ? 2.2 : 1.8} style={{ flexShrink: 0 }} />
+              {!collapsed && <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>}
+            </button>
+          ))}
+        </div>
+
+        {/* ── Divider ── */}
+        <div style={{ height: 1, background: BORDER, margin: '10px 4px' }} />
 
         {/* ── New Scope button ── */}
         <div style={{ marginTop: 12, padding: collapsed ? '0 2px' : '0 2px' }}>

@@ -27,7 +27,6 @@ import { useAgentChat } from '@/contexts/AgentChatContext';
 import type { AgentMessage, EventKind } from '@/contexts/AgentChatContext';
 import { AgentToolCard } from '@/components/AgentCards';
 import InScopeSidebar from '@/components/InScopeSidebar';
-import TopNavBar from '@/components/TopNavBar';
 
 // ─── Design tokens (local) ────────────────────────────────────────────────────
 const PURPLE = '#6B21A8';
@@ -556,9 +555,23 @@ export default function InScopeHome() {
   const [homeInput, setHomeInput] = useState('');
   // composerInput for the thread bar
   const [threadInput, setThreadInput] = useState('');
+  // activeNav: which sidebar nav item is active ('home' | 'builder' | 'dashboard')
+  const [activeNav, setActiveNav] = useState<string>('home');
+  // panelOpen: whether the left slide-in panel is showing
+  const [panelOpen, setPanelOpen] = useState(false);
   const homeInputRef = useRef<HTMLInputElement>(null);
   const threadInputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const handleNavClick = useCallback((id: string) => {
+    if (id === 'home') {
+      setPanelOpen(false);
+      setActiveNav('home');
+    } else {
+      setActiveNav(id);
+      setPanelOpen(true);
+    }
+  }, []);
 
   // Auto-scroll thread
   useEffect(() => {
@@ -627,21 +640,87 @@ export default function InScopeHome() {
       display: 'flex', fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif",
       overflow: 'hidden',
     }}>
-      <InScopeSidebar onNewScope={handleNewScope} />
+      <InScopeSidebar onNewScope={handleNewScope} onNavClick={handleNavClick} activeNav={activeNav} />
 
-      {/* ── Main content ── */}
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+      {/* ── Main content: split panel wrapper ── */}
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', height: '100vh', overflow: 'hidden', position: 'relative' }}>
 
-        {/* ── Top bar: logo + horizontal page nav ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 32px 0', flexShrink: 0, gap: 0 }}>
-          {/* Logo */}
+        {/* ── LEFT SLIDE-IN PANEL (Workflow Builder / Dashboard) ── */}
+        <div style={{
+          position: 'absolute', top: 0, left: 0, bottom: 0,
+          width: panelOpen ? '58%' : '0%',
+          minWidth: 0,
+          overflow: 'hidden',
+          transition: 'width 380ms cubic-bezier(0.23,1,0.32,1)',
+          zIndex: 10,
+          background: 'var(--is-bg)',
+          borderRight: panelOpen ? '1px solid var(--is-border)' : 'none',
+          display: 'flex', flexDirection: 'column',
+        }}>
+          {panelOpen && (
+            <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
+              {/* Panel header */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 28px 0', flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, userSelect: 'none' }}>
+                  <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--is-text-primary)', letterSpacing: '-0.01em' }}>Sinaxe</span>
+                  <span style={{ fontSize: 10, color: 'var(--is-text-tertiary)', verticalAlign: 'super' }}>™</span>
+                  <span style={{ fontSize: 20, fontWeight: 400, color: 'var(--is-text-secondary)', marginLeft: 4, letterSpacing: '-0.01em' }}>InScope</span>
+                </div>
+                <button
+                  onClick={() => { setPanelOpen(false); setActiveNav('home'); }}
+                  style={{
+                    width: 32, height: 32, borderRadius: 10, border: 'none',
+                    background: 'var(--is-surface-2)', boxShadow: 'var(--is-shadow-in)',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: 'var(--is-text-secondary)', transition: 'all 150ms ease-out',
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--is-border)'; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--is-surface-2)'; }}
+                  aria-label="Close panel"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+              {/* Panel content — lazy iframe-style embed */}
+              <div style={{ flex: 1, padding: '20px 28px 28px', overflow: 'auto' }}>
+                {activeNav === 'builder' && (
+                  <div style={{ color: 'var(--is-text-primary)' }}>
+                    <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8, letterSpacing: '-0.02em' }}>Workflow Builder</h2>
+                    <p style={{ fontSize: 14, color: 'var(--is-text-secondary)', marginBottom: 24 }}>Design and manage your automation workflows.</p>
+                    <a href="/builder" target="_blank" rel="noopener" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: PURPLE, textDecoration: 'none', fontWeight: 600 }}>
+                      Open full page <ArrowUpRight size={14} />
+                    </a>
+                  </div>
+                )}
+                {activeNav === 'dashboard' && (
+                  <div style={{ color: 'var(--is-text-primary)' }}>
+                    <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8, letterSpacing: '-0.02em' }}>Dashboard</h2>
+                    <p style={{ fontSize: 14, color: 'var(--is-text-secondary)', marginBottom: 24 }}>Analytics, KPIs, and workflow status at a glance.</p>
+                    <a href="/dashboard" target="_blank" rel="noopener" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: PURPLE, textDecoration: 'none', fontWeight: 600 }}>
+                      Open full page <ArrowUpRight size={14} />
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── RIGHT CHAT PANEL ── */}
+        <div style={{
+          marginLeft: panelOpen ? '58%' : '0%',
+          flex: 1, minWidth: 0,
+          display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden',
+          transition: 'margin-left 380ms cubic-bezier(0.23,1,0.32,1)',
+        }}>
+
+        {/* ── Top bar: logo (only when panel is closed) ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 32px 0', flexShrink: 0, opacity: panelOpen ? 0 : 1, transition: 'opacity 200ms ease-out', pointerEvents: panelOpen ? 'none' : 'auto' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, userSelect: 'none' }}>
             <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--is-text-primary)', letterSpacing: '-0.01em' }}>Sinaxe</span>
             <span style={{ fontSize: 10, color: 'var(--is-text-tertiary)', verticalAlign: 'super' }}>™</span>
             <span style={{ fontSize: 20, fontWeight: 400, color: 'var(--is-text-secondary)', marginLeft: 4, letterSpacing: '-0.01em' }}>InScope</span>
           </div>
-          {/* Horizontal page nav */}
-          <TopNavBar />
         </div>
 
         {/* ── HOME VIEW: greeting above bar, cards below ── */}
@@ -864,10 +943,12 @@ export default function InScopeHome() {
             </div>
           </div>
         )}
-      </div>
+        </div>{/* end right chat panel */}
+      </div>{/* end split panel wrapper */}
 
       {/* Scope map overlay removed — scope button now opens popover menu */}
 
+      {/* CSS animations — placed at root level outside panels */}
       <style>{`
         /* ─ Slide-up transition ─────────────────────────────────────────── */
         @keyframes popoverIn {

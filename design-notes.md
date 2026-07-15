@@ -75,3 +75,16 @@
 - 16 inner orange (#C2410C) breathing dots rotating CCW 9s, r=24
 - Label: 'Scope' 11px bold centered
 - Keyframes: sb-cw (CW 14s), sb-ccw (CCW 9s)
+
+## Workflow Builder Integration (PENDING)
+User request (Jul 15 2026):
+1. Sidebar stays the same when builder panel slides in
+2. Top nav items stay the same
+3. Scope button area morphs into builder section tabs: Source, Tax Logic, Review, Protected, Output, Agents
+4. Remove subcategories from palette (Manual Entry, Excel Upload, Currency Rates, etc.) — keep only the 6 top-level block type tabs
+5. Full-expand button in panel header expands left panel to 100% width (pushes chat off-screen)
+6. No "open full page" link — expand button replaces it
+7. Everything feels like the same page — no navigation jump
+
+Block type tabs (match WorkflowBuilder BLOCK_CONFIG):
+- Source (#2F81F7), Tax Logic (#A371F7), Review (#F0883E), Protected (#3FB950), Output (#56D364), Agents (#D2A8FF)

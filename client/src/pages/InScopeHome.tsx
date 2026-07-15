@@ -21,7 +21,12 @@ import {
   ArrowUpRight, LayoutGrid, Play, AlertTriangle,
   Zap, Mail, Flag, Trash2,
   GitFork, BarChart2, FileText, ExternalLink, X,
+  Maximize2, Minimize2, Database, Calculator, ClipboardCheck, Lock, Package, Sparkles,
+  Save, Upload, Download, Layers, Terminal, GitBranch, Search, Filter, Code, Cpu, Shield,
 } from 'lucide-react';
+import { FAPI_WORKFLOW_BLOCKS, type WorkflowBlock, type BlockType } from '@/lib/data';
+import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 import { useAgentChat } from '@/contexts/AgentChatContext';
 import type { AgentMessage, EventKind } from '@/contexts/AgentChatContext';
@@ -559,6 +564,16 @@ export default function InScopeHome() {
   const [activeNav, setActiveNav] = useState<string>('home');
   // panelOpen: whether the left slide-in panel is showing
   const [panelOpen, setPanelOpen] = useState(false);
+  // panelExpanded: whether the left panel takes full width (chat hidden)
+  const [panelExpanded, setPanelExpanded] = useState(false);
+  // Builder state (embedded)
+  const [builderBlocks, setBuilderBlocks] = useState<WorkflowBlock[]>(FAPI_WORKFLOW_BLOCKS);
+  const [builderSelected, setBuilderSelected] = useState<string | null>(null);
+  const [builderFilter, setBuilderFilter] = useState<BlockType | 'all'>('all');
+  const [builderSearch, setBuilderSearch] = useState('');
+  const [builderShowGrid, setBuilderShowGrid] = useState(true);
+  const [builderBottomTab, setBuilderBottomTab] = useState('structure');
+  const builderCanvasRef = useRef<HTMLDivElement>(null);
   const homeInputRef = useRef<HTMLInputElement>(null);
   const threadInputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -566,12 +581,67 @@ export default function InScopeHome() {
   const handleNavClick = useCallback((id: string) => {
     if (id === 'home') {
       setPanelOpen(false);
+      setPanelExpanded(false);
       setActiveNav('home');
     } else {
       setActiveNav(id);
       setPanelOpen(true);
+      setPanelExpanded(false);
     }
   }, []);
+
+  const builderSelected_block = builderBlocks.find(b => b.id === builderSelected) || null;
+
+  const BUILDER_BLOCK_CONFIG: Record<BlockType, { label: string; color: string; bgColor: string; borderColor: string; icon: React.ReactNode }> = {
+    source:    { label: 'Source',    color: '#2F81F7', bgColor: '#2F81F718', borderColor: '#2F81F730', icon: <Database size={12} /> },
+    logic:     { label: 'Tax Logic', color: '#A371F7', bgColor: '#A371F718', borderColor: '#A371F730', icon: <Calculator size={12} /> },
+    review:    { label: 'Review',    color: '#F0883E', bgColor: '#F0883E18', borderColor: '#F0883E30', icon: <ClipboardCheck size={12} /> },
+    protected: { label: 'Protected', color: '#3FB950', bgColor: '#3FB95018', borderColor: '#3FB95030', icon: <Lock size={12} /> },
+    output:    { label: 'Output',    color: '#56D364', bgColor: '#56D36418', borderColor: '#56D36430', icon: <Package size={12} /> },
+    ai:        { label: 'Agents',    color: '#D2A8FF', bgColor: '#D2A8FF18', borderColor: '#D2A8FF30', icon: <Sparkles size={12} /> },
+  };
+
+  const BUILDER_PALETTE: { type: BlockType; subtype: string; label: string }[] = [
+    { type: 'source',    subtype: 'Manual Entry',      label: 'Manual Entry' },
+    { type: 'source',    subtype: 'Excel / Workbook',  label: 'Excel Upload' },
+    { type: 'source',    subtype: 'PDF / Document',    label: 'PDF Upload' },
+    { type: 'source',    subtype: 'API Source',        label: 'API Source' },
+    { type: 'logic',     subtype: 'Keyword Mapper',    label: 'Keyword Mapper' },
+    { type: 'logic',     subtype: 'Calculation Engine',label: 'Calculation Engine' },
+    { type: 'logic',     subtype: 'Formula',           label: 'Formula Block' },
+    { type: 'logic',     subtype: 'Condition',         label: 'Condition Block' },
+    { type: 'review',    subtype: 'Approval Gate',     label: 'Approval Gate' },
+    { type: 'review',    subtype: 'Reviewer Sign-off', label: 'Reviewer Sign-off' },
+    { type: 'review',    subtype: 'Low Confidence Warning', label: 'Low Confidence Warning' },
+    { type: 'protected', subtype: 'FX Rate',           label: 'FX Rate' },
+    { type: 'protected', subtype: 'Tax Rate',          label: 'Tax Rate' },
+    { type: 'protected', subtype: 'Official Tax Line', label: 'Official Tax Line' },
+    { type: 'output',    subtype: 'PDF Export',        label: 'PDF Export' },
+    { type: 'output',    subtype: 'T1134 Form',        label: 'T1134 Form' },
+    { type: 'output',    subtype: 'Sign-off Package',  label: 'Sign-off Package' },
+    { type: 'ai',        subtype: 'AI Mapper',         label: 'AI Mapper' },
+    { type: 'ai',        subtype: 'AI Reviewer',       label: 'AI Reviewer' },
+    { type: 'ai',        subtype: 'AI Summariser',     label: 'AI Summariser' },
+  ];
+
+  const addBuilderBlock = (type: BlockType, subtype: string, label: string) => {
+    const newBlock: WorkflowBlock = {
+      id: `b${Date.now()}`,
+      type, label, subtype,
+      x: 200 + Math.random() * 300,
+      y: 80 + Math.random() * 180,
+      status: 'pending',
+    };
+    setBuilderBlocks(prev => [...prev, newBlock]);
+    setBuilderSelected(newBlock.id);
+    toast.success(`Added ${label} block`);
+  };
+
+  const filteredPalette = BUILDER_PALETTE.filter(item => {
+    const matchesType = builderFilter === 'all' || item.type === builderFilter;
+    const matchesSearch = !builderSearch || item.label.toLowerCase().includes(builderSearch.toLowerCase());
+    return matchesType && matchesSearch;
+  });
 
   // Auto-scroll thread
   useEffect(() => {
@@ -648,70 +718,316 @@ export default function InScopeHome() {
         {/* ── LEFT SLIDE-IN PANEL (Workflow Builder / Dashboard) ── */}
         <div style={{
           position: 'absolute', top: 0, left: 0, bottom: 0,
-          width: panelOpen ? '58%' : '0%',
+          width: !panelOpen ? '0%' : panelExpanded ? '100%' : '58%',
           minWidth: 0,
           overflow: 'hidden',
           transition: 'width 380ms cubic-bezier(0.23,1,0.32,1)',
           zIndex: 10,
           background: 'var(--is-bg)',
-          borderRight: panelOpen ? '1px solid var(--is-border)' : 'none',
+          borderRight: panelOpen && !panelExpanded ? '1px solid var(--is-border)' : 'none',
           display: 'flex', flexDirection: 'column',
         }}>
           {panelOpen && (
-            <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
-              {/* Panel header */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 28px 0', flexShrink: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, userSelect: 'none' }}>
-                  <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--is-text-primary)', letterSpacing: '-0.01em' }}>Sinaxe</span>
-                  <span style={{ fontSize: 10, color: 'var(--is-text-tertiary)', verticalAlign: 'super' }}>™</span>
-                  <span style={{ fontSize: 20, fontWeight: 400, color: 'var(--is-text-secondary)', marginLeft: 4, letterSpacing: '-0.01em' }}>InScope</span>
+            <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+
+              {/* ── WORKFLOW BUILDER EMBEDDED ── */}
+              {activeNav === 'builder' && (
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--is-bg)' }}>
+
+                  {/* Builder top bar */}
+                  <div style={{
+                    height: 52, borderBottom: '1px solid var(--is-border)',
+                    display: 'flex', alignItems: 'center', padding: '0 20px', gap: 12,
+                    background: 'var(--is-surface)', flexShrink: 0,
+                  }}>
+                    {/* Section tabs — Source, Tax Logic, Review, Protected, Output, Agents */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
+                      {(['all', 'source', 'logic', 'review', 'protected', 'output', 'ai'] as const).map(t => {
+                        const cfg = t === 'all' ? null : BUILDER_BLOCK_CONFIG[t];
+                        const label = t === 'all' ? 'All' : cfg!.label;
+                        const active = builderFilter === t;
+                        return (
+                          <button
+                            key={t}
+                            onClick={() => setBuilderFilter(t)}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 5,
+                              padding: '5px 12px', borderRadius: 8, border: 'none',
+                              background: active ? (t === 'all' ? 'var(--is-surface-2)' : cfg!.bgColor) : 'transparent',
+                              color: active ? (t === 'all' ? 'var(--is-text-primary)' : cfg!.color) : 'var(--is-text-tertiary)',
+                              fontSize: 12, fontWeight: active ? 600 : 400,
+                              cursor: 'pointer', fontFamily: 'inherit',
+                              transition: 'all 140ms ease-out',
+                              borderBottom: active ? `2px solid ${t === 'all' ? 'var(--is-text-secondary)' : cfg!.color}` : '2px solid transparent',
+                            }}
+                          >
+                            {cfg && <span>{cfg.icon}</span>}
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {/* Builder actions */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <button onClick={() => toast.success('Workflow saved')} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 8, border: '1px solid var(--is-border)', background: 'transparent', fontSize: 12, color: 'var(--is-text-secondary)', cursor: 'pointer', fontFamily: 'inherit' }}>
+                        <Save size={11} /> Save
+                      </button>
+                      <button onClick={() => toast.success('Test run started')} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 8, border: '1px solid var(--is-border)', background: 'transparent', fontSize: 12, color: 'var(--is-text-secondary)', cursor: 'pointer', fontFamily: 'inherit' }}>
+                        <Play size={11} /> Test
+                      </button>
+                      <button onClick={() => toast.success('Workflow published')} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 8, border: 'none', background: PURPLE, fontSize: 12, color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>
+                        <Zap size={11} /> Publish
+                      </button>
+                      {/* Expand / collapse toggle */}
+                      <button
+                        onClick={() => setPanelExpanded(v => !v)}
+                        title={panelExpanded ? 'Restore split view' : 'Expand to full width'}
+                        style={{
+                          width: 32, height: 32, borderRadius: 9, border: '1px solid var(--is-border)',
+                          background: 'var(--is-surface-2)', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          color: 'var(--is-text-secondary)', transition: 'all 140ms ease-out',
+                        }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--is-text-primary)'; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--is-text-secondary)'; }}
+                      >
+                        {panelExpanded ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+                      </button>
+                      {/* Close panel */}
+                      <button
+                        onClick={() => { setPanelOpen(false); setPanelExpanded(false); setActiveNav('home'); }}
+                        title="Close builder"
+                        style={{
+                          width: 32, height: 32, borderRadius: 9, border: '1px solid var(--is-border)',
+                          background: 'var(--is-surface-2)', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          color: 'var(--is-text-secondary)', transition: 'all 140ms ease-out',
+                        }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--is-text-primary)'; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--is-text-secondary)'; }}
+                      >
+                        <X size={13} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Builder main area */}
+                  <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+
+                    {/* Left palette — filtered by active tab */}
+                    <div style={{ width: 180, flexShrink: 0, borderRight: '1px solid var(--is-border)', background: 'var(--is-surface)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                      <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--is-border)' }}>
+                        <input
+                          value={builderSearch}
+                          onChange={e => setBuilderSearch(e.target.value)}
+                          placeholder="Search blocks…"
+                          style={{ width: '100%', background: 'var(--is-surface-2)', border: '1px solid var(--is-border)', borderRadius: 8, padding: '6px 10px', fontSize: 11, color: 'var(--is-text-primary)', outline: 'none', fontFamily: 'inherit' }}
+                        />
+                      </div>
+                      <div style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>
+                        {Object.entries(
+                          filteredPalette.reduce((acc, item) => {
+                            if (!acc[item.type]) acc[item.type] = [];
+                            acc[item.type].push(item);
+                            return acc;
+                          }, {} as Record<string, typeof filteredPalette>)
+                        ).map(([type, items]) => {
+                          const cfg = BUILDER_BLOCK_CONFIG[type as BlockType];
+                          return (
+                            <div key={type}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px 4px' }}>
+                                <span style={{ color: cfg.color }}>{cfg.icon}</span>
+                                <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: cfg.color }}>{cfg.label}</span>
+                              </div>
+                              {items.map(item => (
+                                <button
+                                  key={item.subtype}
+                                  onClick={() => addBuilderBlock(item.type, item.subtype, item.label)}
+                                  style={{
+                                    width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+                                    padding: '6px 12px', background: 'transparent', border: 'none',
+                                    cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
+                                    transition: 'background 120ms ease-out',
+                                  }}
+                                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--is-surface-2)'; }}
+                                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+                                >
+                                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: cfg.color, flexShrink: 0 }} />
+                                  <span style={{ fontSize: 11, color: 'var(--is-text-secondary)' }}>{item.label}</span>
+                                </button>
+                              ))}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Canvas */}
+                    <div
+                      ref={builderCanvasRef}
+                      style={{
+                        flex: 1, position: 'relative', overflow: 'auto',
+                        backgroundImage: builderShowGrid
+                          ? 'radial-gradient(circle, rgba(0,0,0,0.06) 1px, transparent 1px)'
+                          : 'none',
+                        backgroundSize: '24px 24px',
+                      }}
+                    >
+                      <div style={{ position: 'relative', width: 1200, height: 600 }}>
+                        {/* SVG connections */}
+                        <svg style={{ position: 'absolute', inset: 0, width: 1200, height: 600, pointerEvents: 'none' }}>
+                          <defs>
+                            <marker id="arrow-emb" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                              <path d="M0,0 L0,6 L8,3 z" fill="rgba(100,116,139,0.6)" />
+                            </marker>
+                          </defs>
+                          {builderBlocks.map(b =>
+                            b.connections?.map(toId => {
+                              const to = builderBlocks.find(x => x.id === toId);
+                              if (!to) return null;
+                              const x1 = b.x + 140, y1 = b.y + 30, x2 = to.x, y2 = to.y + 30, mx = (x1+x2)/2;
+                              return <path key={`${b.id}-${toId}`} d={`M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`} fill="none" stroke="rgba(100,116,139,0.5)" strokeWidth="1.5" markerEnd="url(#arrow-emb)" />;
+                            })
+                          )}
+                        </svg>
+                        {/* Blocks */}
+                        {builderBlocks.map(block => {
+                          const cfg = BUILDER_BLOCK_CONFIG[block.type];
+                          const isSelected = builderSelected === block.id;
+                          return (
+                            <div
+                              key={block.id}
+                              onClick={() => setBuilderSelected(block.id)}
+                              style={{
+                                position: 'absolute', left: block.x, top: block.y,
+                                minWidth: 140, padding: '8px 12px', borderRadius: 10,
+                                background: cfg.bgColor, border: `1px solid ${isSelected ? cfg.color : cfg.borderColor}`,
+                                boxShadow: isSelected ? `0 0 0 2px ${cfg.color}30` : '0 1px 4px rgba(0,0,0,0.06)',
+                                cursor: 'pointer', userSelect: 'none',
+                                transition: 'border-color 120ms ease-out, box-shadow 120ms ease-out',
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                                <span style={{ color: cfg.color }}>{cfg.icon}</span>
+                                <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: cfg.color }}>{cfg.label}</span>
+                              </div>
+                              <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--is-text-primary)' }}>{block.label}</div>
+                              {block.subtype && <div style={{ fontSize: 10, color: 'var(--is-text-tertiary)', marginTop: 2 }}>{block.subtype}</div>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {builderBlocks.length === 0 && (
+                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8 }}>
+                          <Layers size={36} style={{ color: 'var(--is-border)' }} />
+                          <span style={{ fontSize: 13, color: 'var(--is-text-tertiary)' }}>Drag blocks from the palette to build your workflow</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Right inspector */}
+                    <div style={{ width: 220, flexShrink: 0, borderLeft: '1px solid var(--is-border)', background: 'var(--is-surface)', overflow: 'auto', padding: '12px' }}>
+                      {builderSelected_block ? (
+                        <>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--is-text-primary)' }}>Block Inspector</span>
+                            <button onClick={() => setBuilderSelected(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--is-text-tertiary)', padding: 2 }}><X size={12} /></button>
+                          </div>
+                          <div style={{ fontSize: 12, color: 'var(--is-text-secondary)', marginBottom: 8 }}>
+                            <div style={{ fontWeight: 600, color: 'var(--is-text-primary)', marginBottom: 4 }}>{builderSelected_block.label}</div>
+                            <div style={{ fontSize: 11, color: 'var(--is-text-tertiary)' }}>Type: {BUILDER_BLOCK_CONFIG[builderSelected_block.type].label}</div>
+                            {builderSelected_block.subtype && <div style={{ fontSize: 11, color: 'var(--is-text-tertiary)', marginTop: 2 }}>Subtype: {builderSelected_block.subtype}</div>}
+                          </div>
+                          <button
+                            onClick={() => { setBuilderBlocks(prev => prev.filter(b => b.id !== builderSelected_block.id)); setBuilderSelected(null); }}
+                            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.05)', color: '#ef4444', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}
+                          >
+                            <Trash2 size={11} /> Remove block
+                          </button>
+                        </>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 8 }}>
+                          <Layers size={24} style={{ color: 'var(--is-border)' }} />
+                          <span style={{ fontSize: 11, color: 'var(--is-text-tertiary)', textAlign: 'center' }}>Select a block to inspect</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Bottom tabs */}
+                  <div style={{ borderTop: '1px solid var(--is-border)', background: 'var(--is-surface)', flexShrink: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid var(--is-border)', padding: '0 16px' }}>
+                      {[{ id: 'structure', label: 'Structure', icon: <Layers size={11} /> }, { id: 'logs', label: 'Run Logs', icon: <Terminal size={11} /> }].map(tab => (
+                        <button
+                          key={tab.id}
+                          onClick={() => setBuilderBottomTab(tab.id)}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 6, fontSize: 11,
+                            padding: '8px 12px',
+                            color: builderBottomTab === tab.id ? PURPLE : 'var(--is-text-tertiary)',
+                            background: 'none', border: 'none', borderBottom: `2px solid ${builderBottomTab === tab.id ? PURPLE : 'transparent'}`,
+                            cursor: 'pointer', fontFamily: 'inherit', transition: 'color 120ms ease-out',
+                          }}
+                        >
+                          {tab.icon} {tab.label}
+                        </button>
+                      ))}
+                    </div>
+                    <div style={{ padding: '8px 16px', height: 72, overflow: 'auto' }}>
+                      {builderBottomTab === 'structure' && (
+                        <div style={{ display: 'flex', gap: 16, fontSize: 11, color: 'var(--is-text-tertiary)' }}>
+                          <span>Blocks: <strong style={{ color: 'var(--is-text-primary)' }}>{builderBlocks.length}</strong></span>
+                          {(['source','logic','review','protected','output','ai'] as BlockType[]).map(t => (
+                            <span key={t}>{BUILDER_BLOCK_CONFIG[t].label}: <strong style={{ color: BUILDER_BLOCK_CONFIG[t].color }}>{builderBlocks.filter(b => b.type === t).length}</strong></span>
+                          ))}
+                        </div>
+                      )}
+                      {builderBottomTab === 'logs' && (
+                        <div style={{ fontFamily: 'monospace', fontSize: 10, color: 'var(--is-text-tertiary)', lineHeight: 1.7 }}>
+                          <div><span style={{ color: '#3FB950' }}>[OK]</span> Source blocks loaded</div>
+                          <div><span style={{ color: '#3FB950' }}>[OK]</span> Keyword Mapper executed — 8 rows classified</div>
+                          <div><span style={{ color: PURPLE }}>[RUN]</span> Calculation Engine running — FAPI / FAT / Net</div>
+                          <div><span style={{ color: '#F0883E' }}>[WARN]</span> Exception Check: 2 exceptions flagged</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                 </div>
-                <button
-                  onClick={() => { setPanelOpen(false); setActiveNav('home'); }}
-                  style={{
-                    width: 32, height: 32, borderRadius: 10, border: 'none',
-                    background: 'var(--is-surface-2)', boxShadow: 'var(--is-shadow-in)',
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: 'var(--is-text-secondary)', transition: 'all 150ms ease-out',
-                  }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--is-border)'; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--is-surface-2)'; }}
-                  aria-label="Close panel"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-              {/* Panel content — lazy iframe-style embed */}
-              <div style={{ flex: 1, padding: '20px 28px 28px', overflow: 'auto' }}>
-                {activeNav === 'builder' && (
-                  <div style={{ color: 'var(--is-text-primary)' }}>
-                    <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8, letterSpacing: '-0.02em' }}>Workflow Builder</h2>
-                    <p style={{ fontSize: 14, color: 'var(--is-text-secondary)', marginBottom: 24 }}>Design and manage your automation workflows.</p>
-                    <a href="/builder" target="_blank" rel="noopener" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: PURPLE, textDecoration: 'none', fontWeight: 600 }}>
-                      Open full page <ArrowUpRight size={14} />
-                    </a>
+              )}
+
+              {/* ── DASHBOARD PANEL ── */}
+              {activeNav === 'dashboard' && (
+                <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 28px 0', flexShrink: 0 }}>
+                    <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--is-text-primary)', letterSpacing: '-0.02em' }}>Dashboard</h2>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button onClick={() => setPanelExpanded(v => !v)} title={panelExpanded ? 'Restore split view' : 'Expand'} style={{ width: 32, height: 32, borderRadius: 9, border: '1px solid var(--is-border)', background: 'var(--is-surface-2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--is-text-secondary)' }}>
+                        {panelExpanded ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+                      </button>
+                      <button onClick={() => { setPanelOpen(false); setPanelExpanded(false); setActiveNav('home'); }} style={{ width: 32, height: 32, borderRadius: 9, border: '1px solid var(--is-border)', background: 'var(--is-surface-2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--is-text-secondary)' }}>
+                        <X size={13} />
+                      </button>
+                    </div>
                   </div>
-                )}
-                {activeNav === 'dashboard' && (
-                  <div style={{ color: 'var(--is-text-primary)' }}>
-                    <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8, letterSpacing: '-0.02em' }}>Dashboard</h2>
-                    <p style={{ fontSize: 14, color: 'var(--is-text-secondary)', marginBottom: 24 }}>Analytics, KPIs, and workflow status at a glance.</p>
-                    <a href="/dashboard" target="_blank" rel="noopener" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: PURPLE, textDecoration: 'none', fontWeight: 600 }}>
-                      Open full page <ArrowUpRight size={14} />
-                    </a>
+                  <div style={{ padding: '20px 28px', color: 'var(--is-text-secondary)', fontSize: 14 }}>
+                    Analytics, KPIs, and workflow status at a glance.
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+
             </div>
           )}
         </div>
 
         {/* ── RIGHT CHAT PANEL ── */}
         <div style={{
-          marginLeft: panelOpen ? '58%' : '0%',
+          marginLeft: !panelOpen ? '0%' : panelExpanded ? '100%' : '58%',
           flex: 1, minWidth: 0,
           display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden',
           transition: 'margin-left 380ms cubic-bezier(0.23,1,0.32,1)',
+          pointerEvents: panelExpanded ? 'none' : 'auto',
+          opacity: panelExpanded ? 0 : 1,
         }}>
 
         {/* ── Top bar: logo (only when panel is closed) ── */}

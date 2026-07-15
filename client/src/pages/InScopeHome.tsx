@@ -805,48 +805,7 @@ export default function InScopeHome() {
                   {/* Builder main area */}
                   <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
 
-                    {/* Left palette — filtered by sidebar section nav */}
-                    <div style={{ width: 180, flexShrink: 0, borderRight: '1px solid var(--is-border)', background: 'var(--is-surface)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                      <div style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>
-                        {Object.entries(
-                          filteredPalette.reduce((acc, item) => {
-                            if (!acc[item.type]) acc[item.type] = [];
-                            acc[item.type].push(item);
-                            return acc;
-                          }, {} as Record<string, typeof filteredPalette>)
-                        ).map(([type, items]) => {
-                          const cfg = BUILDER_BLOCK_CONFIG[type as BlockType];
-                          return (
-                            <div key={type}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px 4px' }}>
-                                <span style={{ color: cfg.color }}>{cfg.icon}</span>
-                                <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: cfg.color }}>{cfg.label}</span>
-                              </div>
-                              {items.map(item => (
-                                <button
-                                  key={item.subtype}
-                                  onClick={() => addBuilderBlock(item.type, item.subtype, item.label)}
-                                  style={{
-                                    width: '100%', display: 'flex', alignItems: 'center', gap: 8,
-                                    padding: '6px 12px', background: 'transparent', border: 'none',
-                                    cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
-                                    transition: 'background 120ms ease-out',
-                                    /* no colored sub-items */
-                                  }}
-                                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--is-surface-2)'; }}
-                                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
-                                >
-                                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: cfg.color, flexShrink: 0 }} />
-                                  <span style={{ fontSize: 11, color: 'var(--is-text-secondary)' }}>{item.label}</span>
-                                </button>
-                              ))}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Canvas */}
+                                        {/* Canvas — palette removed, sidebar handles section filtering */}
                     <div
                       ref={builderCanvasRef}
                       style={{

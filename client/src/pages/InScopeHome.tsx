@@ -710,7 +710,13 @@ export default function InScopeHome() {
       display: 'flex', fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif",
       overflow: 'hidden',
     }}>
-      <InScopeSidebar onNewScope={handleNewScope} onNavClick={handleNavClick} activeNav={activeNav} />
+      <InScopeSidebar
+        onNewScope={handleNewScope}
+        onNavClick={handleNavClick}
+        activeNav={activeNav}
+        builderFilter={builderFilter}
+        onBuilderFilter={(f) => setBuilderFilter(f as any)}
+      />
 
       {/* ── Main content: split panel wrapper ── */}
       <div style={{ flex: 1, minWidth: 0, display: 'flex', height: '100vh', overflow: 'hidden', position: 'relative' }}>
@@ -740,32 +746,17 @@ export default function InScopeHome() {
                     display: 'flex', alignItems: 'center', padding: '0 20px', gap: 12,
                     background: 'var(--is-surface)', flexShrink: 0,
                   }}>
-                    {/* Section tabs — Source, Tax Logic, Review, Protected, Output, Agents */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
-                      {(['all', 'source', 'logic', 'review', 'protected', 'output', 'ai'] as const).map(t => {
-                        const cfg = t === 'all' ? null : BUILDER_BLOCK_CONFIG[t];
-                        const label = t === 'all' ? 'All' : cfg!.label;
-                        const active = builderFilter === t;
-                        return (
-                          <button
-                            key={t}
-                            onClick={() => setBuilderFilter(t)}
-                            style={{
-                              display: 'flex', alignItems: 'center', gap: 5,
-                              padding: '5px 12px', borderRadius: 8, border: 'none',
-                              background: active ? (t === 'all' ? 'var(--is-surface-2)' : cfg!.bgColor) : 'transparent',
-                              color: active ? (t === 'all' ? 'var(--is-text-primary)' : cfg!.color) : 'var(--is-text-tertiary)',
-                              fontSize: 12, fontWeight: active ? 600 : 400,
-                              cursor: 'pointer', fontFamily: 'inherit',
-                              transition: 'all 140ms ease-out',
-                              borderBottom: active ? `2px solid ${t === 'all' ? 'var(--is-text-secondary)' : cfg!.color}` : '2px solid transparent',
-                            }}
-                          >
-                            {cfg && <span>{cfg.icon}</span>}
-                            {label}
-                          </button>
-                        );
-                      })}
+                    {/* Section filter label (now controlled from sidebar) */}
+                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {builderFilter !== 'all' && BUILDER_BLOCK_CONFIG[builderFilter as keyof typeof BUILDER_BLOCK_CONFIG] && (
+                        <span style={{ fontSize: 12, fontWeight: 600, color: BUILDER_BLOCK_CONFIG[builderFilter as keyof typeof BUILDER_BLOCK_CONFIG].color, display: 'flex', alignItems: 'center', gap: 5 }}>
+                          {BUILDER_BLOCK_CONFIG[builderFilter as keyof typeof BUILDER_BLOCK_CONFIG].icon}
+                          {BUILDER_BLOCK_CONFIG[builderFilter as keyof typeof BUILDER_BLOCK_CONFIG].label}
+                        </span>
+                      )}
+                      {builderFilter === 'all' && (
+                        <span style={{ fontSize: 12, color: 'var(--is-text-tertiary)' }}>All sections</span>
+                      )}
                     </div>
                     {/* Builder actions */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -848,6 +839,7 @@ export default function InScopeHome() {
                                     padding: '6px 12px', background: 'transparent', border: 'none',
                                     cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
                                     transition: 'background 120ms ease-out',
+                                    /* no colored sub-items */
                                   }}
                                   onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--is-surface-2)'; }}
                                   onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}

@@ -21,6 +21,7 @@ import {
   ChevronRight, ChevronLeft, ChevronDown,
   Users, GitBranch, MessageSquare, FileText,
   Pin, User, BarChart2,
+  Database, Calculator, ClipboardCheck, Lock, Package, Sparkles,
 } from 'lucide-react';
 
 const PURPLE = '#6B21A8';
@@ -251,13 +252,27 @@ function NavItem({
 
 // ─── InScopeSidebar ───────────────────────────────────────────────────────────
 
+type BuilderFilter = 'all' | 'source' | 'logic' | 'review' | 'protected' | 'output' | 'ai';
+
+const BUILDER_SECTIONS: { id: BuilderFilter; label: string; icon: React.ReactNode }[] = [
+  { id: 'all',       label: 'All',       icon: <GitFork size={14} /> },
+  { id: 'source',    label: 'Source',    icon: <Database size={14} /> },
+  { id: 'logic',     label: 'Tax Logic', icon: <Calculator size={14} /> },
+  { id: 'review',    label: 'Review',    icon: <ClipboardCheck size={14} /> },
+  { id: 'protected', label: 'Protected', icon: <Lock size={14} /> },
+  { id: 'output',    label: 'Output',    icon: <Package size={14} /> },
+  { id: 'ai',        label: 'Agents',    icon: <Sparkles size={14} /> },
+];
+
 interface InScopeSidebarProps {
   onNewScope?: () => void;
   onNavClick?: (id: string) => void;
   activeNav?: string;
+  builderFilter?: BuilderFilter;
+  onBuilderFilter?: (f: BuilderFilter) => void;
 }
 
-export default function InScopeSidebar({ onNewScope, onNavClick, activeNav = 'home' }: InScopeSidebarProps = {}) {
+export default function InScopeSidebar({ onNewScope, onNavClick, activeNav = 'home', builderFilter = 'all', onBuilderFilter }: InScopeSidebarProps = {}) {
   const [location, navigate] = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [scopesOpen, setScopesOpen] = useState(true);
@@ -373,8 +388,38 @@ export default function InScopeSidebar({ onNewScope, onNavClick, activeNav = 'ho
         {/* ── Divider ── */}
         <div style={{ height: 1, background: BORDER, margin: '10px 4px' }} />
 
-        {/* ── New Scope button ── */}
-        <div style={{ marginTop: 12, padding: collapsed ? '0 2px' : '0 2px' }}>
+        {/* ── Builder section nav (replaces Scopes when builder is active) ── */}
+        {activeNav === 'builder' && !collapsed && (
+          <div style={{ marginTop: 8 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: TEXT_TERTIARY, textTransform: 'uppercase', letterSpacing: '0.07em', padding: '0 4px 6px' }}>Sections</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              {BUILDER_SECTIONS.map(s => (
+                <button
+                  key={s.id}
+                  onClick={() => onBuilderFilter?.(s.id)}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '9px 12px', borderRadius: 10, border: 'none',
+                    background: builderFilter === s.id ? 'rgba(107,33,168,0.08)' : 'transparent',
+                    color: builderFilter === s.id ? PURPLE : TEXT_SECONDARY,
+                    fontWeight: builderFilter === s.id ? 600 : 400,
+                    fontSize: 13, fontFamily: 'inherit',
+                    cursor: 'pointer', transition: 'all 150ms ease-out',
+                    letterSpacing: '-0.01em',
+                  }}
+                  onMouseEnter={(e) => { if (builderFilter !== s.id) (e.currentTarget as HTMLElement).style.background = 'rgba(0,0,0,0.04)'; }}
+                  onMouseLeave={(e) => { if (builderFilter !== s.id) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+                >
+                  <span style={{ color: builderFilter === s.id ? PURPLE : TEXT_SECONDARY, flexShrink: 0 }}>{s.icon}</span>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── New Scope button (only when not in builder mode) ── */}
+        {activeNav !== 'builder' && <div style={{ marginTop: 12, padding: collapsed ? '0 2px' : '0 2px' }}>
           <button
             onClick={() => { if (onNewScope) onNewScope(); }}
             aria-label="New Scope"
@@ -405,9 +450,10 @@ export default function InScopeSidebar({ onNewScope, onNavClick, activeNav = 'ho
               <span style={{ fontSize: 12, fontWeight: 600, color: PURPLE, whiteSpace: 'nowrap' }}>New Scope</span>
             )}
           </button>
-        </div>
+        </div>}
 
-        {/* ── Scopes section ── */}
+        {/* ── Scopes section (only when not in builder mode) ── */}
+        {activeNav !== 'builder' &&
         <div style={{ marginTop: 16 }}>
           {!collapsed && (
             <div style={{ fontSize: 9, fontWeight: 700, color: TEXT_TERTIARY, textTransform: 'uppercase', letterSpacing: '0.07em', padding: '0 4px 6px' }}>
@@ -475,7 +521,7 @@ export default function InScopeSidebar({ onNewScope, onNavClick, activeNav = 'ho
               )}
             </div>
           )}
-        </div>
+        </div>}
 
         {/* ── Spacer ── */}
         <div style={{ flex: 1 }} />

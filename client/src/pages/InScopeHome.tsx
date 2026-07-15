@@ -137,34 +137,101 @@ function ScopeButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-// ─── Scope bar ────────────────────────────────────────────────────────────────
-function ScopeBar({ onScopeClick, scope, empty }: {
-  onScopeClick: () => void; scope: ScopeData | null; empty: boolean;
+// ─── Unified composer bar (scope logo + chips + input + send) ────────────────
+function UnifiedBar({
+  onScopeClick, scope, input, onInputChange, onKeyDown, onSubmit, inputRef, isThread, isTyping,
+}: {
+  onScopeClick: () => void;
+  scope: ScopeData | null;
+  input: string;
+  onInputChange: (v: string) => void;
+  onKeyDown: (e: React.KeyboardEvent) => void;
+  onSubmit: () => void;
+  inputRef: React.Ref<HTMLInputElement & HTMLTextAreaElement>;
+  isThread?: boolean;
+  isTyping?: boolean;
 }) {
+  const hasInput = input.trim().length > 0;
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 0,
+      display: 'flex', alignItems: 'center',
       background: 'var(--is-surface)', borderRadius: 'var(--is-radius-pill)',
       boxShadow: 'var(--is-shadow-out)', border: '1px solid var(--is-border)',
-      padding: '10px 20px 10px 10px', width: '100%',
-    }}>
-      <ScopeButton onClick={onScopeClick} />
-      <div style={{ width: 1, height: 26, background: 'var(--is-border)', margin: '0 18px', flexShrink: 0 }} />
-      {empty || !scope ? (
-        <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--is-text-tertiary)', letterSpacing: '-0.01em' }}>
-          No scope defined — type a prompt below to get started
-        </span>
-      ) : (
-        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0 4px' }}>
-          {[scope.client, scope.year, scope.workstream, scope.extra].map((dim, i) => (
+      padding: '8px 10px 8px 8px', width: '100%', gap: 0,
+      transition: 'box-shadow 200ms var(--is-ease-out)',
+    }}
+      onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--is-shadow-out), 0 0 0 2px var(--is-accent-ring)'; }}
+      onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) (e.currentTarget as HTMLElement).style.boxShadow = 'var(--is-shadow-out)'; }}
+    >
+      {/* Scope logo */}
+      <div style={{ flexShrink: 0 }}>
+        <ScopeButton onClick={onScopeClick} />
+      </div>
+
+      {/* Divider */}
+      <div style={{ width: 1, height: 26, background: 'var(--is-border)', margin: '0 14px', flexShrink: 0 }} />
+
+      {/* Scope chips (when active) */}
+      {scope && (
+        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'nowrap', gap: 4, marginRight: 10, flexShrink: 0, maxWidth: '40%', overflow: 'hidden' }}>
+          {[scope.client, scope.year, scope.workstream].map((dim, i) => (
             <span key={i} style={{
-              fontSize: 12, fontWeight: 600, color: 'var(--is-text-primary)',
-              background: 'var(--is-surface-2)', borderRadius: 8,
-              padding: '3px 9px', border: '1px solid var(--is-border)',
+              fontSize: 11, fontWeight: 600, color: 'var(--is-text-primary)',
+              background: 'var(--is-surface-2)', borderRadius: 6,
+              padding: '2px 8px', border: '1px solid var(--is-border)',
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
             }}>{dim}</span>
           ))}
         </div>
       )}
+
+      {/* Input */}
+      {isThread ? (
+        <textarea
+          ref={inputRef as React.Ref<HTMLTextAreaElement>}
+          value={input}
+          onChange={(e) => onInputChange(e.target.value)}
+          onKeyDown={onKeyDown as React.KeyboardEventHandler<HTMLTextAreaElement>}
+          placeholder={scope ? `Ask about ${scope.workstream} for ${scope.client}…` : 'Ask about this workflow…'}
+          rows={1}
+          style={{
+            flex: 1, resize: 'none', fontSize: 15, color: 'var(--is-text-primary)',
+            background: 'transparent', outline: 'none', border: 'none',
+            lineHeight: 1.5, maxHeight: 72, overflowY: 'auto', fontFamily: 'inherit', fontWeight: 400,
+          }}
+        />
+      ) : (
+        <input
+          ref={inputRef as React.Ref<HTMLInputElement>}
+          type="text"
+          value={input}
+          onChange={(e) => onInputChange(e.target.value)}
+          onKeyDown={onKeyDown as React.KeyboardEventHandler<HTMLInputElement>}
+          placeholder={scope ? `Ask about ${scope.workstream} for ${scope.client}…` : 'e.g. Calculate 2025 FAPI for Northstar Inc…'}
+          style={{
+            flex: 1, background: 'transparent', border: 'none', outline: 'none',
+            fontSize: 15, color: 'var(--is-text-primary)', fontFamily: 'inherit', fontWeight: 400,
+          }}
+        />
+      )}
+
+      {/* Send button */}
+      <button
+        onMouseDown={(e) => { e.preventDefault(); onSubmit(); }}
+        disabled={!hasInput || isTyping}
+        aria-label="Send"
+        style={{
+          width: 44, height: 44, borderRadius: 18, flexShrink: 0,
+          background: hasInput && !isTyping ? 'var(--is-text-primary)' : 'var(--is-surface-2)',
+          boxShadow: hasInput && !isTyping ? '0 4px 14px rgba(32,39,53,0.22)' : 'var(--is-shadow-in)',
+          border: 'none', cursor: hasInput && !isTyping ? 'pointer' : 'default',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transition: 'all 160ms var(--is-ease-out)',
+          color: hasInput && !isTyping ? '#fff' : 'var(--is-text-tertiary)',
+        }}
+      >
+        <Send size={15} />
+      </button>
     </div>
   );
 }
@@ -461,52 +528,21 @@ export default function InScopeHome() {
           </p>
         </div>
 
-        {/* ── Scope bar ── */}
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '28px 40px 0', flexShrink: 0 }}>
-          <div style={{ width: '100%', maxWidth: 820 }}>
-            <ScopeBar onScopeClick={() => setScopeMapOpen(true)} scope={scope} empty={!scope} />
-          </div>
-        </div>
-
-        {/* ── HOME VIEW: composer centred + bottom cards ── */}
+        {/* ── HOME VIEW: unified bar centred + bottom cards ── */}
         {!threadOpen && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-            {/* Centred composer */}
+            {/* Centred unified bar */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 40px', gap: 16, minHeight: 0 }}>
-              <div style={{ width: '100%', maxWidth: 820 }}>
-                {/* Composer bar */}
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: 14,
-                  background: 'var(--is-surface)', borderRadius: 'var(--is-radius-pill)',
-                  boxShadow: 'var(--is-shadow-out)', border: '1px solid var(--is-border)',
-                  padding: '18px 18px 18px 28px', width: '100%', cursor: 'text',
-                  transition: 'box-shadow 200ms var(--is-ease-out)',
-                }}>
-                  <input
-                    ref={homeInputRef}
-                    type="text"
-                    value={homeInput}
-                    onChange={(e) => setHomeInput(e.target.value)}
-                    onKeyDown={handleHomeKeyDown}
-                    placeholder="e.g. Calculate 2025 FAPI for Northstar Inc…"
-                    style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: 16, color: 'var(--is-text-primary)', fontFamily: 'inherit', fontWeight: 400 }}
-                  />
-                  <button
-                    onMouseDown={(e) => { e.preventDefault(); handleHomeSubmit(homeInput); }}
-                    aria-label="Submit"
-                    style={{
-                      width: 44, height: 44, borderRadius: 18, flexShrink: 0,
-                      background: homeInput.trim() ? 'var(--is-text-primary)' : 'var(--is-surface-2)',
-                      boxShadow: homeInput.trim() ? '0 4px 14px rgba(32,39,53,0.22)' : 'var(--is-shadow-in)',
-                      border: 'none', cursor: homeInput.trim() ? 'pointer' : 'default',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      transition: 'all 160ms var(--is-ease-out)',
-                      color: homeInput.trim() ? '#fff' : 'var(--is-text-tertiary)',
-                    }}
-                  >
-                    <Send size={15} />
-                  </button>
-                </div>
+              <div style={{ width: '100%', maxWidth: 860 }}>
+                <UnifiedBar
+                  onScopeClick={() => setScopeMapOpen(true)}
+                  scope={scope}
+                  input={homeInput}
+                  onInputChange={setHomeInput}
+                  onKeyDown={handleHomeKeyDown as React.KeyboardEventHandler}
+                  onSubmit={() => handleHomeSubmit(homeInput)}
+                  inputRef={homeInputRef as React.Ref<HTMLInputElement & HTMLTextAreaElement>}
+                />
                 {/* Suggestion chips */}
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', marginTop: 12 }}>
                   {SUGGESTIONS.map((s) => (
@@ -622,49 +658,20 @@ export default function InScopeHome() {
               </div>
             </div>
 
-            {/* Thread composer — same pill style as home chat bar */}
-            <div style={{
-              flexShrink: 0,
-              background: 'var(--is-bg)',
-              padding: '12px 40px 24px',
-            }}>
-              <div style={{ width: '100%', maxWidth: 820, margin: '0 auto' }}>
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: 14,
-                  background: 'var(--is-surface)', borderRadius: 'var(--is-radius-pill)',
-                  boxShadow: 'var(--is-shadow-out)', border: '1px solid var(--is-border)',
-                  padding: '14px 14px 14px 28px', width: '100%', cursor: 'text',
-                  transition: 'box-shadow 200ms var(--is-ease-out)',
-                }}>
-                  <textarea
-                    ref={threadInputRef}
-                    value={threadInput}
-                    onChange={(e) => setThreadInput(e.target.value)}
-                    onKeyDown={handleThreadKeyDown}
-                    placeholder="Ask about this workflow, open a surface, run a task…"
-                    rows={1}
-                    style={{
-                      flex: 1, resize: 'none', fontSize: 15, color: 'var(--is-text-primary)',
-                      background: 'transparent', outline: 'none', border: 'none',
-                      lineHeight: 1.5, maxHeight: 72, overflowY: 'auto', fontFamily: 'inherit', fontWeight: 400,
-                    }}
-                  />
-                  <button onClick={handleThreadSend} disabled={!threadInput.trim() || state.isAgentTyping}
-                    aria-label="Send"
-                    style={{
-                      width: 44, height: 44, borderRadius: 18, flexShrink: 0,
-                      background: threadInput.trim() && !state.isAgentTyping ? 'var(--is-text-primary)' : 'var(--is-surface-2)',
-                      boxShadow: threadInput.trim() && !state.isAgentTyping ? '0 4px 14px rgba(32,39,53,0.22)' : 'var(--is-shadow-in)',
-                      border: 'none',
-                      cursor: threadInput.trim() && !state.isAgentTyping ? 'pointer' : 'default',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      transition: 'all 160ms var(--is-ease-out)',
-                      color: threadInput.trim() && !state.isAgentTyping ? '#fff' : 'var(--is-text-tertiary)',
-                    }}
-                  >
-                    <Send size={15} />
-                  </button>
-                </div>
+            {/* Thread composer — unified bar with scope logo */}
+            <div style={{ flexShrink: 0, background: '#ffffff', padding: '12px 40px 24px' }}>
+              <div style={{ width: '100%', maxWidth: 860, margin: '0 auto' }}>
+                <UnifiedBar
+                  onScopeClick={() => setScopeMapOpen(true)}
+                  scope={scope}
+                  input={threadInput}
+                  onInputChange={setThreadInput}
+                  onKeyDown={handleThreadKeyDown as React.KeyboardEventHandler}
+                  onSubmit={handleThreadSend}
+                  inputRef={threadInputRef as React.Ref<HTMLInputElement & HTMLTextAreaElement>}
+                  isThread
+                  isTyping={state.isAgentTyping}
+                />
               </div>
             </div>
           </div>

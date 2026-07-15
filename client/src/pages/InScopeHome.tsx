@@ -570,6 +570,7 @@ export default function InScopeHome() {
   const [builderBlocks, setBuilderBlocks] = useState<WorkflowBlock[]>(FAPI_WORKFLOW_BLOCKS);
   const [builderSelected, setBuilderSelected] = useState<string | null>(null);
   const [builderFilter, setBuilderFilter] = useState<BlockType | 'all'>('all');
+  const [dashboardSection, setDashboardSection] = useState('overview');
   const [builderSearch, setBuilderSearch] = useState('');
   const [builderShowGrid, setBuilderShowGrid] = useState(true);
   const [builderBottomTab, setBuilderBottomTab] = useState('structure');
@@ -716,6 +717,8 @@ export default function InScopeHome() {
         activeNav={activeNav}
         builderFilter={builderFilter}
         onBuilderFilter={(f) => setBuilderFilter(f as any)}
+        dashboardSection={dashboardSection}
+        onDashboardSection={setDashboardSection}
       />
 
       {/* ── Main content: split panel wrapper ── */}
@@ -953,8 +956,48 @@ export default function InScopeHome() {
                       </button>
                     </div>
                   </div>
-                  <div style={{ padding: '20px 28px', color: 'var(--is-text-secondary)', fontSize: 14 }}>
-                    Analytics, KPIs, and workflow status at a glance.
+                  <div style={{ padding: '20px 28px', flex: 1 }}>
+                    {dashboardSection === 'overview' && (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+                        {[{ label: 'Active Scopes', value: '18', sub: '+3 this week' }, { label: 'Workflows Running', value: '7', sub: '2 need attention' }, { label: 'Completed', value: '12', sub: 'Last 30 days' }, { label: 'Blocked', value: '2', sub: 'Action required' }].map(m => (
+                          <div key={m.label} style={{ background: 'var(--is-surface)', borderRadius: 14, padding: '18px 20px', border: '1px solid var(--is-border)' }}>
+                            <div style={{ fontSize: 11, color: 'var(--is-text-tertiary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{m.label}</div>
+                            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--is-text-primary)', letterSpacing: '-0.03em', lineHeight: 1 }}>{m.value}</div>
+                            <div style={{ fontSize: 11, color: 'var(--is-text-tertiary)', marginTop: 4 }}>{m.sub}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {dashboardSection === 'clients' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {['Northstar Inc.', 'Alpine AG', 'Cascade Tech', 'Atlas Financial', 'Meridian Energy', 'SAS Paris'].map(c => (
+                          <div key={c} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'var(--is-surface)', borderRadius: 10, border: '1px solid var(--is-border)' }}>
+                            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--is-text-primary)' }}>{c}</span>
+                            <span style={{ fontSize: 11, color: 'var(--is-text-tertiary)' }}>Active</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {dashboardSection === 'workflows' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {[{ name: 'FAPI Readiness — Northstar', status: 'Running', color: '#22c55e' }, { name: 'T1134 Compliance — Cascade', status: 'Needs input', color: '#f59e0b' }, { name: 'Q2 Provision Review', status: 'Completed', color: '#94a3b8' }, { name: 'TP Benchmark Update', status: 'Blocked', color: '#ef4444' }].map(w => (
+                          <div key={w.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'var(--is-surface)', borderRadius: 10, border: '1px solid var(--is-border)' }}>
+                            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--is-text-primary)' }}>{w.name}</span>
+                            <span style={{ fontSize: 11, fontWeight: 600, color: w.color }}>{w.status}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {dashboardSection === 'reports' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {['FAPI Summary — Q2 2025', 'T1134 Filing Report — FY2024', 'Transfer Pricing Benchmark', 'ICT Compliance Overview'].map(r => (
+                          <div key={r} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'var(--is-surface)', borderRadius: 10, border: '1px solid var(--is-border)' }}>
+                            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--is-text-primary)' }}>{r}</span>
+                            <button style={{ fontSize: 11, color: '#6B21A8', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>Export</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
